@@ -4,9 +4,16 @@ A long-term robotics research repository for an ABB IRB1200-5/0.9 virtual
 laboratory, multilingual task execution, classical manipulation, and an
 honest path toward ABB-adapted vision-language-action research.
 
-The repository is currently at the bootstrap checkpoint. No robot, simulator,
-perception, speech, or VLA capability is claimed working yet. See
+The repository has a stable bootstrap checkpoint and an in-progress Phase 0
+environment/upstream audit checkpoint. No robot, simulator, perception, speech,
+or VLA capability is claimed working yet. See
 `PROJECT_STATE.md` for the exact tested state and next commands.
+
+Verified audit result: the local WSL2 installation has Ubuntu 24.04 and ROS 2
+Jazzy, while Gazebo Harmonic, MoveIt, and the control stack still need to be
+installed. The ABB asset source is pinned, but its complete upstream driver is
+not treated as Jazzy-compatible. See `docs/environment_report.md` and
+`docs/upstream_compatibility_report.md`.
 
 ## Engineering order
 
@@ -24,4 +31,3 @@ Every development session starts by reading:
 3. `ROADMAP.md`
 4. `DECISIONS.md`
 5. Git status and history
-

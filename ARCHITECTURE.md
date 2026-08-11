@@ -35,7 +35,8 @@ Voice / Text
 ```text
 Physical-AI-Robot-Lab/
   docs/
-  containers/
+    concepts/
+  docker/
   config/
   scripts/
   ros2_ws/src/
@@ -53,6 +54,13 @@ Physical-AI-Robot-Lab/
     physical_ai_system_monitor/   # health, latency, events, backend truth
     physical_ai_bringup/          # composed launch and profiles
   robotics_core/                  # educational/production interfaces and tests
+    math/
+    kinematics/
+    dynamics/
+    trajectory/
+    control/
+    planning/
+    collision/
   vla/
     interface/
     openpi/
@@ -64,7 +72,10 @@ Physical-AI-Robot-Lab/
     evaluation/
     safety/
   system_explorer/                # later UI, not a source of control truth
+  simulation/                     # expert rollout and episode collection tools
+  benchmarks/                     # reproducible tasks, metrics, plots
   tests/
+  runs/                            # ignored runtime episodes, never Git data
 ```
 
 The layout is a target architecture, not a claim that these packages exist.
@@ -94,3 +105,49 @@ management are preferred over proliferating nodes without isolation value.
 Custom interfaces will include actions equivalent to `ExecuteSkill` and
 `ExecuteTaskGraph`; exact fields are decided and documented before creation.
 
+## Closed-loop executive and recovery
+
+The task executive uses explicit states:
+
+```text
+PLANNING -> READY -> EXECUTING -> VERIFYING -> SUCCESS
+                       |              |
+                       v              v
+                    RETRYING <-> REPLANNING -> FAILED / ABORTED
+```
+
+Every completed skill triggers a fresh timestamped `WorldState` read. A moved
+object invalidates stale poses and returns execution to perception/planning.
+Typed recovery covers at least object-not-found, IK/planning/collision/grasp/
+trajectory failures, moved objects, VLA invalid/timeout, uncertain speech, and
+unknown instructions. Failures are never silent.
+
+## Safety path
+
+Both classical and VLA paths converge before actuation:
+
+```text
+candidate trajectory/action
+  -> finite-value and timestamp checks
+  -> joint position/velocity/acceleration limits
+  -> maximum delta, workspace, and gripper limits
+  -> self/environment collision checks
+  -> timeout/watchdog
+  -> hardware abstraction
+```
+
+The simulation layer adopts real-robot safety structure but is not evidence of
+safe physical ABB deployment. Any real robot connection requires a separate
+human safety review and explicit authorization.
+
+## Observability and reproducibility
+
+Every robot command becomes an Episode containing the command/language,
+TaskGraph, timestamped world/robot state, optional images, selected planner,
+trajectory, controller, VLA output, failures, and verified result. Runtime data
+uses `runs/YYYY-MM-DD/episode_xxx/` outside Git and supports later replay.
+
+System Explorer consumes the same event stream. It must show current task and
+queue, world/robot state, planner/controller/backend, perception mode, brain
+mode, FPS/latency/VLA inference time, status, and failure reason. It cannot
+modify or cosmetically override execution truth.

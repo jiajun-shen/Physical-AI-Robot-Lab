@@ -1,30 +1,76 @@
 # Dependency Matrix
 
-This file records only verified selections. Provisional target names are not
-version claims and must be replaced with exact package versions or Git commits
-during Phase 0.
+Audit date: 2026-08-11. `OBSERVED CANDIDATE` means the target WSL apt
+repository advertised that binary version; it is not installed. The candidate
+must be captured again immediately before installation.
 
-| Layer | Target | Current host | Pin/status | Verification required |
+## Selected runtime baseline
+
+| Layer | Selection | Lock/evidence | Local state | Status |
 |---|---|---|---|---|
-| OS | Ubuntu 24.04 LTS | Audit pending | PROVISIONAL | Native vs WSL2/container runtime |
-| ROS | ROS 2 Jazzy | Audit pending | PROVISIONAL | Official support and installed packages |
-| Simulator | Gazebo Harmonic | Audit pending | PROVISIONAL | Jazzy bridge/control compatibility |
-| Motion | MoveIt 2 for Jazzy | Audit pending | PROVISIONAL | Binary/source and MTC availability |
-| Control | ros2_control + gz_ros2_control | Audit pending | PROVISIONAL | Matching distro packages/interfaces |
-| ABB model/control | `PickNikRobotics/abb_ros2` and upstream description dependencies | Not cloned | UNVERIFIED | IRB1200-5/0.9 content, license, branch, commit |
-| VLA | `Physical-Intelligence/openpi`, π0.5 family | Not cloned | UNVERIFIED | OS/Python/CUDA/GPU, checkpoint terms, commit |
-| Speech | Multilingual Whisper backend | Not installed | UNSELECTED | Runtime, model size, license, CPU/GPU path |
-| Vision | OpenCV RGB-D baseline | Audit pending | UNSELECTED | ROS image/depth transport and OpenCV version |
-| Python | Python 3 | Audit pending | UNPINNED | ROS-compatible version and VLA-isolated version |
-| C++ | ROS-compatible C++17+ compiler | Audit pending | UNPINNED | Toolchain version |
+| Host | Windows 11 25H2 + WSL 2.7.3 | build `26200.8875` | Installed | HOST ONLY |
+| Robotics OS | Ubuntu 24.04.4 Noble WSL2 | `/etc/os-release` | Installed | ADOPTED |
+| ROS | ROS 2 Jazzy Desktop | apt `0.11.0-1noble.20260412.072512` | Installed, CLI verified | ADOPTED |
+| Simulator bridge | `ros-jazzy-ros-gz` / Harmonic vendor packages | apt candidate `1.0.22-1noble.20260616.074726` | Not installed | SELECTED |
+| Motion planning | `ros-jazzy-moveit` | apt candidate `2.12.4-1noble.20260617.161956` | Not installed | SELECTED |
+| Task composition | MoveIt Task Constructor | apt candidate `0.1.5-1noble.20260617.153812` | Not installed | SELECTED |
+| Simulation control | `ros-jazzy-gz-ros2-control` | apt candidate `1.2.19-1noble.20260615.171757` | Not installed | SELECTED |
+| Controllers | ros2_controllers / joint trajectory controller | apt candidate `4.40.1-1noble.20260616.074625` | Not installed | SELECTED |
+| Controller manager | ros2_control controller manager | apt candidate `4.45.2-1noble.20260615.164916` | Not installed | SELECTED |
+| ABB model assets | PickNik ROS 2 port of ROS-Industrial IRB1200 | `abb_ros2@05cbabe774ef026b1cd36fe6b253b55f55e16340` | Audited outside repo, not integrated | PIN SELECTED |
+| ABB asset lineage | ROS-Industrial `abb_irb1200_support` | `abb` tag 1.5.0, commit `eefdf01c956a6f2129aacb88d598201feff3cf19` | Source verified | REFERENCE |
+| VLA code | Physical Intelligence openpi | `main@15a9616a00943ada6c20a0f158e3adb39df2ccac` | Not installed | RESEARCH PIN |
+| VLA runtime | Isolated Ubuntu 22.04/Python 3.11 policy server | upstream Docker/uv environment | Unavailable locally | PLANNED |
+| Speech | Multilingual Whisper-compatible backend | Version/model not selected | Not installed | UNSELECTED |
+| Vision | OpenCV RGB-D baseline | ROS `cv_bridge` 4.1.0 installed; backend pin pending | Partial prerequisites only | UNSELECTED |
+| C++ | GCC/G++ 13.3, minimum C++17 | Ubuntu packages | Installed | ADOPTED |
+| ROS Python | Python 3.12.3 | Ubuntu/Jazzy system Python | Installed | ADOPTED |
+| VLA Python | Python 3.11 isolated | openpi tested environment | Not installed | REQUIRED SEPARATION |
 
-## Isolation policy
+## Verified source-release references
 
-- ROS workspace dependencies follow the ROS distribution and rosdep/apt lock.
-- VLA dependencies use a separate container or `uv` environment and communicate
-  through a versioned policy API.
-- External repositories record URL, branch/tag, commit, and license in
-  `THIRD_PARTY.md` before integration.
-- Model checkpoints and datasets are external artifacts, never ordinary Git
-  objects.
+These references explain compatibility or support future source builds. The
+first baseline still prefers the target-machine Jazzy apt binaries above.
+
+| Component | Repository/reference | Commit | License |
+|---|---|---|---|
+| MoveIt 2 | `moveit/moveit2`, tag `2.12.4` | `1ade0e9dcf50dbbbc3a984b995c786cf12736235` | BSD-3-Clause |
+| MoveIt Task Constructor | `moveit/moveit_task_constructor`, tag `ros2-0.1.5` | `56c6a2a40ebff8a4d1644d9e6fac819c3cd3542f` | BSD-3-Clause |
+| ros2_control | `ros-controls/ros2_control`, release 4.47.0 | `df23a4b7a21cb8ea257c80ecf98e85571b50ba01` | Apache-2.0 |
+| ros2_controllers | `ros-controls/ros2_controllers`, tag 4.41.0 | `b69445a5c72bc1b0dfc0658ce992748e65e94cf6` | Apache-2.0 |
+| gz_ros2_control | `ros-controls/gz_ros2_control`, tag 1.2.19 | `3632af2998895cd18c03717bd40c7acd547db24d` | Apache-2.0 |
+| ros_gz | `gazebosim/ros_gz`, tag 1.0.23 | `ec3a555b540ac492882d587a09752eb2eeeee3cd` | Apache-2.0 |
+
+The ROS buildfarm can expose a newer source release before a binary sync. A
+source tag is never substituted for the actually installed apt version in test
+records.
+
+## Compatibility constraints
+
+- Jazzy + Harmonic is the official recommended pairing. Do not add Gazebo
+  Classic or mix a non-default OSRF Gazebo repository into the baseline.
+- `abb_ros2` has no Jazzy branch/tag and its CI tests Rolling only. Reuse pinned
+  IRB1200 assets and build a Jazzy/Harmonic overlay; do not claim full driver
+  compatibility.
+- ABB description inertials are estimates, effort values are fictional, and
+  ros2_control/URDF limits conflict. Every limit and collision property must be
+  reconciled and tested before simulation use.
+- ROS apt packages use Ubuntu's Python 3.12. openpi uses Python 3.11 plus pinned
+  CUDA/JAX/Torch dependencies and must run outside the ROS environment.
+- openpi officially requires more than 8 GB VRAM for inference; the local 8151
+  MiB GPU is below the strict threshold and no local availability is claimed.
+- No ABB-tuned π0.5 checkpoint exists in the audited upstream. Any unadapted
+  checkpoint must show `EXPERIMENTAL / NOT ABB-TUNED`.
+
+## Locking procedure
+
+1. Before apt installation, save `apt-cache policy` results for every selected
+   package.
+2. After installation, save exact `dpkg-query -W` versions and update this file.
+3. External Git sources use full 40-character commits in a `.repos` manifest or
+   a documented vendored snapshot; moving branches are prohibited as locks.
+4. Model checkpoints and datasets live in external artifact storage and have a
+   manifest/checksum/license record, not ordinary Git objects.
+5. ROS build, VLA service, and real-hardware dependencies remain separately
+   locked.
 
