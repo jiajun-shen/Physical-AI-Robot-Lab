@@ -36,11 +36,11 @@ inspected, documented, and committed. Partial results remain marked `PARTIAL`.
 1. `P1.1` coherent Jazzy/Harmonic/MoveIt/control dependency installation and
    upstream action smoke — `COMPLETE`, committed at `14d946f`.
 2. `P1.2` full-SHA ABB asset subset, geometry-only package, Xacro/URDF/resource
-   contracts — `COMPLETE` with this tested checkpoint.
+   contracts — `COMPLETE`, committed at `2a536eb`.
 3. `P1.3a` fixed-base control-description contract: one world joint, six
-   control joints, canonical limits, enabled limit enforcement, and
-   `GazeboSimSystem`; expand/build/test/commit without claiming a Gazebo run —
-   next.
+   control joints, canonical limits, startup enforcement configured true,
+   `GazeboSimSystem`, and Gazebo resource export; expand/build/test/commit
+   without claiming a Gazebo run — `COMPLETE`, committed at `2ec4330`.
 4. `P1.3b` controller YAML, minimal world, headless launch, controller/resource
    inspection, and bounded observed trajectory; evaluate A01 only after the ABB
-   spawn is actually observed — pending P1.3a.
+   spawn is actually observed — next.

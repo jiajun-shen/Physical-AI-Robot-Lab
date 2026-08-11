@@ -10,20 +10,22 @@ Phase 1 — ABB IRB1200 + Gazebo Harmonic + ros2_control (`IN PROGRESS`)
 
 ## Current subtask
 
-Implement `P1.3a`, the project-owned fixed-base Gazebo Harmonic
-control-description contract, without yet claiming a simulator run.
+Implement `P1.3b`: add project-owned controller definitions, a minimal Gazebo
+world/SDF, and a headless launch; then inspect ABB resource/controller/limiter
+state and execute one bounded observed trajectory. Treat clamp verification as
+a separate out-of-range probe.
 
 ## Git checkpoints
 
-- Latest known-good commit: `2a536eb70c19dbc7b58374c0857cd646070373ae`
-- Stable commit: `2a536eb70c19dbc7b58374c0857cd646070373ae`
+- Latest known-good commit: `2ec43308498e8e8ffb83da9b9d037ab50f84d83f`
+- Stable commit: `2ec43308498e8e8ffb83da9b9d037ab50f84d83f`
 - Experimental commit: none
 - Current branch: `main`
 - Remote: none configured
 
-The self-contained ABB asset/geometry package, tests, and evidence are committed
-at the stable hash above. This state checkpoint records `P1.2` as complete and
-keeps Phase 1 in progress.
+The self-contained ABB geometry and static control-description contracts,
+tests, and evidence are committed at the stable hash above. This state
+checkpoint records `P1.3a` as complete and keeps Phase 1 in progress.
 
 ## Working features
 
@@ -33,8 +35,13 @@ keeps Phase 1 in progress.
   and MoveIt Task Constructor are installed and discoverable.
 - The installed upstream headless cart executes a real trajectory action through
   gz_ros2_control and publishes the resulting joint state.
-- Project package `abb_lab_description` builds and expands a pinned
-  geometry-only IRB1200-5/0.9 with 10 links, 9 joints, and 14 mesh references.
+- Project package `abb_lab_description` builds and expands the unchanged pinned
+  geometry entry point with 10 links, 9 joints, and 14 mesh references.
+- Its separate static control composition expands to 11 links, 10 kinematic
+  joints, and one `GazeboSimSystem` with six position-command joints.
+- The simulation position/velocity table, ordinary URDF, and interface bounds
+  agree; startup command enforcement is configured true, and the installed
+  Gazebo resource export/plugin registrations pass static inspection.
 
 No ABB Gazebo/control runtime, project world, perception, speech, task, skill,
 or VLA runtime feature is claimed working.
@@ -60,11 +67,16 @@ or VLA runtime feature is claimed working.
 - Committed the package-local, full-SHA/SHA-256-locked IRB1200 asset subset and
   independently buildable geometry-only `abb_lab_description` package at
   `2a536eb`.
+- Committed P1.3a's separate fixed-base Harmonic control description, canonical
+  simulation limits, resource export, executable contracts, and evidence at
+  `2ec4330`.
 
 ## Partially completed features
 
 - Phase 1 dependency/runtime baseline is verified and checkpointed.
-- Fixed-base Gazebo/control composition and enforced limits are not implemented.
+- Static fixed-base control composition and configured limits are verified;
+  project Gazebo spawn, controllers, limiter initialization, clamping, and ABB
+  trajectory execution are not implemented.
 - WSLg endpoints and RViz binary exist, but real 3D GUI rendering is untested.
 
 ## Not started features
@@ -81,6 +93,8 @@ or VLA runtime feature is claimed working.
 - Phase 0 documentation checkpoint: PASS at `eb1b8e8`.
 - Phase 1 dependency/control checkpoint: PASS at `14d946f`.
 - Phase 1 ABB asset/geometry checkpoint: PASS at `2a536eb`.
+- Phase 1 ABB static control-description checkpoint: PASS at `2ec4330`.
+  - Full evidence: `docs/phase1_abb_control_description_evidence.md`
 - Pre-install apt lock vs a second `apt-cache policy`: PASS (10/10 exact).
 - `scripts/verify_ros_environment.sh`: PASS.
   - all 10 direct packages fully installed
@@ -101,15 +115,21 @@ or VLA runtime feature is claimed working.
 - Package-local `config/abb-model-assets.repos` fresh `vcs import`: PASS at exact detached
   `05cbabe774ef026b1cd36fe6b253b55f55e16340`.
 - ABB snapshot vs pinned Git objects: PASS (19/19 files).
-- Phase 1 Python source/asset tests: PASS (15/15).
+- Phase 1 Python source/asset/control tests: PASS (23/23).
 - `scripts/build_and_test_abb_description.sh`: PASS on a clean output tree.
   - colcon build: one package finished
-  - real Xacro expansion and `check_urdf`: PASS
-  - expanded links/joints/revolute joints/meshes: 10/9/6/14
+  - geometry and control Xacro expansion plus both `check_urdf`: PASS
+  - geometry links/joints/revolute joints/meshes: 10/9/6/14
+  - control links/kinematic joints/control joints/canonical limits: 11/10/6/6
   - installed locked assets: 19/19
-  - CTest targets: 2/2; 17 records, 0 errors/failures/skips
-- Package-only copy at unrelated workspace depth: build, Xacro, URDF, installed
-  asset verification, and 17 test records PASS.
+  - controller_manager 4.45.2 and gz_ros2_control 1.2.19 contract checks: PASS
+  - Gazebo model resource export and system plugin inspection: PASS
+  - CTest targets: 3/3; 23 unique pytest cases; 26 total wrapper/xUnit records,
+    0 errors/failures/skips
+- Package-only copy at `/var/tmp/p13a-gz-path-audit.wwtjBKcD`: build, tests,
+  both Xacros/URDF verifiers, official Gazebo path discovery, and both SDF
+  conversions PASS; all 14 mesh URIs in each SDF resolve through the export.
+- `rosdep check` for `abb_lab_description`: PASS.
 - Shell syntax (`bash -n`) for all six Phase 1 scripts: PASS.
 - MoveIt project planning: NOT RUN.
 - Acceptance A01–A14: all `NOT STARTED`.
@@ -119,7 +139,9 @@ or VLA runtime feature is claimed working.
 `abb_lab_description` builds successfully with colcon using DrvFS source and
 ext4 `/tmp` build/install/log trees. Generated trees and expanded URDF are not
 committed. The package also builds/tests independently after a package-only copy
-to WSL ext4. No control, simulator, or MoveIt project package exists yet.
+to WSL ext4. The package contains a static control description, but no
+controller definitions, Gazebo world/SDF, launch, or MoveIt project package
+exists yet.
 
 ## Current run status
 
@@ -127,15 +149,18 @@ to WSL ext4. No control, simulator, or MoveIt project package exists yet.
 - `rviz2 --help`: verified; GUI not run.
 - Gazebo gz-sim 8.11.0 upstream headless cart: launch/shutdown verified.
 - gz_ros2_control trajectory execution: verified on upstream cart only.
-- Project ABB geometry Xacro: expanded and parsed; this is not a simulator run.
+- Project ABB geometry/control Xacros: expanded, parsed, and converted to valid
+  SDF; this is not a simulator run.
 - Physical-AI-Robot-Lab ABB runtime: not implemented.
 - VLA backend: `VLA_BACKEND_UNAVAILABLE`.
 
 ## Known bugs
 
-No unresolved project-code bug. Two harness bugs were fixed and fully rerun:
+No unresolved project-code bug. Three harness bugs were fixed and fully rerun:
 the control smoke parser initially missed ROS 2's `array('d', [...])` output,
-and the description build initially sourced colcon setup under Bash nounset.
+the description build initially sourced colcon setup under Bash nounset, and
+the first control verifier expected an unresolved `$(find ...)` literal instead
+of Xacro's installed absolute path.
 
 ## Known limitations
 
@@ -143,12 +168,15 @@ and the description build initially sourced colcon setup under Bash nounset.
 - Local GPU has 8151 MiB, below openpi's strict `> 8 GB` statement.
 - No CUDA Toolkit or Docker is present.
 - `abb_ros2` has no Jazzy branch/tag and tests only Rolling upstream.
-- ABB model inertials are estimates, efforts are fictional, and upstream
-  URDF/ros2_control limits conflict.
-- Geometry-only description has no world joint, Gazebo plugin, ros2_control,
-  MoveIt, gripper, or approved operational control limits.
-- The upstream smoke demo disables command-limit enforcement. It proves only
-  the dependency path and is not an acceptable ABB safety configuration.
+- ABB model inertials are estimates and efforts are fictional. P1.3a reconciles
+  simulation position/velocity values only; derivatives and MoveIt limits are
+  not defined.
+- The geometry-only entry remains control-free. The separate control
+  composition has no Gazebo world/SDF, controller definitions, launch, MoveIt,
+  gripper, or real-hardware integration.
+- Project command-limit enforcement is configured true but has not been
+  initialized or clamp-tested at runtime. The upstream smoke proves only the
+  dependency/control path and is not ABB safety evidence.
 - Repository is on Windows DrvFS and has no remote backup.
 
 ## Unresolved questions
@@ -166,8 +194,10 @@ and the description build initially sourced colcon setup under Bash nounset.
 - Use official Jazzy apt packages and the default Harmonic pairing.
 - Reuse pinned ABB geometry/kinematic assets, not the unverified complete driver;
   build a project-owned Jazzy/Harmonic control/MoveIt overlay.
-- ABB overlay must enable command limits and reconcile URDF, ros2_control, and
-  MoveIt definitions before motion.
+- Keep geometry provenance separate from simulation control policy.
+- P1.3b must verify runtime limiters and an in-range control trajectory;
+  out-of-range clamping is a separate test. MoveIt limits are required before
+  Phase 2 planned/collision-aware motion.
 - Language planning emits typed Task/Skill/Goal structures, never joint angles.
 - `vision` mode cannot access simulator ground truth.
 - ROS and openpi remain isolated behind a versioned policy API.
@@ -229,12 +259,10 @@ bash scripts/build_and_test_abb_description.sh
 
 ## Next exact steps
 
-1. Start `P1.3a`: write failing contracts for a fixed `world` joint, exactly six control
-   joints, one canonical position/velocity limit table, and enabled command
-   limits; add the description/control Xacro with
-   `gz_ros2_control/GazeboSimSystem`, then expand/build/test/commit without
-   claiming a Gazebo run.
-2. Start `P1.3b`: add controller YAML and a minimal project world without a
-   gripper, launch headlessly, and inspect resource/controller state.
-3. Command a bounded ABB joint trajectory, verify observed joint states, and
-   only then evaluate A01.
+1. Write failing P1.3b contracts for six-joint controller definitions, a
+   minimal no-gripper world/SDF, headless launch, and bounded test trajectory.
+2. Launch the project ABB headlessly; inspect hardware resources, controller
+   states, `enforce_command_limits=true`, and six initialized joint limiters.
+3. Execute one in-range bounded trajectory and verify observed joint states.
+   Test out-of-range clamping separately; evaluate A01 only after the actual ABB
+   spawn is observed. Keep A02-A14 `NOT STARTED`.
