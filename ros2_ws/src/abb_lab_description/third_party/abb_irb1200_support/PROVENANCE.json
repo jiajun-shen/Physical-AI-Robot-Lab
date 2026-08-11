@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "snapshot_created": "2026-08-11",
+  "repository": "https://github.com/PickNikRobotics/abb_ros2.git",
+  "upstream_branch": "rolling",
+  "commit": "05cbabe774ef026b1cd36fe6b253b55f55e16340",
+  "asset_lineage": {
+    "repository": "https://github.com/ros-industrial/abb.git",
+    "tag": "1.5.0",
+    "commit": "eefdf01c956a6f2129aacb88d598201feff3cf19"
+  },
+  "license": "Apache-2.0",
+  "scope": "Unmodified ABB IRB1200-5/0.9 geometry, kinematic macro, material resources, and upstream warning metadata only",
+  "selected_file_count": 18,
+  "source_files_are_unmodified": true,
+  "driver_compatibility": "NOT_CLAIMED",
+  "excluded_upstream_content": [
+    "abb_hardware_interface and all EGM/RWS driver packages",
+    "abb_bringup",
+    "robot_specific_config/abb_irb1200_support/urdf/irb1200.ros2_control.xacro",
+    "robot_specific_config/abb_irb1200_support/urdf/irb1200_5_90.xacro",
+    "robot_specific_config/abb_irb1200_support/launch",
+    "robot_specific_config/abb_irb1200_support/rviz",
+    "robot_specific_config/abb_irb1200_5_90_moveit_config"
+  ],
+  "known_limitations": [
+    "Link masses and inertias are mesh-based constant-density estimates.",
+    "The upstream effort value 1000 is fictional and is not a real robot limit.",
+    "The source macro alone has no Gazebo Harmonic ros2_control integration.",
+    "No gripper or end-effector model is included.",
+    "A project-owned fixed-base control and MoveIt overlay is still required."
+  ]
+}

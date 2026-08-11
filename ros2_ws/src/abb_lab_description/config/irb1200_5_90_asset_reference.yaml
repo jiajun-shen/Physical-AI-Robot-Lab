@@ -1,0 +1,30 @@
+schema_version: 1
+source:
+  repository: https://github.com/PickNikRobotics/abb_ros2.git
+  commit: 05cbabe774ef026b1cd36fe6b253b55f55e16340
+  variant: IRB1200-5/0.9
+  datasheet: ROB0275EN_A, September 2016
+
+joint_position_velocity_limits:
+  units:
+    position: rad
+    velocity: rad_per_second
+  joint_1: {lower: -2.967, upper: 2.967, velocity: 5.027}
+  joint_2: {lower: -1.745, upper: 2.269, velocity: 4.189}
+  joint_3: {lower: -3.491, upper: 1.222, velocity: 5.236}
+  joint_4: {lower: -4.712, upper: 4.712, velocity: 6.981}
+  joint_5: {lower: -2.269, upper: 2.269, velocity: 7.069}
+  joint_6: {lower: -6.283, upper: 6.283, velocity: 10.472}
+
+safety_status:
+  operational_control_limits: NOT_UNIFIED
+  command_limit_enforcement: NOT_TESTED
+  upstream_effort_value: 1000
+  upstream_effort_is_real_robot_limit: false
+  inertial_source: mesh_volume_constant_density_estimate
+  real_robot_ready: false
+
+notes:
+  - Position and velocity entries preserve the audited upstream datasheet representation.
+  - The fictional effort value is retained only in the source geometry macro and is not an approved control limit.
+  - A project-owned control overlay must reconcile URDF, ros2_control, and MoveIt limits before motion.

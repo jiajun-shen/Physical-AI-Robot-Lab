@@ -31,11 +31,16 @@ inspected, documented, and committed. Partial results remain marked `PARTIAL`.
 | 15 | CLASSICAL/HYBRID/VLA benchmark | Reproducible metrics with unavailable/experimental modes clearly separated |
 | 16 | Hardening, documentation, CI | Clean rebuild, regression, acceptance ledger, operational docs |
 
-## Immediate Phase 0 work packages
+## Immediate Phase 1 work packages
 
-1. `P0.1` repository and preservation audit.
-2. `P0.2` host hardware/software audit.
-3. `P0.3` official upstream compatibility and license audit.
-4. `P0.4` package/dataflow/interface design.
-5. `P0.5` documentation validation and checkpoint.
-
+1. `P1.1` coherent Jazzy/Harmonic/MoveIt/control dependency installation and
+   upstream action smoke — `COMPLETE`, committed at `14d946f`.
+2. `P1.2` full-SHA ABB asset subset, geometry-only package, Xacro/URDF/resource
+   contracts — `COMPLETE` with this tested checkpoint.
+3. `P1.3a` fixed-base control-description contract: one world joint, six
+   control joints, canonical limits, enabled limit enforcement, and
+   `GazeboSimSystem`; expand/build/test/commit without claiming a Gazebo run —
+   next.
+4. `P1.3b` controller YAML, minimal world, headless launch, controller/resource
+   inspection, and bounded observed trajectory; evaluate A01 only after the ABB
+   spawn is actually observed — pending P1.3a.

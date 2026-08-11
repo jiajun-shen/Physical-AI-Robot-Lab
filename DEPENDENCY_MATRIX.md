@@ -17,7 +17,7 @@ must be captured again immediately before installation.
 | Simulation control | `ros-jazzy-gz-ros2-control` | apt `1.2.19-1noble.20260615.171757` | Installed; controller/action/joint-state smoke passed | VERIFIED DEPENDENCY |
 | Controllers | ros2_controllers / joint trajectory controller | apt meta `4.40.1-1noble.20260616.074625` | Installed; trajectory action passed | VERIFIED DEPENDENCY |
 | Controller manager | ros2_control controller manager | apt `4.45.2-1noble.20260615.175135` | Installed; two active controllers observed | VERIFIED DEPENDENCY |
-| ABB model assets | PickNik ROS 2 port of ROS-Industrial IRB1200 | `abb_ros2@05cbabe774ef026b1cd36fe6b253b55f55e16340` | Audited outside repo, not integrated | PIN SELECTED |
+| ABB model assets | PickNik ROS 2 port of ROS-Industrial IRB1200 | `abb_ros2@05cbabe774ef026b1cd36fe6b253b55f55e16340`, 19-file SHA-256 lock | Vendored subset; `abb_lab_description` builds/expands/tests | VERIFIED ASSET INPUT |
 | ABB asset lineage | ROS-Industrial `abb_irb1200_support` | `abb` tag 1.5.0, commit `eefdf01c956a6f2129aacb88d598201feff3cf19` | Source verified | REFERENCE |
 | VLA code | Physical Intelligence openpi | `main@15a9616a00943ada6c20a0f158e3adb39df2ccac` | Not installed | RESEARCH PIN |
 | VLA runtime | Isolated Ubuntu 22.04/Python 3.11 policy server | upstream Docker/uv environment | Unavailable locally | PLANNED |

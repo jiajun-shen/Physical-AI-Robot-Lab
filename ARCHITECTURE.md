@@ -81,6 +81,17 @@ Physical-AI-Robot-Lab/
 The layout is a target architecture, not a claim that these packages exist.
 Packages are created only in tested atomic increments.
 
+## Implemented Phase 1 slice
+
+`abb_lab_description` now exists as a geometry-only ROS 2 package. It installs
+a full-SHA/SHA-256-locked ABB IRB1200-5/0.9 asset subset under project-local
+resource URIs and expands to 10 links, 6 revolute joints, 3 fixed joints, and 14
+mesh references. The snapshot, source locks, license, and tests live inside the
+package, so it builds and tests after being copied alone to a differently
+nested colcon workspace. It intentionally has no world joint, Gazebo plugin,
+ros2_control block, transmission, MoveIt config, gripper, or real-hardware
+dependency. Those boundaries are executable tests, not only documentation.
+
 ## Core domain contracts
 
 - `SpeechCommand`: transcript, detected language, confidence, timestamp.

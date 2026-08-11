@@ -63,6 +63,12 @@
 - Reason: Upstream has no Jazzy branch/tag, tests only Rolling, lacks a
   gz_ros2_control plugin/gripper, and contains conflicting or approximate
   physical limits. Its complete driver cannot be called Jazzy-compatible.
+- Implementation note (2026-08-11): The asset subset is vendored under a
+  full-SHA/per-file hash contract. The project-owned `abb_lab_description`
+  package changes only resource paths, avoids upstream package-name shadowing,
+  and deliberately omits all control/bringup/MoveIt entry points. Vendored
+  inputs, locks, tests, and notices are package-local so the ROS package has no
+  hidden dependency on its repository depth.
 
 ## ADR-0009: Local VLA remains unavailable by default
 

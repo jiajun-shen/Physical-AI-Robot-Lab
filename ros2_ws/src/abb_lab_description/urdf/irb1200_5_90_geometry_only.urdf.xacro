@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<robot name="abb_irb1200_5_90_geometry_only" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:arg name="prefix" default=""/>
+  <xacro:include filename="$(find abb_lab_description)/urdf/irb1200_5_90_macro.project.xacro"/>
+  <xacro:abb_irb1200_5_90 prefix="$(arg prefix)"/>
+</robot>

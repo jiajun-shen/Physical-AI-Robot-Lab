@@ -10,20 +10,20 @@ Phase 1 — ABB IRB1200 + Gazebo Harmonic + ros2_control (`IN PROGRESS`)
 
 ## Current subtask
 
-Import the pinned ABB IRB1200 model assets with provenance and structural tests,
-without importing or claiming the unverified upstream driver stack.
+Checkpoint the verified ABB geometry-only asset/package slice, then implement
+the project-owned fixed-base Gazebo Harmonic ros2_control overlay.
 
 ## Git checkpoints
 
-- Latest known-good commit: `14d946f5b0d498aa028d5b7c3179eb5ba7da59ab`
-- Stable commit: `14d946f5b0d498aa028d5b7c3179eb5ba7da59ab`
+- Latest known-good commit: `522eadb19426401890e08d534edc7d95df30fc70`
+- Stable commit: `522eadb19426401890e08d534edc7d95df30fc70`
 - Experimental commit: none
 - Current branch: `main`
 - Remote: none configured
 
-The hash above contains the exact installed ROS package manifest, environment
-and manifest verifiers, the reproducible upstream control smoke, and its
-inspected evidence.
+The current ABB asset/package implementation and evidence pass locally but are
+not yet committed. The stable hash above is the dependency-baseline state
+checkpoint.
 
 ## Working features
 
@@ -33,9 +33,11 @@ inspected evidence.
   and MoveIt Task Constructor are installed and discoverable.
 - The installed upstream headless cart executes a real trajectory action through
   gz_ros2_control and publishes the resulting joint state.
+- Project package `abb_lab_description` builds and expands a pinned
+  geometry-only IRB1200-5/0.9 with 10 links, 9 joints, and 14 mesh references.
 
-No ABB, project world, perception, speech, task, skill, or VLA runtime feature
-is claimed working.
+No ABB Gazebo/control runtime, project world, perception, speech, task, skill,
+or VLA runtime feature is claimed working.
 
 ## Completed features
 
@@ -59,8 +61,9 @@ is claimed working.
 ## Partially completed features
 
 - Phase 1 dependency/runtime baseline is verified and checkpointed.
-- Phase 1 ABB assets and project-owned description/control overlay are not yet
-  integrated.
+- The ABB asset snapshot and geometry-only package are implemented, built,
+  expanded, and tested; their checkpoint commit is pending.
+- Fixed-base Gazebo/control composition and enforced limits are not implemented.
 - WSLg endpoints and RViz binary exist, but real 3D GUI rendering is untested.
 
 ## Not started features
@@ -93,17 +96,28 @@ is claimed working.
   - trajectory action: `SUCCEEDED`, `error_code: 0`
   - target 2.0, observed final position `1.9999999999999991`
   - no `ERROR`/`FATAL` or leftover launched processes
-- Shell syntax (`bash -n`) for all four Phase 1 scripts: PASS.
-- Python tests: no project Python package/tests yet.
-- ROS project tests: no project ROS package/tests yet.
+- Package-local `config/abb-model-assets.repos` fresh `vcs import`: PASS at exact detached
+  `05cbabe774ef026b1cd36fe6b253b55f55e16340`.
+- ABB snapshot vs pinned Git objects: PASS (19/19 files).
+- Phase 1 Python source/asset tests: PASS (15/15).
+- `scripts/build_and_test_abb_description.sh`: PASS on a clean output tree.
+  - colcon build: one package finished
+  - real Xacro expansion and `check_urdf`: PASS
+  - expanded links/joints/revolute joints/meshes: 10/9/6/14
+  - installed locked assets: 19/19
+  - CTest targets: 2/2; 17 records, 0 errors/failures/skips
+- Package-only copy at unrelated workspace depth: build, Xacro, URDF, installed
+  asset verification, and 17 test records PASS.
+- Shell syntax (`bash -n`) for all six Phase 1 scripts: PASS.
 - MoveIt project planning: NOT RUN.
 - Acceptance A01–A14: all `NOT STARTED`.
 
 ## Current build status
 
-No project ROS package/build exists. WSL now has the required binary Gazebo,
-MoveIt, ros2_control/controller, CMake, GCC/G++, colcon, rosdep, and vcstool
-baseline. No generated `build/`, `install/`, or `log/` tree is committed.
+`abb_lab_description` builds successfully with colcon using DrvFS source and
+ext4 `/tmp` build/install/log trees. Generated trees and expanded URDF are not
+committed. The package also builds/tests independently after a package-only copy
+to WSL ext4. No control, simulator, or MoveIt project package exists yet.
 
 ## Current run status
 
@@ -111,14 +125,15 @@ baseline. No generated `build/`, `install/`, or `log/` tree is committed.
 - `rviz2 --help`: verified; GUI not run.
 - Gazebo gz-sim 8.11.0 upstream headless cart: launch/shutdown verified.
 - gz_ros2_control trajectory execution: verified on upstream cart only.
+- Project ABB geometry Xacro: expanded and parsed; this is not a simulator run.
 - Physical-AI-Robot-Lab ABB runtime: not implemented.
 - VLA backend: `VLA_BACKEND_UNAVAILABLE`.
 
 ## Known bugs
 
-No unresolved project-code bug. The first smoke run reached the target but its
-harness did not parse ROS 2's `array('d', [...])` output. The parser was fixed
-and the entire smoke passed on rerun.
+No unresolved project-code bug. Two harness bugs were fixed and fully rerun:
+the control smoke parser initially missed ROS 2's `array('d', [...])` output,
+and the description build initially sourced colcon setup under Bash nounset.
 
 ## Known limitations
 
@@ -128,6 +143,8 @@ and the entire smoke passed on rerun.
 - `abb_ros2` has no Jazzy branch/tag and tests only Rolling upstream.
 - ABB model inertials are estimates, efforts are fictional, and upstream
   URDF/ros2_control limits conflict.
+- Geometry-only description has no world joint, Gazebo plugin, ros2_control,
+  MoveIt, gripper, or approved operational control limits.
 - The upstream smoke demo disables command-limit enforcement. It proves only
   the dependency path and is not an acceptable ABB safety configuration.
 - Repository is on Windows DrvFS and has no remote backup.
@@ -199,17 +216,25 @@ bash scripts/smoke_test_gz_ros2_control.sh \
 
 bash scripts/capture_ros_apt_manifest.sh \
   config/ros-jazzy-installed-packages.lock.tsv
-```
 
-Project build/run commands will be added only after they actually exist/run.
+bash scripts/capture_abb_asset_hashes.sh \
+  ros2_ws/src/abb_lab_description/third_party/abb_irb1200_support \
+  /tmp/abb_ros2-clean-exact-sha-checkout \
+  ros2_ws/src/abb_lab_description/config/abb-irb1200-assets.sha256
+
+bash scripts/build_and_test_abb_description.sh
+```
 
 ## Next exact steps
 
-1. Create a full-SHA `.repos` import for the pinned ABB model source, excluding
-   the EGM/RWS driver dependency chain from the simulation baseline.
-2. Write structural Xacro tests first for exactly six revolute joints, expected
-   names/frames, mesh resources, finite inertials, and one canonical limit set.
-3. Import only the licensed IRB1200 support assets at the audited commit and
-   make the structural tests pass.
-4. Implement a project-owned fixed-base Jazzy/Harmonic description/control
-   overlay with unified/enforced joint limits and no gripper yet.
+1. Commit the pinned asset snapshot, geometry package, tests, evidence, and
+   long-term document updates; then record the feature commit as stable.
+2. Start `P1.3a`: write failing contracts for a fixed `world` joint, exactly six control
+   joints, one canonical position/velocity limit table, and enabled command
+   limits; add the description/control Xacro with
+   `gz_ros2_control/GazeboSimSystem`, then expand/build/test/commit without
+   claiming a Gazebo run.
+3. Start `P1.3b`: add controller YAML and a minimal project world without a
+   gripper, launch headlessly, and inspect resource/controller state.
+4. Command a bounded ABB joint trajectory, verify observed joint states, and
+   only then evaluate A01.

@@ -1,4 +1,6 @@
 * text=auto
+.gitattributes text eol=lf
+.gitignore text eol=lf
 *.sh text eol=lf
 *.bash text eol=lf
 *.py text eol=lf
@@ -11,10 +13,15 @@ CMakeLists.txt text eol=lf
 *.md text eol=lf
 *.yaml text eol=lf
 *.yml text eol=lf
+*.json text eol=lf
+*.repos text eol=lf
+*.sha256 text eol=lf
+*.tsv text eol=lf
 *.xml text eol=lf
 *.urdf text eol=lf
 *.xacro text eol=lf
 *.sdf text eol=lf
+LICENSE text eol=lf
 *.launch.py text eol=lf
 *.png binary
 *.jpg binary
@@ -22,4 +29,3 @@ CMakeLists.txt text eol=lf
 *.dae binary
 *.stl binary
 *.glb binary
-
