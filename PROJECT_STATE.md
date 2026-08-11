@@ -10,20 +10,20 @@ Phase 1 — ABB IRB1200 + Gazebo Harmonic + ros2_control (`IN PROGRESS`)
 
 ## Current subtask
 
-Checkpoint the verified ABB geometry-only asset/package slice, then implement
-the project-owned fixed-base Gazebo Harmonic ros2_control overlay.
+Implement `P1.3a`, the project-owned fixed-base Gazebo Harmonic
+control-description contract, without yet claiming a simulator run.
 
 ## Git checkpoints
 
-- Latest known-good commit: `522eadb19426401890e08d534edc7d95df30fc70`
-- Stable commit: `522eadb19426401890e08d534edc7d95df30fc70`
+- Latest known-good commit: `2a536eb70c19dbc7b58374c0857cd646070373ae`
+- Stable commit: `2a536eb70c19dbc7b58374c0857cd646070373ae`
 - Experimental commit: none
 - Current branch: `main`
 - Remote: none configured
 
-The current ABB asset/package implementation and evidence pass locally but are
-not yet committed. The stable hash above is the dependency-baseline state
-checkpoint.
+The self-contained ABB asset/geometry package, tests, and evidence are committed
+at the stable hash above. This state checkpoint records `P1.2` as complete and
+keeps Phase 1 in progress.
 
 ## Working features
 
@@ -57,12 +57,13 @@ or VLA runtime feature is claimed working.
 - Sent a real two-second `FollowJointTrajectory` goal from 1.0 to 2.0 through
   Gazebo and gz_ros2_control; action succeeded with error code 0 and final
   `/joint_states` position `1.9999999999999991`.
+- Committed the package-local, full-SHA/SHA-256-locked IRB1200 asset subset and
+  independently buildable geometry-only `abb_lab_description` package at
+  `2a536eb`.
 
 ## Partially completed features
 
 - Phase 1 dependency/runtime baseline is verified and checkpointed.
-- The ABB asset snapshot and geometry-only package are implemented, built,
-  expanded, and tested; their checkpoint commit is pending.
 - Fixed-base Gazebo/control composition and enforced limits are not implemented.
 - WSLg endpoints and RViz binary exist, but real 3D GUI rendering is untested.
 
@@ -79,6 +80,7 @@ or VLA runtime feature is claimed working.
 
 - Phase 0 documentation checkpoint: PASS at `eb1b8e8`.
 - Phase 1 dependency/control checkpoint: PASS at `14d946f`.
+- Phase 1 ABB asset/geometry checkpoint: PASS at `2a536eb`.
 - Pre-install apt lock vs a second `apt-cache policy`: PASS (10/10 exact).
 - `scripts/verify_ros_environment.sh`: PASS.
   - all 10 direct packages fully installed
@@ -227,14 +229,12 @@ bash scripts/build_and_test_abb_description.sh
 
 ## Next exact steps
 
-1. Commit the pinned asset snapshot, geometry package, tests, evidence, and
-   long-term document updates; then record the feature commit as stable.
-2. Start `P1.3a`: write failing contracts for a fixed `world` joint, exactly six control
+1. Start `P1.3a`: write failing contracts for a fixed `world` joint, exactly six control
    joints, one canonical position/velocity limit table, and enabled command
    limits; add the description/control Xacro with
    `gz_ros2_control/GazeboSimSystem`, then expand/build/test/commit without
    claiming a Gazebo run.
-3. Start `P1.3b`: add controller YAML and a minimal project world without a
+2. Start `P1.3b`: add controller YAML and a minimal project world without a
    gripper, launch headlessly, and inspect resource/controller state.
-4. Command a bounded ABB joint trajectory, verify observed joint states, and
+3. Command a bounded ABB joint trajectory, verify observed joint states, and
    only then evaluate A01.
