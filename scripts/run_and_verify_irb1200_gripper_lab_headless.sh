@@ -31,6 +31,18 @@ readonly REQUIRED_AVAILABLE_MEMORY_KIB=$((2 * 1024 * 1024))
 readonly EXPECTED_MODEL_COUNT=10
 readonly RIGHT_FINGER="two_finger_right_joint"
 readonly LEFT_FINGER="two_finger_left_joint"
+readonly -a EXPECTED_MODELS=(
+  ground_plane
+  work_table
+  drawing_board
+  obstacle_left
+  obstacle_right
+  green_ball
+  red_ball
+  blue_cube
+  yellow_cube
+  abb_irb1200_gripper
+)
 
 die() {
   echo "ERROR: $*" >&2
@@ -42,6 +54,20 @@ for required_command in awk cmp colcon find findmnt flock git grep gz pgrep ps \
   command -v "${required_command}" >/dev/null 2>&1 ||
     die "required command is unavailable: ${required_command}"
 done
+
+# The selected seed is part of the real-runtime identity, not merely a
+# generator input.  Keep the value in a bounded non-negative range so the
+# adjacent contrast seed is always valid too.
+requested_scene_seed="${P31_SCENE_SEED:-42}"
+[[ "${requested_scene_seed}" =~ ^[0-9]+$ ]] ||
+  die "P31_SCENE_SEED must be a non-negative decimal integer"
+(( ${#requested_scene_seed} <= 10 )) ||
+  die "P31_SCENE_SEED exceeds the supported Phase-3 seed range"
+selected_scene_seed=$((10#${requested_scene_seed}))
+(( selected_scene_seed <= 2147483646 )) ||
+  die "P31_SCENE_SEED exceeds the supported Phase-3 seed range"
+readonly P31_SCENE_SEED_SELECTED="${selected_scene_seed}"
+readonly P31_CONTRAST_SCENE_SEED="$((P31_SCENE_SEED_SELECTED + 1))"
 
 if [[ $# -gt 1 ]]; then
   die "usage: $0 [new-or-empty-output-directory]"
@@ -92,12 +118,17 @@ readonly PARAMETER_LOG="${RUNTIME_LOG_ROOT}/enforce_command_limits.txt"
 readonly NODES_LOG="${RUNTIME_LOG_ROOT}/nodes.txt"
 readonly ACTIONS_LOG="${RUNTIME_LOG_ROOT}/actions.txt"
 readonly MODELS_LOG="${RUNTIME_LOG_ROOT}/models.txt"
+readonly MODELS_AFTER_LOG="${RUNTIME_LOG_ROOT}/models_after_actions.txt"
+readonly LIVE_SCENE_POSE_ROOT="${RUNTIME_LOG_ROOT}/model_poses"
+readonly LIVE_SCENE_CAPTURE_LOG="${RUNTIME_LOG_ROOT}/live_scene_capture.txt"
+readonly LIVE_SCENE_EVIDENCE="${RUNTIME_LOG_ROOT}/live_scene_evidence.json"
 readonly VERIFIER_LOG="${RUNTIME_LOG_ROOT}/gripper_verifier.txt"
 readonly VERIFIER_EVIDENCE="${RUNTIME_LOG_ROOT}/gripper_evidence.json"
 readonly SOURCE_MANIFEST_BEFORE="${OUTPUT_ROOT}/working_source_before.sha256"
 readonly SOURCE_MANIFEST_AFTER="${OUTPUT_ROOT}/working_source_after.sha256"
 readonly RESULT_LOG="${OUTPUT_ROOT}/result.txt"
-mkdir -p "${COLCON_LOG_BASE}" "${RUNTIME_LOG_ROOT}" "${ROS_HOME_PATH}" "${SCENE_ROOT}"
+mkdir -p "${COLCON_LOG_BASE}" "${RUNTIME_LOG_ROOT}" "${ROS_HOME_PATH}" "${SCENE_ROOT}" \
+  "${LIVE_SCENE_POSE_ROOT}"
 
 export PYTHONDONTWRITEBYTECODE=1
 export ROS_HOME="${ROS_HOME_PATH}"
@@ -175,6 +206,9 @@ source_manifest_sha256="$(sha256sum "${SOURCE_MANIFEST_BEFORE}" | awk '{print $1
   echo "SOURCE_WORKTREE_CLEAN=${source_worktree_clean}"
   echo "ROS_DOMAIN_ID=${ROS_DOMAIN_ID}"
   echo "GZ_PARTITION=${GZ_PARTITION}"
+  echo "P31_SCENE_SEED=${P31_SCENE_SEED_SELECTED}"
+  echo "P31_CONTRAST_SCENE_SEED=${P31_CONTRAST_SCENE_SEED}"
+  echo "SCENE_WORLD_NAME=manipulation_lab"
   echo "MEM_AVAILABLE_KIB_AT_START=${available_memory_kib}"
   echo "OUTPUT_FILESYSTEM=${output_filesystem}"
   echo "WORKING_SOURCE_MANIFEST_SHA256=${source_manifest_sha256}"
@@ -190,6 +224,7 @@ controllers_active=false
 limiter_initialized=false
 lab_objects_present=false
 scene_seed_reproducible=false
+live_scene_pose_capture=false
 gripper_open_close_open=false
 gripper_mirror_state=false
 launch_exit_status="NOT_WAITED"
@@ -270,6 +305,7 @@ cleanup() {
       echo "LIMITER_RUNTIME_INITIALIZED=PASS"
       echo "LAB_OBJECTS_PRESENT=PASS"
       echo "LAB_SCENE_SEED_REPRODUCIBLE=PASS"
+      echo "GAZEBO_LIVE_SCENE_POSE_CAPTURE=PASS"
       echo "GRIPPER_OPEN_CLOSE_OPEN=PASS"
       echo "GRIPPER_MIRROR_STATE=PASS"
       echo "GRASP_STATE=NOT_DETERMINED_NO_CONTACT_EVIDENCE"
@@ -278,6 +314,7 @@ cleanup() {
       if [[ "${project_spawn}" == "true" && "${hardware_resources}" == "true" && \
           "${controllers_active}" == "true" && "${limiter_initialized}" == "true" && \
           "${lab_objects_present}" == "true" && "${scene_seed_reproducible}" == "true" && \
+          "${live_scene_pose_capture}" == "true" && \
           "${gripper_open_close_open}" == "true" && "${gripper_mirror_state}" == "true" ]]; then
         echo "P3_1=PASS"
       else
@@ -297,6 +334,10 @@ cleanup() {
       echo "TESTED_COMMIT=${tested_commit}"
       echo "SOURCE_WORKTREE_CLEAN=${source_worktree_clean}"
       echo "WORKING_SOURCE_MANIFEST_SHA256=${source_manifest_sha256}"
+      echo "P31_SCENE_SEED=${P31_SCENE_SEED_SELECTED}"
+      echo "P31_CONTRAST_SCENE_SEED=${P31_CONTRAST_SCENE_SEED}"
+      echo "SCENE_WORLD_NAME=manipulation_lab"
+      echo "LIVE_SCENE_EVIDENCE=${LIVE_SCENE_EVIDENCE}"
       echo "ROS_DOMAIN_ID=${ROS_DOMAIN_ID}"
       echo "GZ_PARTITION=${GZ_PARTITION}"
       echo "OUTPUT_ROOT=${OUTPUT_ROOT}"
@@ -322,9 +363,15 @@ run_step() {
 
 readonly ROOT_VERIFIER="${SCRIPT_DIR}/verify_irb1200_gripper_lab_runtime.py"
 [[ -f "${ROOT_VERIFIER}" ]] || die "missing P3.1 runtime verifier: ${ROOT_VERIFIER}"
+readonly ROOT_SCENE_CAPTURE="${SCRIPT_DIR}/capture_gazebo_lab_scene_evidence.py"
+[[ -f "${ROOT_SCENE_CAPTURE}" ]] ||
+  die "missing live Gazebo scene evidence helper: ${ROOT_SCENE_CAPTURE}"
 run_step "P3.1 verifier syntax" "${OUTPUT_ROOT}/verifier_syntax.txt" \
   python3 -B -c 'import ast, pathlib, sys; ast.parse(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))' \
   "${ROOT_VERIFIER}"
+run_step "live scene evidence helper syntax" "${OUTPUT_ROOT}/live_scene_capture_syntax.txt" \
+  python3 -B -c 'import ast, pathlib, sys; ast.parse(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))' \
+  "${ROOT_SCENE_CAPTURE}"
 
 run_step "colcon build" "${OUTPUT_ROOT}/colcon_build.txt" \
   colcon --log-base "${COLCON_LOG_BASE}/build" build \
@@ -373,23 +420,25 @@ generate_scene() {
       --world-template "${SCENE_TEMPLATE}" \
       --world-output "${SCENE_ROOT}/scene_${suffix}.sdf"
 }
-generate_scene 42 seed42_a
-generate_scene 42 seed42_b
-generate_scene 43 seed43
-cmp --silent "${SCENE_ROOT}/scene_seed42_a.json" "${SCENE_ROOT}/scene_seed42_b.json" ||
+generate_scene "${P31_SCENE_SEED_SELECTED}" selected_a
+generate_scene "${P31_SCENE_SEED_SELECTED}" selected_b
+generate_scene "${P31_CONTRAST_SCENE_SEED}" contrast
+cmp --silent "${SCENE_ROOT}/scene_selected_a.json" "${SCENE_ROOT}/scene_selected_b.json" ||
   die "same seed did not reproduce an identical scene manifest"
-cmp --silent "${SCENE_ROOT}/scene_seed42_a.sdf" "${SCENE_ROOT}/scene_seed42_b.sdf" ||
+cmp --silent "${SCENE_ROOT}/scene_selected_a.sdf" "${SCENE_ROOT}/scene_selected_b.sdf" ||
   die "same seed did not reproduce an identical scene SDF"
-if cmp --silent "${SCENE_ROOT}/scene_seed42_a.json" "${SCENE_ROOT}/scene_seed43.json"; then
+if cmp --silent "${SCENE_ROOT}/scene_selected_a.json" "${SCENE_ROOT}/scene_contrast.json"; then
   die "different scene seeds produced the same manifest"
 fi
-if cmp --silent "${SCENE_ROOT}/scene_seed42_a.sdf" "${SCENE_ROOT}/scene_seed43.sdf"; then
+if cmp --silent "${SCENE_ROOT}/scene_selected_a.sdf" "${SCENE_ROOT}/scene_contrast.sdf"; then
   die "different scene seeds produced the same SDF"
 fi
-run_step "validate seed 42 SDF" "${SCENE_ROOT}/seed42_sdf_check.txt" \
-  gz sdf -k "${SCENE_ROOT}/scene_seed42_a.sdf"
-run_step "validate seed 43 SDF" "${SCENE_ROOT}/seed43_sdf_check.txt" \
-  gz sdf -k "${SCENE_ROOT}/scene_seed43.sdf"
+run_step "validate selected seed ${P31_SCENE_SEED_SELECTED} SDF" \
+  "${SCENE_ROOT}/selected_sdf_check.txt" \
+  gz sdf -k "${SCENE_ROOT}/scene_selected_a.sdf"
+run_step "validate contrast seed ${P31_CONTRAST_SCENE_SEED} SDF" \
+  "${SCENE_ROOT}/contrast_sdf_check.txt" \
+  gz sdf -k "${SCENE_ROOT}/scene_contrast.sdf"
 scene_seed_reproducible=true
 
 if ! prelaunch_nodes="$(
@@ -403,9 +452,9 @@ printf '%s\n' "${prelaunch_nodes}" >"${RUNTIME_LOG_ROOT}/domain_prelaunch_nodes.
 [[ -z "${prelaunch_nodes}" ]] ||
   die "selected ROS domain ${ROS_DOMAIN_ID} gained nodes before launch: ${prelaunch_nodes}"
 
-readonly SEED42_WORLD="${SCENE_ROOT}/scene_seed42_a.sdf"
+readonly SELECTED_SCENE_WORLD="${SCENE_ROOT}/scene_selected_a.sdf"
 setsid ros2 launch abb_lab_bringup irb1200_gripper_lab_headless.launch.py \
-  world_path:="${SEED42_WORLD}" world_name:=manipulation_lab \
+  world_path:="${SELECTED_SCENE_WORLD}" world_name:=manipulation_lab \
   >"${LAUNCH_LOG}" 2>&1 &
 launch_pid="$!"
 launch_pgid="${launch_pid}"
@@ -515,8 +564,7 @@ timeout --kill-after=1s 5s gz model --list >"${MODELS_LOG}" 2>&1 ||
   die "could not query Gazebo models"
 grep -Fq "Requesting state for world [manipulation_lab]" "${MODELS_LOG}" ||
   die "Gazebo model query did not resolve the expected manipulation_lab world"
-for model_name in ground_plane work_table drawing_board obstacle_left obstacle_right \
-    green_ball red_ball blue_cube yellow_cube abb_irb1200_gripper; do
+for model_name in "${EXPECTED_MODELS[@]}"; do
   model_matches="$(grep -Ec "^[[:space:]]*-[[:space:]]+${model_name}[[:space:]]*$" "${MODELS_LOG}" || true)"
   [[ "${model_matches}" == "1" ]] ||
     die "expected exactly one Gazebo model named ${model_name}"
@@ -551,6 +599,48 @@ for controller_name in joint_state_broadcaster joint_trajectory_controller two_f
   grep -Eq "^${controller_name}[[:space:]].*[[:space:]]active([[:space:]]|$)" \
     "${CONTROLLERS_LOG}.after" || die "${controller_name} did not remain active"
 done
+
+# The preceding list check establishes that the seeded laboratory survived the
+# real gripper actions.  Capture each *live* Gazebo pose now.  The JSON helper
+# deliberately parses these responses rather than the generated SDF/manifest;
+# this makes two completed runs independently comparable by selected seed.
+timeout --kill-after=1s 5s gz model --list >"${MODELS_AFTER_LOG}" 2>&1 ||
+  die "could not re-query Gazebo models after gripper actions"
+grep -Fq "Requesting state for world [manipulation_lab]" "${MODELS_AFTER_LOG}" ||
+  die "post-action Gazebo model query did not resolve the expected manipulation_lab world"
+for model_name in "${EXPECTED_MODELS[@]}"; do
+  model_matches="$(grep -Ec "^[[:space:]]*-[[:space:]]+${model_name}[[:space:]]*$" "${MODELS_AFTER_LOG}" || true)"
+  [[ "${model_matches}" == "1" ]] ||
+    die "post-action Gazebo query did not report exactly one ${model_name}"
+done
+model_count_after="$(grep -Ec '^[[:space:]]*-[[:space:]]+' "${MODELS_AFTER_LOG}" || true)"
+[[ "${model_count_after}" == "${EXPECTED_MODEL_COUNT}" ]] ||
+  die "post-action Gazebo query expected ${EXPECTED_MODEL_COUNT} models, observed ${model_count_after}"
+
+capture_arguments=(
+  --seed "${P31_SCENE_SEED_SELECTED}"
+  --world-name manipulation_lab
+  --run-metadata "${OUTPUT_ROOT}/run_metadata.txt"
+  --models-log "${MODELS_AFTER_LOG}"
+  --output "${LIVE_SCENE_EVIDENCE}"
+)
+for model_name in "${EXPECTED_MODELS[@]}"; do
+  pose_log="${LIVE_SCENE_POSE_ROOT}/${model_name}.txt"
+  timeout --kill-after=1s 5s gz model -m "${model_name}" -p >"${pose_log}" 2>&1 ||
+    die "could not capture the live Gazebo pose for ${model_name}"
+  capture_arguments+=(--pose "${model_name}=${pose_log}")
+done
+run_step "capture live Gazebo scene evidence" "${LIVE_SCENE_CAPTURE_LOG}" \
+  python3 "${ROOT_SCENE_CAPTURE}" "${capture_arguments[@]}"
+grep -Fxq "GAZEBO_LIVE_SCENE_POSES=PASS" "${LIVE_SCENE_CAPTURE_LOG}" ||
+  die "live scene helper did not prove Gazebo pose capture"
+grep -Fxq "LAB_OBJECTS_PRESENT=PASS" "${LIVE_SCENE_CAPTURE_LOG}" ||
+  die "live scene helper did not preserve laboratory object presence"
+grep -Fxq "LIVE_SCENE_SELECTED_SEED=${P31_SCENE_SEED_SELECTED}" "${LIVE_SCENE_CAPTURE_LOG}" ||
+  die "live scene helper did not bind evidence to the selected seed"
+[[ -s "${LIVE_SCENE_EVIDENCE}" ]] ||
+  die "live Gazebo scene evidence JSON was not written"
+live_scene_pose_capture=true
 
 capture_working_source_manifest >"${SOURCE_MANIFEST_AFTER}"
 cmp --silent "${SOURCE_MANIFEST_BEFORE}" "${SOURCE_MANIFEST_AFTER}" ||
