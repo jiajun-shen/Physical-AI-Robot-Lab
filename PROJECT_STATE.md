@@ -10,122 +10,136 @@ Phase 1 — ABB IRB1200 + Gazebo Harmonic + ros2_control (`IN PROGRESS`)
 
 ## Current subtask
 
-Install the exact top-level packages recorded in
-`config/ros-jazzy-apt.lock.yaml`, capture post-install versions, and pass the
-upstream gz_ros2_control headless smoke test before importing ABB assets.
+Checkpoint the verified Jazzy/Harmonic/control dependency installation and
+smoke harness, then import the pinned ABB model assets without its unverified
+driver stack.
 
 ## Git checkpoints
 
-- Latest known-good commit: `eb1b8e8bad4365894b16e95dd93128246270394c`
-- Stable commit: `eb1b8e8bad4365894b16e95dd93128246270394c`
+- Latest known-good commit: `9b1916d8f72f548214bb10df3718e09664018679`
+- Stable commit: `9b1916d8f72f548214bb10df3718e09664018679`
 - Experimental commit: none
 - Current branch: `main`
 - Remote: none configured
 
-The stable commit contains the verified Phase 0 reports and architecture.
+The current tested dependency scripts/evidence are not yet committed; the hash
+above is the stable pre-install-lock repository checkpoint.
 
 ## Working features
 
 - Recoverable Git repository and session handoff documentation.
-- ROS 2 Jazzy CLI and RViz2 binaries in WSL Ubuntu after explicit environment
-  sourcing.
-- Host/upstream audit commands have run and their results are documented.
+- ROS 2 Jazzy CLI and RViz2 binaries in WSL Ubuntu after explicit sourcing.
+- Gazebo Harmonic, ros_gz, gz_ros2_control, ros2_control/controllers, MoveIt,
+  and MoveIt Task Constructor are installed and discoverable.
+- The installed upstream headless cart executes a real trajectory action through
+  gz_ros2_control and publishes the resulting joint state.
 
-No ABB, Gazebo, MoveIt, perception, speech, task, skill, or VLA runtime feature
+No ABB, project world, perception, speech, task, skill, or VLA runtime feature
 is claimed working.
 
 ## Completed features
 
-- Audited the target workspace; no pre-existing project required preservation.
-- Initialized Git on `main`, added artifact/secret exclusions, and created the
-  initial baseline commit.
-- Audited Windows, WSL2 Ubuntu, CPU/RAM/GPU/CUDA, toolchains, ROS 2, Gazebo,
-  MoveIt, ros2_control, Docker, Python, storage, and Git state.
+- Created and committed the recoverable repository baseline.
+- Completed and committed Phase 0 host, dependency, upstream, license, and
+  architecture audits.
 - Verified the official Jazzy/Harmonic/MoveIt/control compatibility baseline.
-- Audited ABB IRB1200-5/0.9 asset source, six joints, frames, limits, meshes,
-  licenses, missing Harmonic integration, and upstream compatibility risks.
-- Audited openpi at a fixed commit, its environment/GPU requirements, remote
-  inference boundary, licenses, and absence of an ABB-tuned checkpoint.
-- Designed package boundaries and classical/HYBRID/VLA safety separation.
+- Audited/pinned the ABB IRB1200 asset source and documented its six joints,
+  frames, meshes, limit conflicts, approximate inertials, and missing Harmonic
+  integration.
+- Audited/pinned openpi requirements and recorded local
+  `VLA_BACKEND_UNAVAILABLE` / `EXPERIMENTAL / NOT ABB-TUNED` constraints.
+- Captured and committed exact pre-install apt candidates.
+- Installed those exact top-level simulator, control, MoveIt, and MTC packages;
+  apt added 309 packages without upgrading/removing existing packages.
+- Captured 431 installed `ros-jazzy-*` package versions in a generated manifest.
+- Sent a real two-second `FollowJointTrajectory` goal from 1.0 to 2.0 through
+  Gazebo and gz_ros2_control; action succeeded with error code 0 and final
+  `/joint_states` position `1.9999999999999991`.
 
 ## Partially completed features
 
-- Phase 1 environment preparation has started; packages are not installed yet.
-- WSLg endpoints and RViz binary exist, but 3D GUI rendering is untested.
-- The ROS/Gazebo/MoveIt/control stack is selected but missing locally.
+- Phase 1 dependency/runtime baseline is verified but its checkpoint commit is
+  pending.
+- Phase 1 ABB assets and project-owned description/control overlay are not yet
+  integrated.
+- WSLg endpoints and RViz binary exist, but real 3D GUI rendering is untested.
 
 ## Not started features
 
-- Phase 1 ABB Gazebo Harmonic spawn and ros2_control execution.
-- Phase 2 MoveIt collision-aware planning.
-- Phase 3 gripper and deterministic randomized world.
-- Phase 4 RGB-D perception.
-- Phase 5 verified pick/place.
-- Phase 6 parametric drawing.
-- Phase 7 multilingual speech.
-- Phase 8 TaskGraph executive/recovery.
-- Phase 9 System Explorer.
-- Phase 10 educational robotics core.
-- Phases 11–15 VLA interface, ABB adaptation, data, fine-tuning, benchmarks.
-- Phase 16 hardening, final documentation, and CI.
+- A01 ABB IRB1200 Gazebo Harmonic spawn.
+- A02 ABB Home → Pose → Home collision-free execution.
+- Phase 2 project MoveIt planning and all later phases.
+- Gripper/world, RGB-D perception, pick/place, drawing, speech, TaskGraph
+  executive, System Explorer, robotics core, VLA, dataset, training, benchmarks,
+  and hardening/CI.
 
 ## Current test status
 
-- Repository baseline commit: created successfully.
-- Environment audit commands: executed successfully; unavailable components are
-  recorded as unavailable rather than failures.
-- Upstream ABB source inspection: six revolute joints, meshes, base/flange/tool
-  frames, and conflicting limit sources observed at pinned commit.
-- Phase 0 documentation checkpoint: committed as `eb1b8e8`.
-- Phase 1 pre-install apt candidates captured for the simulator, control,
-  MoveIt, and MoveIt Task Constructor packages.
-- Phase 0 documentation consistency checks: PASS on 2026-08-11:
-  - 14 required files present and non-empty
-  - all required files strict UTF-8 decodable
-  - all required `PROJECT_STATE.md` sections present
-  - exactly A01–A14 present and all truthfully `NOT STARTED`
-  - relative Markdown links resolve
-  - `git diff --check` passes
-- Python tests: no Python package/tests yet.
-- ROS tests: no project ROS package/tests yet.
-- Gazebo: not installed; no launch test.
-- MoveIt: not installed; no planning test.
+- Phase 0 documentation checkpoint: PASS at `eb1b8e8`.
+- Pre-install apt lock vs a second `apt-cache policy`: PASS (10/10 exact).
+- `scripts/verify_ros_environment.sh`: PASS.
+  - all 10 direct packages fully installed
+  - required ROS package prefixes resolve under `/opt/ros/jazzy`
+  - gz-sim version 8.11.0
+  - ros2_control CLI loads
+  - `dpkg --audit` clean
+- `scripts/verify_ros_apt_manifest.sh`: PASS.
+  - 431 well-formed, sorted, unique installed-package rows
+  - all 10 direct versions match dpkg, the direct lock, and the manifest
+- Root `apt-get check`: PASS.
+- `scripts/smoke_test_gz_ros2_control.sh`: PASS on complete rerun.
+  - `joint_state_broadcaster`: active
+  - `joint_trajectory_controller`: active
+  - trajectory action: `SUCCEEDED`, `error_code: 0`
+  - target 2.0, observed final position `1.9999999999999991`
+  - no `ERROR`/`FATAL` or leftover launched processes
+- Shell syntax (`bash -n`) for all four Phase 1 scripts: PASS.
+- Python tests: no project Python package/tests yet.
+- ROS project tests: no project ROS package/tests yet.
+- MoveIt project planning: NOT RUN.
 - Acceptance A01–A14: all `NOT STARTED`.
 
 ## Current build status
 
-No project build system exists. WSL has ROS 2 Jazzy, CMake, GCC/G++, colcon,
-rosdep, and vcstool. Gazebo/MoveIt/control build dependencies are absent.
+No project ROS package/build exists. WSL now has the required binary Gazebo,
+MoveIt, ros2_control/controller, CMake, GCC/G++, colcon, rosdep, and vcstool
+baseline. No generated `build/`, `install/`, or `log/` tree is committed.
 
 ## Current run status
 
-- `ros2 --help`: verified after sourcing `/opt/ros/jazzy/setup.bash`.
-- `rviz2 --help`: verified; GUI rendering not tested.
-- Physical-AI-Robot-Lab runtime: not implemented.
+- `ros2 --help`: verified.
+- `rviz2 --help`: verified; GUI not run.
+- Gazebo gz-sim 8.11.0 upstream headless cart: launch/shutdown verified.
+- gz_ros2_control trajectory execution: verified on upstream cart only.
+- Physical-AI-Robot-Lab ABB runtime: not implemented.
 - VLA backend: `VLA_BACKEND_UNAVAILABLE`.
 
 ## Known bugs
 
-None in project code because no runtime code exists.
+No unresolved project-code bug. The first smoke run reached the target but its
+harness did not parse ROS 2's `array('d', [...])` output. The parser was fixed
+and the entire smoke passed on rerun.
 
 ## Known limitations
 
-- WSL is allocated 7.4 GiB RAM; the combined GUI stack may be memory-bound.
-- Local GPU reports 8151 MiB, below openpi's strict `> 8 GB` statement.
-- No CUDA Toolkit, Docker, Gazebo, MoveIt, or ros2_control packages are present.
+- WSL has 7.4 GiB RAM; combined simulator/MoveIt/RViz may be memory-bound.
+- Local GPU has 8151 MiB, below openpi's strict `> 8 GB` statement.
+- No CUDA Toolkit or Docker is present.
 - `abb_ros2` has no Jazzy branch/tag and tests only Rolling upstream.
-- ABB model inertials are estimates, effort limits are fictional, and upstream
-  URDF/ros2_control limit definitions conflict.
+- ABB model inertials are estimates, efforts are fictional, and upstream
+  URDF/ros2_control limits conflict.
+- The upstream smoke demo disables command-limit enforcement. It proves only
+  the dependency path and is not an acceptable ABB safety configuration.
 - Repository is on Windows DrvFS and has no remote backup.
 
 ## Unresolved questions
 
 - Whether Gazebo/RViz WSLg 3D rendering is stable on this driver/GPU.
-- Whether building under `/mnt/c` is reliable enough or build trees must live
-  on WSL ext4.
-- Final first-party repository license (do not infer from third-party licenses).
-- Exact Whisper implementation/model pin; deferred until Phase 7.
-- VLA GPU service location; no paid training or remote resource is authorized.
+- Whether colcon build trees under `/mnt/c` are reliable enough or must live on
+  WSL ext4.
+- Final first-party repository license.
+- Whisper/model pin (deferred to Phase 7).
+- VLA GPU service location; no paid training/remote resource is authorized.
 
 ## Important architecture decisions
 
@@ -133,29 +147,32 @@ None in project code because no runtime code exists.
 - Use official Jazzy apt packages and the default Harmonic pairing.
 - Reuse pinned ABB geometry/kinematic assets, not the unverified complete driver;
   build a project-owned Jazzy/Harmonic control/MoveIt overlay.
+- ABB overlay must enable command limits and reconcile URDF, ros2_control, and
+  MoveIt definitions before motion.
 - Language planning emits typed Task/Skill/Goal structures, never joint angles.
 - `vision` mode cannot access simulator ground truth.
-- ROS and openpi run in isolated environments behind a versioned policy API.
-- Simulation and real ABB hardware remain separate implementations and safety
-  gates; this project makes no real-robot deployment safety claim.
-- Missing VLA produces `VLA_BACKEND_UNAVAILABLE`; fallback success is labelled
+- ROS and openpi remain isolated behind a versioned policy API.
+- Missing VLA produces `VLA_BACKEND_UNAVAILABLE`; a fallback success is labelled
   CLASSICAL, never VLA.
 
 ## Dependency versions
 
-See `DEPENDENCY_MATRIX.md` and `docs/environment_report.md`. Important installed
-baseline versions:
+See `DEPENDENCY_MATRIX.md`, `config/ros-jazzy-apt.lock.yaml`,
+`config/ros-jazzy-installed-packages.lock.tsv`, and the reports under `docs/`.
 
-- Ubuntu 24.04.4 LTS WSL2
-- ROS 2 Jazzy Desktop apt meta version
-  `0.11.0-1noble.20260412.072512`
-- Python 3.12.3, GCC/G++ 13.3.0, CMake 3.28.3
+Important installed versions:
+
+- Ubuntu 24.04.4 LTS WSL2; ROS 2 Jazzy Desktop
+- Python 3.12.3; GCC/G++ 13.3.0; CMake 3.28.3
+- Gazebo gz-sim 8.11.0; ros_gz 1.0.22; gz_ros2_control 1.2.19
+- ros2_control 4.45.2; ros2_controllers 4.40.1
+- MoveIt 2.12.4; MoveIt Task Constructor 0.1.5
 - NVIDIA driver 591.91; no CUDA Toolkit
 
 ## External repository commits
 
 - PickNik `abb_ros2`: `05cbabe774ef026b1cd36fe6b253b55f55e16340`
-- ROS-Industrial `abb` asset lineage: `eefdf01c956a6f2129aacb88d598201feff3cf19`
+- ROS-Industrial `abb`: `eefdf01c956a6f2129aacb88d598201feff3cf19`
 - Physical Intelligence `openpi`: `15a9616a00943ada6c20a0f158e3adb39df2ccac`
 
 Additional audited source-release pins are in `THIRD_PARTY.md`.
@@ -163,38 +180,38 @@ Additional audited source-release pins are in `THIRD_PARTY.md`.
 ## Important commands
 
 ```powershell
-# Repository state
 git status --short --branch
 git log --oneline --decorate -10
-git remote -v
-
-# Enter the WSL runtime
 wsl -d Ubuntu-24.04
 ```
 
 ```bash
-# Every non-interactive ROS command must do this first
 source /opt/ros/jazzy/setup.bash
 
-# Recheck selected binary candidates before installation
-apt-cache policy ros-jazzy-ros-gz ros-jazzy-gz-ros2-control \
-  ros-jazzy-moveit ros-jazzy-moveit-task-constructor-core \
-  ros-jazzy-ros2-controllers
+bash scripts/verify_ros_environment.sh
+
+bash scripts/verify_ros_apt_manifest.sh \
+  config/ros-jazzy-installed-packages.lock.tsv \
+  config/ros-jazzy-apt.lock.yaml
+
+bash scripts/smoke_test_gz_ros2_control.sh \
+  /tmp/physical-ai-robot-lab/gz_ros2_control-smoke
+
+bash scripts/capture_ros_apt_manifest.sh \
+  config/ros-jazzy-installed-packages.lock.tsv
 ```
 
-Build/run/test commands will be added only after they actually exist and run.
+Project build/run commands will be added only after they actually exist/run.
 
 ## Next exact steps
 
-1. Commit `config/ros-jazzy-apt.lock.yaml` after checking its candidate values
-   against a second `apt-cache policy` query.
-2. Install those exact top-level Jazzy/Harmonic/MoveIt/control packages in WSL,
-   record
-   exact installed versions, and run upstream `gz_ros2_control` headless smoke
-   launch before adding ABB assets.
-3. If the upstream control smoke passes, pin/import the ABB model assets in a
-   separate atomic commit and add structural Xacro tests before Gazebo spawn.
-4. Implement a project-owned fixed-base Jazzy/Harmonic description/control
-   overlay with unified joint limits and no gripper yet.
-5. Build, spawn headlessly, inspect six joint states/controller status, update
-   A01 only if the real launch succeeds, then checkpoint.
+1. Re-run shell syntax, environment verification, apt integrity, and upstream
+   headless smoke; inspect logs and check for leftover processes.
+2. Commit scripts, installed manifest, evidence, dependency/state updates; then
+   record that commit as the latest stable checkpoint.
+3. Create a full-SHA `.repos` import for the pinned ABB model source, excluding
+   the EGM/RWS driver dependency chain from the simulation baseline.
+4. Write structural Xacro tests for exactly six revolute joints, expected
+   names/frames, mesh resources, finite inertials, and one canonical limit set.
+5. Implement a project-owned fixed-base Jazzy/Harmonic description/control
+   overlay with unified/enforced joint limits and no gripper yet.

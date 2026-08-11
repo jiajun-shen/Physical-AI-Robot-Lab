@@ -4,7 +4,7 @@
 |---:|---|---|
 | Bootstrap | COMPLETE | Stable baseline commit `82971ce`; clean main; no remote |
 | 0 Repository/environment/architecture | COMPLETE | Reports verified and committed at `eb1b8e8` |
-| 1 ABB + Gazebo + ros2_control | IN PROGRESS | Lock/install coherent apt stack, pass upstream headless control smoke, then pin/import ABB assets |
+| 1 ABB + Gazebo + ros2_control | IN PROGRESS | Dependency/action smoke passed; next pin/import ABB assets and add structural Xacro tests |
 | 2 MoveIt + planning | NOT STARTED | Collision-aware Home → Pose → Home verified |
 | 3 Gripper + objects | NOT STARTED | Modular gripper and deterministic solvable seeded world verified |
 | 4 Perception | NOT STARTED | Green sphere localized only from RGB-D and transformed by TF2 |

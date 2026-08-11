@@ -5,15 +5,17 @@ laboratory, multilingual task execution, classical manipulation, and an
 honest path toward ABB-adapted vision-language-action research.
 
 The repository has completed its verified Phase 0 environment, dependency, and
-architecture audit and has entered Phase 1. No robot, simulator, perception,
-speech, or VLA capability is claimed working yet. See
+architecture audit and has entered Phase 1. The installed upstream Gazebo /
+gz_ros2_control dependency path has passed a real headless trajectory smoke,
+but no ABB or project laboratory runtime, perception, speech, or VLA capability
+is claimed working yet. See
 `PROJECT_STATE.md` for the exact tested state and next commands.
 
-Verified audit result: the local WSL2 installation has Ubuntu 24.04 and ROS 2
-Jazzy, while Gazebo Harmonic, MoveIt, and the control stack still need to be
-installed. The ABB asset source is pinned, but its complete upstream driver is
-not treated as Jazzy-compatible. See `docs/environment_report.md` and
-`docs/upstream_compatibility_report.md`.
+The local WSL2 installation now has Ubuntu 24.04, ROS 2 Jazzy, Gazebo Harmonic,
+MoveIt, and the control stack at recorded apt versions. The ABB asset source is
+pinned, but its complete upstream driver is not treated as Jazzy-compatible.
+See `docs/environment_report.md`, `docs/upstream_compatibility_report.md`, and
+`docs/phase1_dependency_smoke.md`.
 
 ## Engineering order
 

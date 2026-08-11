@@ -11,12 +11,12 @@ must be captured again immediately before installation.
 | Host | Windows 11 25H2 + WSL 2.7.3 | build `26200.8875` | Installed | HOST ONLY |
 | Robotics OS | Ubuntu 24.04.4 Noble WSL2 | `/etc/os-release` | Installed | ADOPTED |
 | ROS | ROS 2 Jazzy Desktop | apt `0.11.0-1noble.20260412.072512` | Installed, CLI verified | ADOPTED |
-| Simulator bridge | `ros-jazzy-ros-gz` / Harmonic vendor packages | apt candidate `1.0.22-1noble.20260616.074726` | Not installed | SELECTED |
-| Motion planning | `ros-jazzy-moveit` | apt candidate `2.12.4-1noble.20260617.161956` | Not installed | SELECTED |
-| Task composition | MoveIt Task Constructor | apt candidate `0.1.5-1noble.20260617.153812` | Not installed | SELECTED |
-| Simulation control | `ros-jazzy-gz-ros2-control` | apt candidate `1.2.19-1noble.20260615.171757` | Not installed | SELECTED |
-| Controllers | ros2_controllers / joint trajectory controller | apt candidate `4.40.1-1noble.20260616.074625` | Not installed | SELECTED |
-| Controller manager | ros2_control controller manager | apt candidate `4.45.2-1noble.20260615.164916` | Not installed | SELECTED |
+| Simulator bridge | `ros-jazzy-ros-gz` / Harmonic vendor packages | apt `1.0.22-1noble.20260616.074726` | Installed; gz-sim 8.11.0 headless smoke | VERIFIED DEPENDENCY |
+| Motion planning | `ros-jazzy-moveit` | apt `2.12.4-1noble.20260617.161956` | Installed/package prefix verified; no project plan run | INSTALLED |
+| Task composition | MoveIt Task Constructor | apt core `0.1.5-1noble.20260617.153812` | Installed/package prefix verified | INSTALLED |
+| Simulation control | `ros-jazzy-gz-ros2-control` | apt `1.2.19-1noble.20260615.171757` | Installed; controller/action/joint-state smoke passed | VERIFIED DEPENDENCY |
+| Controllers | ros2_controllers / joint trajectory controller | apt meta `4.40.1-1noble.20260616.074625` | Installed; trajectory action passed | VERIFIED DEPENDENCY |
+| Controller manager | ros2_control controller manager | apt `4.45.2-1noble.20260615.175135` | Installed; two active controllers observed | VERIFIED DEPENDENCY |
 | ABB model assets | PickNik ROS 2 port of ROS-Industrial IRB1200 | `abb_ros2@05cbabe774ef026b1cd36fe6b253b55f55e16340` | Audited outside repo, not integrated | PIN SELECTED |
 | ABB asset lineage | ROS-Industrial `abb_irb1200_support` | `abb` tag 1.5.0, commit `eefdf01c956a6f2129aacb88d598201feff3cf19` | Source verified | REFERENCE |
 | VLA code | Physical Intelligence openpi | `main@15a9616a00943ada6c20a0f158e3adb39df2ccac` | Not installed | RESEARCH PIN |
@@ -65,12 +65,12 @@ records.
 ## Locking procedure
 
 1. Before apt installation, save `apt-cache policy` results for every selected
-   package.
-2. After installation, save exact `dpkg-query -W` versions and update this file.
+   package in `config/ros-jazzy-apt.lock.yaml`.
+2. After installation, save exact `dpkg-query -W` versions in
+   `config/ros-jazzy-installed-packages.lock.tsv` and update this file.
 3. External Git sources use full 40-character commits in a `.repos` manifest or
    a documented vendored snapshot; moving branches are prohibited as locks.
 4. Model checkpoints and datasets live in external artifact storage and have a
    manifest/checksum/license record, not ordinary Git objects.
 5. ROS build, VLA service, and real-hardware dependencies remain separately
    locked.
-

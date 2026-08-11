@@ -195,3 +195,20 @@ apt-cache policy ros-jazzy-ros-gz ros-jazzy-gz-ros2-control \
   ros-jazzy-moveit ros-jazzy-moveit-task-constructor-core \
   ros-jazzy-ros2-controllers
 ```
+
+## Post-audit Phase 1 update
+
+After the read-only audit and Phase 0 checkpoint, the selected exact top-level
+packages were installed on 2026-08-11. The audit-time “missing” table above
+remains the historical pre-install observation.
+
+- Gazebo Harmonic gz-sim 8.11.0: installed and headless execution verified.
+- ros_gz / gz_ros2_control / ros2_control / ros2_controllers: installed; an
+  upstream trajectory action and resulting joint state were verified.
+- MoveIt 2.12.4 and MoveIt Task Constructor 0.1.5: installed and discoverable;
+  no project planning task has run yet.
+- Docker and CUDA Toolkit remain unavailable.
+
+Exact versions and executable evidence are in
+`config/ros-jazzy-installed-packages.lock.tsv` and
+`docs/phase1_dependency_smoke.md`.
