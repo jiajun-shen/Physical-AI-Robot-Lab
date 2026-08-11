@@ -6,23 +6,23 @@ Physical-AI-Robot-Lab
 
 ## Current phase
 
-Phase 0 — Repository, environment, dependency, and architecture audit
-(`PARTIAL` until the current documentation is verified and committed)
+Phase 1 — ABB IRB1200 + Gazebo Harmonic + ros2_control (`IN PROGRESS`)
 
 ## Current subtask
 
-Commit the now-validated Phase 0 documentation, record that checkpoint hash,
-then begin Phase 1 with a pre-install dependency snapshot.
+Capture the exact pre-install Jazzy apt snapshot, install the selected simulator,
+planning, and control dependencies, and pass the upstream gz_ros2_control
+headless smoke test before importing ABB assets.
 
 ## Git checkpoints
 
-- Latest known-good commit: `82971ceb1ed6e23930f54e9f77d83297f791855d`
-- Stable commit: `82971ceb1ed6e23930f54e9f77d83297f791855d`
+- Latest known-good commit: `eb1b8e8bad4365894b16e95dd93128246270394c`
+- Stable commit: `eb1b8e8bad4365894b16e95dd93128246270394c`
 - Experimental commit: none
 - Current branch: `main`
 - Remote: none configured
 
-The current uncommitted Phase 0 documentation is not yet the stable checkpoint.
+The stable commit contains the verified Phase 0 reports and architecture.
 
 ## Working features
 
@@ -50,7 +50,7 @@ is claimed working.
 
 ## Partially completed features
 
-- Phase 0 documentation is validated but not yet committed.
+- Phase 1 environment preparation has started; packages are not installed yet.
 - WSLg endpoints and RViz binary exist, but 3D GUI rendering is untested.
 - The ROS/Gazebo/MoveIt/control stack is selected but missing locally.
 
@@ -76,6 +76,7 @@ is claimed working.
   recorded as unavailable rather than failures.
 - Upstream ABB source inspection: six revolute joints, meshes, base/flange/tool
   frames, and conflicting limit sources observed at pinned commit.
+- Phase 0 documentation checkpoint: committed as `eb1b8e8`.
 - Phase 0 documentation consistency checks: PASS on 2026-08-11:
   - 14 required files present and non-empty
   - all required files strict UTF-8 decodable
@@ -183,12 +184,14 @@ Build/run/test commands will be added only after they actually exist and run.
 
 ## Next exact steps
 
-1. Commit the validated Phase 0 reports/architecture/dependency records.
-2. Record the Phase 0 checkpoint hash as the latest known-good commit, mark
-   Phase 0 `COMPLETE`, re-run the consistency check, and commit the state update.
-3. Capture a fresh `apt-cache policy` snapshot for the exact Phase 1 packages.
-4. Install the selected Jazzy/Harmonic/MoveIt/control packages in WSL, record
+1. Capture a fresh `apt-cache policy` snapshot for the exact Phase 1 packages
+   in a committed lock/evidence file.
+2. Install the selected Jazzy/Harmonic/MoveIt/control packages in WSL, record
    exact installed versions, and run upstream `gz_ros2_control` headless smoke
    launch before adding ABB assets.
-5. If the upstream control smoke passes, pin/import the ABB model assets in a
+3. If the upstream control smoke passes, pin/import the ABB model assets in a
    separate atomic commit and add structural Xacro tests before Gazebo spawn.
+4. Implement a project-owned fixed-base Jazzy/Harmonic description/control
+   overlay with unified joint limits and no gripper yet.
+5. Build, spawn headlessly, inspect six joint states/controller status, update
+   A01 only if the real launch succeeds, then checkpoint.

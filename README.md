@@ -4,9 +4,9 @@ A long-term robotics research repository for an ABB IRB1200-5/0.9 virtual
 laboratory, multilingual task execution, classical manipulation, and an
 honest path toward ABB-adapted vision-language-action research.
 
-The repository has a stable bootstrap checkpoint and an in-progress Phase 0
-environment/upstream audit checkpoint. No robot, simulator, perception, speech,
-or VLA capability is claimed working yet. See
+The repository has completed its verified Phase 0 environment, dependency, and
+architecture audit and has entered Phase 1. No robot, simulator, perception,
+speech, or VLA capability is claimed working yet. See
 `PROJECT_STATE.md` for the exact tested state and next commands.
 
 Verified audit result: the local WSL2 installation has Ubuntu 24.04 and ROS 2
