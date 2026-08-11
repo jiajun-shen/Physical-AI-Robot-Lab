@@ -10,20 +10,20 @@ Phase 1 — ABB IRB1200 + Gazebo Harmonic + ros2_control (`IN PROGRESS`)
 
 ## Current subtask
 
-Checkpoint the verified Jazzy/Harmonic/control dependency installation and
-smoke harness, then import the pinned ABB model assets without its unverified
-driver stack.
+Import the pinned ABB IRB1200 model assets with provenance and structural tests,
+without importing or claiming the unverified upstream driver stack.
 
 ## Git checkpoints
 
-- Latest known-good commit: `9b1916d8f72f548214bb10df3718e09664018679`
-- Stable commit: `9b1916d8f72f548214bb10df3718e09664018679`
+- Latest known-good commit: `14d946f5b0d498aa028d5b7c3179eb5ba7da59ab`
+- Stable commit: `14d946f5b0d498aa028d5b7c3179eb5ba7da59ab`
 - Experimental commit: none
 - Current branch: `main`
 - Remote: none configured
 
-The current tested dependency scripts/evidence are not yet committed; the hash
-above is the stable pre-install-lock repository checkpoint.
+The hash above contains the exact installed ROS package manifest, environment
+and manifest verifiers, the reproducible upstream control smoke, and its
+inspected evidence.
 
 ## Working features
 
@@ -58,8 +58,7 @@ is claimed working.
 
 ## Partially completed features
 
-- Phase 1 dependency/runtime baseline is verified but its checkpoint commit is
-  pending.
+- Phase 1 dependency/runtime baseline is verified and checkpointed.
 - Phase 1 ABB assets and project-owned description/control overlay are not yet
   integrated.
 - WSLg endpoints and RViz binary exist, but real 3D GUI rendering is untested.
@@ -76,6 +75,7 @@ is claimed working.
 ## Current test status
 
 - Phase 0 documentation checkpoint: PASS at `eb1b8e8`.
+- Phase 1 dependency/control checkpoint: PASS at `14d946f`.
 - Pre-install apt lock vs a second `apt-cache policy`: PASS (10/10 exact).
 - `scripts/verify_ros_environment.sh`: PASS.
   - all 10 direct packages fully installed
@@ -205,13 +205,11 @@ Project build/run commands will be added only after they actually exist/run.
 
 ## Next exact steps
 
-1. Re-run shell syntax, environment verification, apt integrity, and upstream
-   headless smoke; inspect logs and check for leftover processes.
-2. Commit scripts, installed manifest, evidence, dependency/state updates; then
-   record that commit as the latest stable checkpoint.
-3. Create a full-SHA `.repos` import for the pinned ABB model source, excluding
+1. Create a full-SHA `.repos` import for the pinned ABB model source, excluding
    the EGM/RWS driver dependency chain from the simulation baseline.
-4. Write structural Xacro tests for exactly six revolute joints, expected
+2. Write structural Xacro tests first for exactly six revolute joints, expected
    names/frames, mesh resources, finite inertials, and one canonical limit set.
-5. Implement a project-owned fixed-base Jazzy/Harmonic description/control
+3. Import only the licensed IRB1200 support assets at the audited commit and
+   make the structural tests pass.
+4. Implement a project-owned fixed-base Jazzy/Harmonic description/control
    overlay with unified/enforced joint limits and no gripper yet.
