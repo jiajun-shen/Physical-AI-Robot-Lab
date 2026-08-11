@@ -6,7 +6,9 @@ request_adapters:
   - default_planning_request_adapters/CheckStartStateBounds
   - default_planning_request_adapters/CheckStartStateCollision
 response_adapters:
-  - default_planning_response_adapters/AddTimeOptimalParameterization
+  # Time-optimal parameterization requires acceleration limits. This project
+  # has no verified acceleration/deceleration authority, so the verifier
+  # performs a conservative, velocity-only retime before execution instead.
   - default_planning_response_adapters/ValidateSolution
   - default_planning_response_adapters/DisplayMotionPath
 start_state_max_bounds_error: 0.1

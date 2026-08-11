@@ -3,9 +3,10 @@
   <name>abb_lab_moveit_config</name>
   <version>0.1.0</version>
   <description>
-    Project-owned, arm-only MoveIt configuration contract for the ABB
-    IRB1200-5/0.9 simulation model. This package contains no simulator launch
-    and does not establish planning or execution acceptance evidence.
+    Project-owned, arm-only MoveIt configuration and headless integration
+    launch for the ABB IRB1200-5/0.9 simulation model. The launch reuses the
+    project Gazebo control chain and does not itself establish planning or
+    execution acceptance evidence.
   </description>
   <maintainer email="maintainers@example.invalid">Physical-AI-Robot-Lab maintainers</maintainer>
   <license>Apache-2.0</license>
@@ -14,10 +15,23 @@
 
   <exec_depend>abb_lab_control</exec_depend>
   <exec_depend>abb_lab_description</exec_depend>
+  <exec_depend>abb_lab_gazebo</exec_depend>
+  <exec_depend>action_msgs</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>builtin_interfaces</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
   <exec_depend>moveit_configs_utils</exec_depend>
   <exec_depend>moveit_kinematics</exec_depend>
+  <exec_depend>moveit_msgs</exec_depend>
   <exec_depend>moveit_planners_ompl</exec_depend>
+  <exec_depend>moveit_ros_move_group</exec_depend>
   <exec_depend>moveit_simple_controller_manager</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>shape_msgs</exec_depend>
   <exec_depend>xacro</exec_depend>
 
   <test_depend>abb_lab_control</test_depend>

@@ -1,0 +1,88 @@
+# Bounded, simulation-only targets for the P2.2 integrated MoveIt smoke run.
+# Every vector is named explicitly so runtime evidence cannot silently depend on
+# the incoming JointState array order.
+schema_version: 1
+scope: SIMULATION_ONLY
+
+robot:
+  group_name: manipulator
+  base_frame: base_link
+  tool_link: tool0
+  joint_names:
+    - joint_1
+    - joint_2
+    - joint_3
+    - joint_4
+    - joint_5
+    - joint_6
+
+planner:
+  pipeline_id: ompl
+  planner_id: RRTConnectkConfigDefault
+  planning_attempts: 2
+  allowed_planning_time_sec: 3.0
+  velocity_scaling: 0.20
+
+# These are deliberately moderate, interior joint configurations. The pose
+# target is not copied from a hard-coded Cartesian point: the verifier obtains
+# its actual base_link -> tool0 pose through /compute_fk before it asks MoveIt
+# to plan a pose-constrained trajectory.
+targets:
+  # The verifier requires a real neutral observation at this exact semantic
+  # HOME state before any test action, and returns to it after both the joint
+  # and Cartesian demonstrations.
+  home:
+    joint_1: 0.0
+    joint_2: 0.0
+    joint_3: 0.0
+    joint_4: 0.0
+    joint_5: 0.0
+    joint_6: 0.0
+  joint_execution:
+    joint_1: 0.35
+    joint_2: -0.40
+    joint_3: 0.30
+    joint_4: -0.25
+    joint_5: 0.20
+    joint_6: -0.20
+  joint_alternate:
+    joint_1: -0.30
+    joint_2: 0.35
+    joint_3: -0.25
+    joint_4: 0.25
+    joint_5: -0.20
+    joint_6: 0.20
+  fk_pose_seed:
+    joint_1: 0.75
+    joint_2: -0.55
+    joint_3: 0.65
+    joint_4: 0.45
+    joint_5: -0.35
+    joint_6: 0.55
+
+guards:
+  endpoint_samples: 2
+  minimum_joint_motion_rad: 0.05
+  observed_home_tolerance_rad: 0.035
+  joint_goal_tolerance_rad: 0.004
+  observed_joint_tolerance_rad: 0.035
+  pose_goal_position_tolerance_m: 0.008
+  pose_goal_orientation_tolerance_rad: 0.035
+  observed_pose_position_tolerance_m: 0.030
+  observed_pose_orientation_tolerance_rad: 0.090
+  # This is a trajectory scheduling floor, not an acceleration constraint.
+  # Per-segment time is also multiplied by the conservative factor below to
+  # bound velocity-only retiming while leaving derivative arrays empty.
+  velocity_only_retime_safety_factor: 2.0
+  minimum_segment_duration_sec: 0.10
+  service_wait_timeout_sec: 8.0
+  service_call_timeout_sec: 5.0
+  action_result_timeout_sec: 10.0
+  endpoint_observation_timeout_sec: 5.0
+
+collision:
+  object_id: p22_tool0_goal_block
+  # The box is centred at the FK-derived tool0 pose. It overlaps the terminal
+  # arm geometry at fk_pose_seed but is sufficiently compact to leave the
+  # separated joint_execution retreat state collision-free.
+  box_dimensions_m: [0.12, 0.12, 0.12]

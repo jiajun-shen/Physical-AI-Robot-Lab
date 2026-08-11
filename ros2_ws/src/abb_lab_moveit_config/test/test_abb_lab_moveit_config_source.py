@@ -1,12 +1,14 @@
 """Static contracts for the project-owned ABB MoveIt configuration.
 
-These tests deliberately validate package data only.  They do not launch
-Gazebo, move_group, a controller, or an execution action; P2.2 must provide
-that separate runtime evidence before A02 can change state.
+P2.1 validates the declarative configuration.  P2.2 adds source contracts for
+the *separate* headless launch, verifier, and bounded root harness.  These
+tests never claim that a plan or trajectory has run; only a clean P2.2 runtime
+gate may change A02.
 """
 
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 import unittest
 import xml.etree.ElementTree as ET
@@ -18,6 +20,8 @@ import yaml
 
 
 PACKAGE_SHARE = Path(get_package_share_directory("abb_lab_moveit_config"))
+PACKAGE_ROOT = Path(__file__).resolve().parents[1]
+REPOSITORY_ROOT = PACKAGE_ROOT.parents[2]
 DESCRIPTION_SHARE = Path(get_package_share_directory("abb_lab_description"))
 CONTROL_SHARE = Path(get_package_share_directory("abb_lab_control"))
 
@@ -29,11 +33,15 @@ LIMITS_PATH = PACKAGE_SHARE / "config" / "joint_limits.yaml"
 KINEMATICS_PATH = PACKAGE_SHARE / "config" / "kinematics.yaml"
 OMPL_PATH = PACKAGE_SHARE / "config" / "ompl_planning.yaml"
 CONTROLLERS_PATH = PACKAGE_SHARE / "config" / "moveit_controllers.yaml"
+SMOKE_PATH = PACKAGE_SHARE / "config" / "irb1200_moveit_smoke.yaml"
 SETUP_ASSISTANT_PATH = PACKAGE_SHARE / ".setup_assistant"
 CANONICAL_LIMITS_PATH = (
     DESCRIPTION_SHARE / "config" / "irb1200_5_90_control_limits.yaml"
 )
 RUNTIME_CONTROLLERS_PATH = CONTROL_SHARE / "config" / "irb1200_controllers.yaml"
+P22_LAUNCH_PATH = PACKAGE_ROOT / "launch" / "irb1200_moveit_headless.launch.py"
+P22_VERIFIER_PATH = PACKAGE_ROOT / "scripts" / "verify_moveit_runtime.py"
+P22_HARNESS_PATH = REPOSITORY_ROOT / "scripts" / "run_and_verify_irb1200_moveit_headless.sh"
 
 JOINTS = [f"joint_{index}" for index in range(1, 7)]
 LIMIT_KEYS = {
@@ -62,6 +70,12 @@ def collect_keys(value: object) -> set[str]:
     if isinstance(value, list):
         return set().union(*(collect_keys(item) for item in value))
     return set()
+
+
+def required_source(path: Path) -> str:
+    if not path.is_file():
+        raise AssertionError(f"required P2.2 source file is missing: {path}")
+    return path.read_text(encoding="utf-8")
 
 
 class TestAbbLabMoveItConfigSource(unittest.TestCase):
@@ -100,6 +114,29 @@ class TestAbbLabMoveItConfigSource(unittest.TestCase):
         self.assertIsNotNone(chain)
         self.assertEqual(chain.attrib, {"base_link": "base_link", "tip_link": "tool0"})
         self.assertIsNone(root.find("end_effector"))
+
+        # The only disabled pairs are physical neighbours that share a joint.
+        # This prevents the vendor meshes from reporting permanent self-contact
+        # without hiding any non-adjacent collision risk from planning.
+        disabled_pairs = {
+            (
+                item.attrib["link1"],
+                item.attrib["link2"],
+                item.attrib["reason"],
+            )
+            for item in root.findall("disable_collisions")
+        }
+        self.assertEqual(
+            disabled_pairs,
+            {
+                ("base_link", "link_1", "Adjacent"),
+                ("link_1", "link_2", "Adjacent"),
+                ("link_2", "link_3", "Adjacent"),
+                ("link_3", "link_4", "Adjacent"),
+                ("link_4", "link_5", "Adjacent"),
+                ("link_5", "link_6", "Adjacent"),
+            },
+        )
 
     def test_installed_runtime_urdf_expands_and_resolves_semantic_chain(self) -> None:
         srdf_root = ET.parse(SRDF_PATH).getroot()
@@ -183,6 +220,13 @@ class TestAbbLabMoveItConfigSource(unittest.TestCase):
             "default_planning_response_adapters/ValidateSolution",
             ompl["response_adapters"],
         )
+        # TOTG requires acceleration limits, which this project deliberately
+        # does not invent. P2.2 schedules the returned geometric trajectory
+        # conservatively from the verified velocity limits instead.
+        self.assertNotIn(
+            "default_planning_response_adapters/AddTimeOptimalParameterization",
+            ompl["response_adapters"],
+        )
         self.assertEqual(
             ompl["manipulator"]["planner_configs"], ["RRTConnectkConfigDefault"]
         )
@@ -224,6 +268,61 @@ class TestAbbLabMoveItConfigSource(unittest.TestCase):
             "/joint_trajectory_controller/follow_joint_trajectory",
         )
 
+    def test_p22_smoke_contract_is_bounded_home_pose_home_without_dynamic_fiction(self) -> None:
+        smoke = load_yaml(SMOKE_PATH)
+        self.assertEqual(
+            set(smoke), {"schema_version", "scope", "robot", "planner", "targets", "guards", "collision"}
+        )
+        self.assertEqual(smoke["schema_version"], 1)
+        self.assertEqual(smoke["scope"], "SIMULATION_ONLY")
+        self.assertEqual(
+            smoke["robot"],
+            {
+                "group_name": "manipulator",
+                "base_frame": "base_link",
+                "tool_link": "tool0",
+                "joint_names": JOINTS,
+            },
+        )
+        self.assertEqual(
+            set(smoke["planner"]),
+            {"pipeline_id", "planner_id", "planning_attempts", "allowed_planning_time_sec", "velocity_scaling"},
+        )
+        self.assertEqual(smoke["planner"]["pipeline_id"], "ompl")
+        self.assertEqual(smoke["planner"]["planner_id"], "RRTConnectkConfigDefault")
+        self.assertGreater(smoke["planner"]["planning_attempts"], 0)
+        self.assertGreater(smoke["planner"]["allowed_planning_time_sec"], 0.0)
+        self.assertGreater(smoke["planner"]["velocity_scaling"], 0.0)
+        self.assertLessEqual(smoke["planner"]["velocity_scaling"], 1.0)
+        self.assertFalse(
+            any(
+                fragment in key.lower()
+                for fragment in ("acceleration", "deceleration", "jerk")
+                for key in collect_keys(smoke)
+            )
+        )
+
+        canonical = load_yaml(CANONICAL_LIMITS_PATH)["joint_limits"]
+        targets = smoke["targets"]
+        self.assertEqual(
+            set(targets), {"home", "joint_execution", "joint_alternate", "fk_pose_seed"}
+        )
+        self.assertEqual(targets["home"], {name: 0.0 for name in JOINTS})
+        for target_name, positions in targets.items():
+            with self.subTest(target=target_name):
+                self.assertEqual(set(positions), set(JOINTS))
+                for name in JOINTS:
+                    self.assertGreaterEqual(positions[name], canonical[name]["min_position"])
+                    self.assertLessEqual(positions[name], canonical[name]["max_position"])
+
+        guards = smoke["guards"]
+        self.assertEqual(guards["velocity_only_retime_safety_factor"], 2.0)
+        self.assertGreater(guards["minimum_segment_duration_sec"], 0.0)
+        self.assertGreater(guards["observed_home_tolerance_rad"], 0.0)
+        self.assertEqual(smoke["collision"]["object_id"], "p22_tool0_goal_block")
+        self.assertEqual(len(smoke["collision"]["box_dimensions_m"]), 3)
+        self.assertTrue(all(value > 0.0 for value in smoke["collision"]["box_dimensions_m"]))
+
     def test_moveit_configs_builder_loads_the_installed_configuration(self) -> None:
         configs = (
             MoveItConfigsBuilder(
@@ -256,8 +355,141 @@ class TestAbbLabMoveItConfigSource(unittest.TestCase):
             ["RRTConnectkConfigDefault"],
         )
 
-    def test_package_contains_no_runtime_launch_file(self) -> None:
-        self.assertFalse((PACKAGE_SHARE / "launch").exists())
+    def test_p22_runtime_sources_exist_and_are_installed(self) -> None:
+        """P2.2 must own an installed launch and verifier, not a README claim."""
+        for path in (P22_LAUNCH_PATH, P22_VERIFIER_PATH, P22_HARNESS_PATH):
+            with self.subTest(path=path):
+                self.assertTrue(path.is_file(), path)
+
+        cmake = required_source(PACKAGE_ROOT / "CMakeLists.txt")
+        self.assertRegex(
+            cmake,
+            r"install\s*\(\s*DIRECTORY\s+config\s+launch\s+scripts\b",
+        )
+
+    def test_p22_launch_reuses_the_owned_gazebo_control_chain_before_move_group(self) -> None:
+        """The MoveIt layer must attach to P1.3b, never create another control stack."""
+        source = required_source(P22_LAUNCH_PATH)
+        ast.parse(source, filename=str(P22_LAUNCH_PATH))
+
+        self.assertRegex(
+            source,
+            r"FindPackageShare\(\s*['\"]abb_lab_gazebo['\"]\s*\)",
+        )
+        for token in (
+            "IncludeLaunchDescription",
+            "PythonLaunchDescriptionSource",
+            "irb1200_headless.launch.py",
+            "moveit_ros_move_group",
+            "move_group",
+            "robot_description",
+            "robot_description_semantic",
+            "robot_description_kinematics",
+            "robot_description_planning",
+            "use_sim_time",
+        ):
+            with self.subTest(token=token):
+                self.assertIn(token, source)
+
+        self.assertLess(
+            source.index("abb_lab_gazebo"),
+            source.index("moveit_ros_move_group"),
+            "the inherited Gazebo/control bringup must be constructed before move_group",
+        )
+        self.assertNotIn("ros2_control_node", source)
+        self.assertNotRegex(
+            source,
+            r"package\s*=\s*['\"]controller_manager['\"]",
+        )
+        self.assertNotRegex(
+            source,
+            r"executable\s*=\s*['\"]spawner['\"]",
+        )
+
+    def test_p22_launch_uses_the_explicit_ompl_only_and_existing_jtc_contract(self) -> None:
+        """No planner or controller may be silently substituted at runtime."""
+        source = required_source(P22_LAUNCH_PATH)
+        self.assertIn("MoveItConfigsBuilder", source)
+        self.assertRegex(
+            source,
+            r"\.planning_pipelines\(\s*pipelines\s*=\s*\[\s*['\"]ompl['\"]\s*\]"
+            r"\s*,\s*load_all\s*=\s*False\s*\)",
+        )
+        self.assertIn("moveit_controllers.yaml", source)
+
+        moveit = load_yaml(CONTROLLERS_PATH)
+        self.assertFalse(moveit["moveit_manage_controllers"])
+        manager = moveit["moveit_simple_controller_manager"]
+        self.assertEqual(manager["controller_names"], ["joint_trajectory_controller"])
+        controller = manager["joint_trajectory_controller"]
+        self.assertEqual(controller["type"], "FollowJointTrajectory")
+        self.assertEqual(controller["action_ns"], "follow_joint_trajectory")
+        self.assertEqual(controller["joints"], JOINTS)
+
+    def test_p22_verifier_requires_real_joint_pose_and_collision_evidence(self) -> None:
+        """A02 evidence must cover execution and an intentionally rejected collision."""
+        source = required_source(P22_VERIFIER_PATH)
+        ast.parse(source, filename=str(P22_VERIFIER_PATH))
+
+        for token in (
+            "rclpy",
+            "MoveGroup",
+            "JointState",
+            "PoseStamped",
+            "tool0",
+            "CollisionObject",
+            "PlanningScene",
+            "ApplyPlanningScene",
+            "velocity_only",
+            "canonical_velocity_limits",
+            "acceleration_limits_used",
+            "temporary_collision_object_removed",
+            "world_object_ids_after_removal",
+            "math.isfinite",
+            "MOVEIT_JOINT_EXECUTION=PASS",
+            "MOVEIT_POSE_EXECUTION=PASS",
+            "MOVEIT_HOME_POSE_HOME=PASS",
+            "MOVEIT_COLLISION_REJECTION=PASS",
+        ):
+            with self.subTest(token=token):
+                self.assertIn(token, source)
+
+        self.assertTrue(
+            any(
+                token in source
+                for token in ("GetStateValidity", "GetMotionPlan", "MoveItErrorCodes")
+            ),
+            "collision rejection must inspect a real MoveIt planning outcome",
+        )
+        self.assertNotIn("random", source.lower())
+
+    def test_p22_harness_gates_a02_on_all_three_runtime_results(self) -> None:
+        """The root runtime gate must not publish A02 PASS prematurely."""
+        source = required_source(P22_HARNESS_PATH)
+        required_tokens = (
+            "set -eo pipefail",
+            "setsid ros2 launch abb_lab_moveit_config irb1200_moveit_headless.launch.py",
+            "verify_moveit_runtime.py",
+            "MOVEIT_JOINT_EXECUTION=PASS",
+            "MOVEIT_POSE_EXECUTION=PASS",
+            "MOVEIT_HOME_POSE_HOME=PASS",
+            "MOVEIT_COLLISION_REJECTION=PASS",
+            "A02=NOT_STARTED",
+            "A02=PASS",
+        )
+        for token in required_tokens:
+            with self.subTest(token=token):
+                self.assertIn(token, source)
+
+        pass_index = source.index("A02=PASS")
+        for marker in required_tokens[3:7]:
+            with self.subTest(marker=marker):
+                self.assertLess(
+                    source.index(marker),
+                    pass_index,
+                    f"{marker} must be checked before A02 can pass",
+                )
+        self.assertIn("if", source[: pass_index + len("A02=PASS")])
 
 
 if __name__ == "__main__":

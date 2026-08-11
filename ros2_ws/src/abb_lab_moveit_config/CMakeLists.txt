@@ -3,11 +3,15 @@ project(abb_lab_moveit_config)
 
 find_package(ament_cmake REQUIRED)
 
-install(DIRECTORY config
+install(DIRECTORY config launch scripts
   DESTINATION share/${PROJECT_NAME})
 
 install(FILES .setup_assistant
   DESTINATION share/${PROJECT_NAME})
+
+install(PROGRAMS
+  scripts/verify_moveit_runtime.py
+  DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
