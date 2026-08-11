@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>abb_lab_control</name>
+  <version>0.1.0</version>
+  <description>
+    Simulation-only controller configuration and bounded smoke goal for the
+    ABB IRB1200-5/0.9 Physical-AI-Robot-Lab runtime.
+  </description>
+  <maintainer email="maintainers@example.invalid">Physical-AI-Robot-Lab maintainers</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>joint_state_broadcaster</exec_depend>
+  <exec_depend>joint_trajectory_controller</exec_depend>
+  <test_depend>abb_lab_description</test_depend>
+  <test_depend>ament_cmake_pytest</test_depend>
+  <test_depend>python3-yaml</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+    <architecture_independent/>
+  </export>
+</package>

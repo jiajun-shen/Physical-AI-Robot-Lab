@@ -1,0 +1,44 @@
+schema_version: 1
+scope: SIMULATION_ONLY
+
+joint_order:
+  - joint_1
+  - joint_2
+  - joint_3
+  - joint_4
+  - joint_5
+  - joint_6
+
+neutral_reference:
+  joint_1: 0.0
+  joint_2: 0.0
+  joint_3: 0.0
+  joint_4: 0.0
+  joint_5: 0.0
+  joint_6: 0.0
+
+target:
+  joint_1: 0.05
+  joint_2: -0.05
+  joint_3: 0.04
+  joint_4: 0.06
+  joint_5: -0.04
+  joint_6: 0.05
+
+guards:
+  initial_neutral_tolerance_rad: 0.03
+  max_delta_rad: 0.1
+  limit_margin_rad: 0.05
+  time_from_start_sec: 3
+  final_position_tolerance_rad: 0.03
+  consecutive_target_samples: 5
+  minimum_action_feedback_samples: 10
+  observation_timeout_sec: 15
+  clock_min_advance_sec: 0.5
+  base_translation_tolerance_m: 0.00001
+  base_rotation_tolerance_rad: 0.00001
+
+safety_status:
+  collision_free: NOT_VERIFIED
+  clamp_probe: NOT_RUN
+  real_robot_ready: false

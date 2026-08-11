@@ -232,6 +232,14 @@ class ABBControlDescriptionSourceTests(unittest.TestCase):
     def test_full_description_has_fixed_world_and_harmonic_plugin(self) -> None:
         root = required_xml(CONTROL_DESCRIPTION_PATH)
         self.assertEqual(root.attrib["name"], "abb_irb1200_5_90_gz_control")
+        arguments = {
+            element.attrib["name"]: element.attrib["default"]
+            for element in root.findall(f"{{{XACRO_NAMESPACE}}}arg")
+        }
+        self.assertDictEqual(
+            arguments,
+            {"prefix": "", "controller_config_file": ""},
+        )
         self.assertEqual({link.attrib["name"] for link in root.findall("link")}, {"world"})
 
         world_joint = root.find("joint")
@@ -263,7 +271,14 @@ class ABBControlDescriptionSourceTests(unittest.TestCase):
             element.attrib["name"]: element.attrib["value"]
             for element in root.findall(f"{{{XACRO_NAMESPACE}}}property")
         }
-        self.assertSetEqual(set(properties), {"prefix", "joint_limits"})
+        self.assertSetEqual(
+            set(properties),
+            {"prefix", "controller_config_file", "joint_limits"},
+        )
+        self.assertEqual(
+            properties["controller_config_file"],
+            "$(arg controller_config_file)",
+        )
         self.assertIn("irb1200_5_90_control_limits.yaml", properties["joint_limits"])
 
         geometry_call = root.find(f"{{{XACRO_NAMESPACE}}}abb_irb1200_5_90")
@@ -292,6 +307,18 @@ class ABBControlDescriptionSourceTests(unittest.TestCase):
         self.assertEqual(
             gazebo_plugins[0].findtext("parameters"),
             "$(find abb_lab_description)/config/controller_manager_safety.yaml",
+        )
+        runtime_parameters = gazebo_plugins[0].findall(
+            f"{{{XACRO_NAMESPACE}}}if"
+        )
+        self.assertEqual(len(runtime_parameters), 1)
+        self.assertEqual(
+            runtime_parameters[0].attrib,
+            {"value": "${controller_config_file != ''}"},
+        )
+        self.assertEqual(
+            runtime_parameters[0].findtext("parameters"),
+            "$(arg controller_config_file)",
         )
         self.assertEqual(gazebo_plugins[0].findtext("hold_joints"), "true")
         self.assertEqual(root.findall(".//limits[@enable='false']"), [])

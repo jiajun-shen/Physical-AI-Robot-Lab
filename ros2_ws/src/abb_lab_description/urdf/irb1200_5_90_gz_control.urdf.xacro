@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
 <robot name="abb_irb1200_5_90_gz_control" xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:arg name="prefix" default=""/>
+  <xacro:arg name="controller_config_file" default=""/>
   <xacro:include filename="$(find abb_lab_description)/urdf/irb1200_5_90_macro.project.xacro"/>
   <xacro:include filename="$(find abb_lab_description)/urdf/irb1200_5_90_gz_ros2_control.xacro"/>
   <xacro:property name="prefix" value="$(arg prefix)"/>
+  <xacro:property name="controller_config_file" value="$(arg controller_config_file)"/>
   <xacro:property name="joint_limits" value="${xacro.load_yaml('$(find abb_lab_description)/config/irb1200_5_90_control_limits.yaml')['joint_limits']}"/>
 
   <link name="world"/>
@@ -22,6 +24,9 @@
   <gazebo>
     <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
       <parameters>$(find abb_lab_description)/config/controller_manager_safety.yaml</parameters>
+      <xacro:if value="${controller_config_file != ''}">
+        <parameters>$(arg controller_config_file)</parameters>
+      </xacro:if>
       <hold_joints>true</hold_joints>
     </plugin>
   </gazebo>

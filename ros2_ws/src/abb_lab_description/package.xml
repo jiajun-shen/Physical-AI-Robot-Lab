@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>abb_lab_description</name>
-  <version>0.2.0</version>
+  <version>0.3.0</version>
   <description>
-    Pinned ABB IRB1200-5/0.9 geometry and pre-runtime Gazebo Harmonic
+    Pinned ABB IRB1200-5/0.9 geometry and runtime-configurable Gazebo Harmonic
     ros2_control description for Physical-AI-Robot-Lab. Controllers, motion,
-    MoveIt, and real-hardware integration are intentionally excluded.
+    MoveIt, and real-hardware integration remain separate concerns.
   </description>
   <maintainer email="maintainers@example.invalid">Physical-AI-Robot-Lab maintainers</maintainer>
   <license>Apache-2.0</license>
