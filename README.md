@@ -1,27 +1,26 @@
 # Physical-AI-Robot-Lab
 
 A long-term robotics research repository for an ABB IRB1200-5/0.9 virtual
-laboratory, multilingual task execution, classical manipulation, and an
-honest path toward ABB-adapted vision-language-action research.
+laboratory, multilingual task execution, classical manipulation, and an honest
+path toward ABB-adapted vision-language-action research.
 
-The repository has completed its verified Phase 0 environment, dependency, and
-architecture audit and has entered Phase 1. The installed upstream Gazebo /
-gz_ros2_control dependency path has passed a real headless trajectory smoke,
-and the pinned ABB IRB1200 package now passes both its immutable geometry
-contract and a static fixed-base Harmonic control-description contract. The
-project control description has not been spawned, no project controller has
-been activated, and command-limit enforcement has not been observed at
-runtime. No ABB Gazebo runtime, project laboratory, perception, speech, or VLA
-capability is claimed working yet. See
-`PROJECT_STATE.md` for the exact tested state and next commands.
+The project has completed its verified Phase 0 audit and is in Phase 1. The
+project-owned ABB IRB1200 now has a real, clean, headless Gazebo Harmonic and
+ros2_control runtime result: the exact model spawned, six position interfaces
+were claimed, joint-state and trajectory controllers became active, command
+limiters initialized, a bounded six-axis trajectory returned `SUCCEEDED` with
+`error_code: 0`, and cleanup was verified. This establishes A01 only; it does
+not establish MoveIt planning, collision avoidance, a gripper, perception,
+speech, TaskGraph execution, VLA readiness, GUI behavior, or real-robot safety.
+See `PROJECT_STATE.md`, `ACCEPTANCE_STATUS.md`, and
+`docs/phase1_abb_gazebo_control_runtime_evidence.md` for exact evidence.
 
-The local WSL2 installation now has Ubuntu 24.04, ROS 2 Jazzy, Gazebo Harmonic,
-MoveIt, and the control stack at recorded apt versions. The ABB asset source is
-pinned, but its complete upstream driver is not treated as Jazzy-compatible.
-See `docs/environment_report.md`, `docs/upstream_compatibility_report.md`, and
-`docs/phase1_dependency_smoke.md`. ABB asset/build evidence is in
-`docs/phase1_abb_asset_evidence.md`; the separate pre-runtime control evidence
-is in `docs/phase1_abb_control_description_evidence.md`.
+The local WSL2 installation has Ubuntu 24.04, ROS 2 Jazzy, Gazebo Harmonic,
+MoveIt, and the control stack at recorded apt versions. ABB asset provenance is
+pinned, but the complete upstream driver is not treated as Jazzy-compatible.
+The repository is currently private at
+`https://github.com/jiajun-shen/Physical-AI-Robot-Lab`; publication decisions
+remain gated by the unresolved first-party license.
 
 ## Engineering order
 
@@ -29,6 +28,14 @@ is in `docs/phase1_abb_control_description_evidence.md`.
 2. Build verified classical skills and closed-loop task execution.
 3. Integrate VLA inference behind explicit ABB observation, action, and safety
    adapters without misrepresenting an unadapted checkpoint as ABB-ready.
+
+## Mandatory midterm hold
+
+Development proceeds autonomously through Phase 8. When Phase 8 has real-run
+evidence, the project must stop before Phase 9 and wait for the user's explicit
+midterm acceptance. All twelve M1 capabilities in `ACCEPTANCE_STATUS.md` must
+pass from saved real integrated runs on the tested final commit; code presence,
+unit tests, or static configuration are not sufficient.
 
 ## Recovery entry point
 

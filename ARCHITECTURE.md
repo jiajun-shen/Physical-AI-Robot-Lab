@@ -102,12 +102,14 @@ sets startup-only command-limit enforcement to true. The package exports its
 installed share parent as a Gazebo model resource root so converted
 `model://abb_lab_description/...` mesh URIs resolve in a clean overlay.
 
-This is a pre-runtime description contract. It contains no controller
-definitions or activation configuration, no Gazebo world/SDF or launch file,
-no motion target or invented initial state, and no MoveIt limit table, gripper,
-or real-ABB interface. Gazebo has not loaded this project description, and
-runtime enforcement/clamping is explicitly unverified. Those boundaries are
-executable tests, not only documentation.
+P1.3b adds project-owned controller definitions, a minimal headless Gazebo
+world, an ordered RSP/spawn/controller launch, and a bounded test trajectory.
+A clean run at `1228c13` loaded the model, activated JTC/JSB, observed six
+claimed position interfaces and runtime command-limit initialization, executed
+the bounded trajectory, and verified cleanup. It still contains no MoveIt
+configuration, collision-aware motion, gripper, GUI proof, real-ABB interface,
+or out-of-range clamp proof. These boundaries remain executable tests, not only
+documentation.
 
 ## Core domain contracts
 
@@ -149,6 +151,23 @@ object invalidates stale poses and returns execution to perception/planning.
 Typed recovery covers at least object-not-found, IK/planning/collision/grasp/
 trajectory failures, moved objects, VLA invalid/timeout, uncertain speech, and
 unknown instructions. Failures are never silent.
+
+## Mandatory M1 governance hold
+
+Phase 8 completion cannot directly enable Phase 9:
+
+```text
+PHASE_8_COMPLETE
+  -> M1_EVIDENCE_READY
+  -> PAUSED_AWAITING_USER_MIDTERM_ACCEPTANCE
+  -- explicit user acceptance --> PHASE_9_ALLOWED
+```
+
+`M1_EVIDENCE_READY` requires all twelve M1 entries in `ACCEPTANCE_STATUS.md`
+to pass as saved real integrated runs on the tested Phase-8-final commit. Each
+episode must preserve the TaskGraph and per-step timestamped
+`OBSERVE -> VERIFY -> CONTINUE | RETRY | REPLAN` events. The executive, a test,
+or the model cannot release the hold; only explicit user acceptance can do so.
 
 ## Safety path
 

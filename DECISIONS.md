@@ -97,3 +97,20 @@
 - P1.3a boundary (2026-08-11): No Gazebo launch, controller activation,
   trajectory, MoveIt configuration, acceleration/jerk value, or real-robot
   readiness is claimed.
+- P1.3b evidence (2026-08-11): A clean project runtime at `1228c13` verified
+  controller-manager command-limit enforcement, six limiter initializations,
+  and a bounded in-range trajectory. It does not verify out-of-range clamping,
+  collision-aware planning, GUI behavior, or real-robot safety.
+
+## ADR-0011: Mandatory M1 midterm hold before System Explorer
+
+- Status: Accepted
+- Decision: Completion of Phase 8 enters `PAUSED - AWAITING USER MIDTERM
+  ACCEPTANCE`. M1's twelve required capabilities must each have saved,
+  reproducible real integrated-run evidence on the tested Phase-8-final commit.
+  Phase 9 may begin only after the user explicitly accepts M1; tests, the task
+  executive, and automated workflows cannot release this hold.
+- Reason: System Explorer or later features must not mask an incomplete
+  manipulation, perception, speech, language, or closed-loop executive
+  baseline. The hold makes the user's hands-on midterm review a control-plane
+  decision rather than an inferred code state.
