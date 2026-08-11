@@ -4,18 +4,25 @@ A long-term robotics research repository for an ABB IRB1200-5/0.9 virtual
 laboratory, multilingual task execution, classical manipulation, and an honest
 path toward ABB-adapted vision-language-action research.
 
-The project has completed verified Phase 0, Phase 1, and Phase 2 gates. The
-project-owned ABB IRB1200 has real clean headless Gazebo Harmonic,
-ros2_control, and MoveIt evidence: the exact model spawned, six position
-interfaces were claimed, JSB/JTC became active, command limiters initialized,
-and MoveIt planned/executed a joint route plus `HOME -> FK-derived tool0 pose
--> HOME`. A planning-scene object made the target invalid and both pose and
-joint planning requests were rejected. This establishes A01 and A02 in
-headless simulation only; it does not establish a gripper, lab objects,
-perception, pick/place, drawing, speech, TaskGraph execution, VLA readiness,
-GUI behavior, or real-robot safety. See `PROJECT_STATE.md`,
-`ACCEPTANCE_STATUS.md`, and
-`docs/phase2_moveit_runtime_evidence.md` for exact evidence.
+The project has completed verified Phase 0, Phase 1, Phase 2, and the scoped
+Phase-3 gripper/live-laboratory gate. The project-owned ABB IRB1200 has real
+clean headless Gazebo Harmonic, ros2_control, and MoveIt evidence: the exact
+model spawned, six position interfaces were claimed, JSB/JTC became active,
+command limiters initialized, and MoveIt planned/executed a joint route plus
+`HOME -> FK-derived tool0 pose -> HOME`. A planning-scene object made the
+target invalid and both pose and joint planning requests were rejected.
+
+Phase 3 then ran the ABB-with-gripper profile in two separately launched,
+clean seeded Gazebo worlds (seeds 42 and 43) on commit `f6907ff`. Both runs
+observed the ten required laboratory models and captured their live Gazebo
+poses, proved material seeded object-position variation and directional-cube
+yaw variation, and completed a real free-space gripper
+`open -> closed clearance -> reopen` action sequence with mirrored finger
+states. This is not a contact, force, attachment, grasp, arm-in-lab MoveIt,
+perception, pick/place, GUI, or real-robot result. A03, A04, and M1.04 remain
+`NOT STARTED`. The project is now paused for the user's explicit Phase-3
+acceptance; see `PROJECT_STATE.md`, `ACCEPTANCE_STATUS.md`, and
+`docs/phase3_gripper_lab_runtime_evidence.md`.
 
 The clean P2.2 run found no residual owned process, but observed the installed
 `move_group` process exit with SIGSEGV during requested teardown. That is
@@ -35,6 +42,13 @@ remain gated by the unresolved first-party license.
 2. Build verified classical skills and closed-loop task execution.
 3. Integrate VLA inference behind explicit ABB observation, action, and safety
    adapters without misrepresenting an unadapted checkpoint as ABB-ready.
+
+## Phase-3 acceptance hold
+
+Phase 3 is `PAUSED - AWAITING USER PHASE-3 ACCEPTANCE`. Phase 4 must not begin
+until the user explicitly accepts the saved final Phase-3 real-run evidence.
+This earlier hold releases, at most, later Phase-4--8 work; it does not mark
+any M1 item as passed or replace the separate Phase-8 M1 hold below.
 
 ## Mandatory midterm hold
 

@@ -19,7 +19,7 @@ Phase 9 work begins.
 | 0 | Repository, host/dependency audit, architecture | Reports verified; baseline commits; no unsupported compatibility claims |
 | 1 | ABB IRB1200 + Gazebo + ros2_control | Real project ABB model spawns; six joints identified; controller exchanges actual joint state/trajectory |
 | 2 | MoveIt + collision-aware planning | Joint and pose targets plan and execute with planning-scene collision checks |
-| 3 | Modular two-finger gripper + randomized lab objects | Command/state/collision model works; deterministic seeded scene |
+| 3 | Modular two-finger gripper + randomized lab objects | Real free-space command/state profile; two selected seeded worlds actually launch with saved live Gazebo-pose variation evidence; contact/grasp remains a later criterion |
 | 4 | RGB-D perception | Real RGB/depth projection and TF transform locate required objects in vision mode |
 | 5 | Verified pick/place | Multi-stage collision-aware grasp succeeds over multiple seeds |
 | 6 | Parametric drawing | Generated Cartesian heart/path executes; scale changes geometry |
@@ -60,9 +60,27 @@ Phase 9 work begins.
    rejection before marking A02 `PASS`. No owned process remained, but the
    installed `move_group` process had a SIGSEGV during requested teardown;
    this remains KI-012, not a graceful-cleanup claim.
-7. `P3.1` modular two-finger gripper and first live laboratory objects: next.
-   It must establish a project-owned gripper command/state/collision contract
-   and a reproducible running world before attempting pick/place.
+7. `P3.1` modular two-finger gripper and live laboratory objects: `COMPLETE`
+   on final clean commit `f6907ff6b6a4ed2ea91c4c21af68f4b78eb60d63`.
+   Separate real headless runs selected seeds 42 and 43, each captured the ten
+   expected live Gazebo model poses after a real free-space
+   `ParallelGripperCommand` open/close/open sequence. Their comparison proves
+   live position variation for the seeded objects/obstacles and yaw variation
+   for both directional cubes. This is position-only gripper evidence: no
+   contact, force, attachment, grasp, arm-in-lab MoveIt execution, or
+   pick/place was claimed. See `docs/phase3_gripper_lab_runtime_evidence.md`.
+8. Phase-3 acceptance hold: `PAUSED - AWAITING USER PHASE-3 ACCEPTANCE`.
+   Do not begin Phase 4 until the user explicitly accepts the final Phase-3
+   evidence. This local hold does not satisfy or release M1.
+
+## Phase-3 release rule
+
+After the final Phase-3 real-run evidence is complete, the project state is
+`PAUSED - AWAITING USER PHASE-3 ACCEPTANCE`. Phase 4 may begin only after the
+user explicitly accepts the Phase-3 review. The evidence must remain tied to
+the tested clean commit and include the selected live Gazebo scenes rather than
+only generated manifest/SDF files. This release permits no claim about
+perception, contact, grasp, pick/place, or any M1 row.
 
 ## M1 release rule
 

@@ -6,25 +6,28 @@ Physical-AI-Robot-Lab
 
 ## Current phase
 
-Phase 3 - modular two-finger gripper + live laboratory objects (`NOT STARTED`)
+Phase 3 - modular two-finger gripper + live laboratory objects (`COMPLETED`)
+
+Project state: `PAUSED - AWAITING USER PHASE-3 ACCEPTANCE`.
 
 ## Current subtask
 
-Start `P3.1`: design a project-owned two-finger gripper and its Gazebo/
-ros2_control command, state, collision, and attachment boundary. The first live
-laboratory world must be reproducible before claiming grasp or pick/place.
+Stop at the completed Phase-3 acceptance gate. Do not start Phase 4 until the
+user explicitly accepts the saved Phase-3 real-run evidence. This is an earlier
+project hold and does not replace the later mandatory M1 hold after Phase 8.
 
 ## Git checkpoints
 
-- Latest runtime-qualified feature commit: `4203e81508f91b651eb8f55e663c74f21b8ff5b0`
-- Stable feature commit: `4203e81508f91b651eb8f55e663c74f21b8ff5b0`
+- Latest runtime-qualified feature commit: `f6907ff6b6a4ed2ea91c4c21af68f4b78eb60d63`
+- Stable feature commit: `f6907ff6b6a4ed2ea91c4c21af68f4b78eb60d63`
 - Experimental commit: none
 - Current branch: `main` tracking `origin/main`
 - Remote: `https://github.com/jiajun-shen/Physical-AI-Robot-Lab.git` (private)
 
-The P2.2 feature has a clean, commit-addressable runtime gate. The evidence
-checkpoint records both the functional A02 result and the observed abnormal
-MoveIt teardown, so later phases cannot silently reinterpret either condition.
+The Phase-3 final evidence is clean and commit-addressable: two separately
+launched selected seeds captured their live Gazebo model poses on the same
+commit. It remains a gripper/laboratory gate, not an implicit contact, grasp,
+perception, or MoveIt-with-gripper result.
 
 ## Working features
 
@@ -40,6 +43,16 @@ MoveIt teardown, so later phases cannot silently reinterpret either condition.
   existing JTC action mapping. Its headless integration launch adds one
   `move_group` to the already owned Gazebo controller chain; it never starts a
   second controller manager.
+- `abb_lab_gripper` adds an isolated ABB-with-two-finger simulation profile:
+  one commanded right prismatic finger, one state-only mirrored left finger,
+  and the existing safety parameter file ahead of gripper controller policy.
+- `abb_lab_lab` supplies a static default laboratory template plus an explicit
+  deterministic external scene generator; it is the generator/harness, not the
+  default launch alone, that selects randomized scenes.
+- `abb_lab_bringup` starts the separate gripper/lab profile with one
+  Gazebo-hosted controller manager and the JSB -> arm JTC -> gripper action
+  controller sequence. It selects Bullet Featherstone only for this mimicked
+  gripper profile.
 - A project-owned ABB IRB1200 spawned in Gazebo as `abb_irb1200`; six position
   command interfaces were claimed, JTC/JSB were active, command-limit
   enforcement initialized, and an observed trajectory completed.
@@ -82,12 +95,29 @@ MoveIt teardown, so later phases cannot silently reinterpret either condition.
     source manifest `ad0b91e8dc33641893fc98c2e8aebaa995d90e996944e37b41fe977b09abb968`
     matched before and after the run.
   - A02 is `PASS`; see `docs/phase2_moveit_runtime_evidence.md`.
+- Phase 3 final gripper/laboratory runtime at `f6907ff`.
+  - Two independent clean headless runs selected seeds 42 and 43, with the
+    same source manifest
+    `63e531b1a67c42132d434ef721cb5c9b076df8a8781d58e385d121ea039b0736`.
+  - Each run had one active `GazeboSimSystem`, seven claimed position command
+    interfaces, 22 state interfaces, active JSB/JTC/gripper controller, and
+    command-limit enforcement.
+  - Each run captured all ten required live Gazebo model names and poses after
+    a real free-space gripper open/closed-clearance/reopen action sequence.
+  - The independent comparison of the two live captures proved material
+    position variation for two obstacles and four objects and directional yaw
+    variation for both cubes. It did not infer the scene from an SDF or
+    manifest.
+  - Each run had 82 colcon test records with zero errors, failures, or skips;
+    cleanup passed. See `docs/phase3_gripper_lab_runtime_evidence.md`.
 
 ## Partially completed features
 
-- Headless MoveIt planning/execution and collision rejection are verified, but
-  GUI validation, a gripper, live lab objects, perception, pick/place, and an
-  out-of-range clamp probe remain unverified.
+- Headless MoveIt planning/execution and collision rejection are verified, and
+  Phase 3 verified a position-only free-space gripper plus two live seeded lab
+  scenes. GUI validation, RGB-D perception, contact/force/attachment/grasp,
+  arm/MoveIt execution in the gripper lab, pick/place, and an out-of-range
+  clamp probe remain unverified.
 - Runtime command-limit initialization and the bounded in-range control chain
   are verified. Clamp behavior remains explicitly unverified.
 - WSLg endpoints and RViz exist, but real 3D GUI rendering is untested.
@@ -114,6 +144,15 @@ MoveIt teardown, so later phases cannot silently reinterpret either condition.
     acceptance tolerances.
   - 58 colcon records passed. No owned process remained, but requested
     teardown observed `move_group` SIGSEGV; see KI-012.
+- Phase-3 final clean runtime: PASS at `f6907ff` for selected seeds 42 and 43.
+  - Both were clean-worktree, 82-record runs; both passed ABB/gripper spawn,
+    control resources, active controllers, live ten-model pose capture,
+    free-space gripper action, and cleanup.
+  - The comparison artifact independently re-parsed live Gazebo poses and
+    proved position variation for the two obstacles and four movable objects,
+    plus yaw variation for `blue_cube` and `yellow_cube`.
+  - `GRASP_STATE=NOT_DETERMINED_NO_CONTACT_EVIDENCE`, force control is not
+    configured, and attachment is not implemented in both runs.
 - A01-A02: PASS. A03-A14: NOT STARTED.
 - P2.1 clean static configuration: PASS at `281c36b`.
   - `rosdep check`: PASS.
@@ -122,17 +161,21 @@ MoveIt teardown, so later phases cannot silently reinterpret either condition.
 
 ## Current build status
 
-The clean P2.2 gate built and tested `abb_lab_description`, `abb_lab_control`,
-`abb_lab_gazebo`, and `abb_lab_moveit_config` on ext4. Generated
-build/install/log trees and runtime episodes remain outside Git. The next work
-package starts gripper/world work without weakening the established MoveIt
-controller ownership contract.
+The final Phase-3 gates each built and tested `abb_lab_description`,
+`abb_lab_control`, `abb_lab_gazebo`, `abb_lab_moveit_config`,
+`abb_lab_gripper`, `abb_lab_lab`, and `abb_lab_bringup` on ext4. Generated
+build/install/log trees and runtime episodes remain outside Git. The phase is
+complete at the user-approved foundational gripper-and-objects scope and the
+project is paused rather than starting Phase 4.
 
 ## Current run status
 
 - Project ABB headless Gazebo spawn/control: verified.
 - Project MoveIt planning/execution and collision rejection: verified in
   headless simulation at `4203e81`.
+- Project gripper/laboratory profile: verified as free-space position action
+  plus captured live selected-seed variation at `f6907ff`; no arm motion,
+  contact, force, attachment, or grasp claim.
 - Project GUI rendering: not run.
 - Project out-of-range clamp injection: not run.
 - VLA backend: `VLA_BACKEND_UNAVAILABLE`.
@@ -146,14 +189,32 @@ controller ownership contract.
 - ABB inertials are estimates and efforts are fictional. No acceleration or jerk
   limits are claimed.
 - The clean P2.2 run validated a headless collision scene, but not GUI,
-  gripper, perception, physical effort behavior, out-of-range clamp, or a real
-  robot.
+  physical effort behavior, out-of-range clamp, or a real robot. P3 later
+  added an isolated free-space gripper/lab profile, not a MoveIt-with-gripper
+  execution.
+- Phase 3 is complete only at the user-approved foundational gripper-and-live-
+  objects boundary. There is no valid finger-force signal, contact sensor,
+  attachment, grasp inference, lift, transport, RGB-D observation, or
+  pick/place result; see KI-013.
+- The P3 final runs show step-goal position-rate limiter interventions. They
+  are not an out-of-range clamp probe or a general clamp behavior claim.
+- The default lab launch is static; only the explicit generator/harness selects
+  the seeded worlds used in the final evidence.
 - The installed `move_group` process had SIGSEGV during requested P2.2 teardown
   despite no residual owned processes; this is KI-012 and is not a graceful
   cleanup result.
 - The GitHub repository remains private while the first-party license is open.
 - Final first-party license, speech-model pin, and VLA GPU service location are
   open design decisions.
+
+## Mandatory Phase-3 acceptance hold
+
+Phase 3 is complete at the user-approved foundational gripper-and-objects
+scope. Its state is `PAUSED - AWAITING USER PHASE-3 ACCEPTANCE`. Phase 4 must
+not begin until the user explicitly accepts the final two-seed real-run
+evidence. A passing test, source code, or a model cannot release this hold.
+This earlier authorization does not make a contact/grasp claim and does not
+modify the separate Phase-8 M1 stop condition below.
 
 ## Mandatory M1 stop condition
 
@@ -188,10 +249,11 @@ ros2_control 4.45.2, gz_ros2_control 1.2.19, ros2_controllers 4.40.1, MoveIt
 
 ## Next exact steps
 
-1. Write the P3.1 gripper/world architecture and failing contracts: exact
-   gripper interfaces, ownership, collision geometry, and a deterministic
-   seeded lab scene.
-2. Add a project-owned two-finger gripper model/control path without adding a
-   second controller manager or claiming a grasp before contact evidence exists.
-3. Run a clean headless gripper open/close and live-world identity gate; keep
-   A03-A14 unchanged until their own real-run criteria are met.
+1. Wait for the user's explicit Phase-3 acceptance. Do not begin Phase 4
+   perception work before it is received.
+2. On acceptance, begin Phase 4 with RGB-D/CameraInfo/TF evidence that does
+   not consume Gazebo ground truth; keep A03 `NOT STARTED` until that real
+   vision-mode acceptance runs.
+3. Preserve the Phase-8 M1 hold unchanged: even after any later Phase-4--8
+   work, Phase 9 requires final integrated M1 evidence and separate explicit
+   user acceptance.

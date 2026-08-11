@@ -6,8 +6,8 @@
 | 0 Repository/environment/architecture | COMPLETE | Reports verified and committed at `eb1b8e8` |
 | 1 ABB + Gazebo + ros2_control | COMPLETE | A01 clean project runtime gate passed at `1228c13` |
 | 2 MoveIt + planning | COMPLETE | A02 clean real `move_group` plan/execution plus planning-scene collision rejection passed at `4203e81`; teardown SIGSEGV remains KI-012 |
-| 3 Gripper + objects | NOT STARTED | Modular gripper and deterministic solvable seeded world verified |
-| 4 Perception | NOT STARTED | Green sphere localized only from RGB-D and transformed by TF2 |
+| 3 Gripper + objects | COMPLETE / AWAITING USER ACCEPTANCE | Final clean runs at `f6907ff` launched and captured live Gazebo poses for distinct selected seeds 42 and 43; free-space gripper action and live scene variation passed. No contact/grasp claim. |
+| 4 Perception | BLOCKED BY PHASE-3 ACCEPTANCE | May start only after the user explicitly accepts the final Phase-3 evidence; then green sphere must be localized only from RGB-D and transformed by TF2. |
 | 5 Pick/place | NOT STARTED | Green sphere placed next to red sphere across multiple seeds |
 | 6 Drawing | NOT STARTED | Mathematical Cartesian heart path executes on board |
 | 7 Speech | NOT STARTED | zh/en/fr microphone commands normalize and execute |
@@ -24,4 +24,6 @@
 
 Detailed atomic next commands live in `PROJECT_STATE.md`. A phase stays
 `PARTIAL` until it is implemented, built, tested, run, inspected, documented,
-and committed. M1 is stricter: code or unit tests alone cannot advance it.
+and committed. Phase 3 is now paused pending explicit user acceptance; this
+does not change the later M1 rule. M1 is stricter: code or unit tests alone
+cannot advance it.

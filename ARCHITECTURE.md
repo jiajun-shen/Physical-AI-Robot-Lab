@@ -41,10 +41,13 @@ Physical-AI-Robot-Lab/
   scripts/
   ros2_ws/src/
     physical_ai_interfaces/       # msg, srv, action contracts
-    abb_lab_description/          # upstream ABB composition + modular gripper
-    abb_lab_gazebo/               # Harmonic worlds, spawning, randomization
+    abb_lab_description/          # pinned ABB geometry + arm-only composition
+    abb_lab_gazebo/               # minimal arm-only Harmonic profile
     abb_lab_control/              # ros2_control and hardware abstraction
     abb_lab_moveit_config/        # SRDF, solvers, controllers, planning scene
+    abb_lab_gripper/              # isolated two-finger control/geometry profile
+    abb_lab_lab/                  # static lab template + external seed generator
+    abb_lab_bringup/              # one-manager ABB-with-gripper lab launch
     physical_ai_perception/       # RGB-D backends and TF-aware poses
     physical_ai_world_model/      # observed robot/object/surface state
     physical_ai_skills/           # schema-driven verified actions
@@ -130,6 +133,31 @@ live joint state/FK and the collision object is read back after both addition
 and removal. The known teardown SIGSEGV is recorded separately as KI-012; it is
 not treated as graceful cleanup or as physical-robot evidence.
 
+## Implemented Phase-3 gripper and live-laboratory profile
+
+P3 is an additional profile, not a modification of the arm-only P1/P2 launch.
+`abb_lab_gripper` composes the pinned ABB description with project-owned
+two-finger primitives. The right prismatic finger is the sole commanded finger
+and the left finger is state-only with a `-1` URDF mimic relationship. The
+combined profile still has one Gazebo-hosted `GazeboSimSystem` and one
+controller manager: six arm position commands plus the right-finger position
+command, with an arm JTC and a separate `ParallelGripperCommand` controller.
+
+The left-finger mimic makes
+`gz-physics-bullet-featherstone-plugin` a profile-only launch requirement:
+Gazebo's default DART engine does not implement this mimic constraint. This is
+not a project-wide physics-engine switch and no cross-engine or physical
+gripper equivalence is inferred.
+
+`abb_lab_lab` contains a static default `manipulation_lab` template, while its
+separate generator produces external seed-specific SDF/manifest copies. The
+default launch does not randomize on its own. The final P3 evidence explicitly
+generated and launched separate seed-42 and seed-43 worlds, then captured each
+live model pose with Gazebo queries after free-space gripper actions. It proves
+live seeded scene variation, but not perception, live collision-shape
+inspection, MoveIt-with-gripper arm execution, force/contact, attachment,
+grasp, lifting, or pick/place.
+
 ## Core domain contracts
 
 - `SpeechCommand`: transcript, detected language, confidence, timestamp.
@@ -170,6 +198,15 @@ object invalidates stale poses and returns execution to perception/planning.
 Typed recovery covers at least object-not-found, IK/planning/collision/grasp/
 trajectory failures, moved objects, VLA invalid/timeout, uncertain speech, and
 unknown instructions. Failures are never silent.
+
+## Mandatory Phase-3 acceptance hold
+
+The user-approved foundational P3 scope is complete only after saved clean
+real runs of the gripper and live seeded laboratory. Its completion state is
+`PAUSED - AWAITING USER PHASE-3 ACCEPTANCE`. Phase 4 cannot be created or run
+until the user explicitly accepts P3. This release is limited to Phase 4--8
+work and neither supplies contact/grasp evidence nor releases the separate M1
+hold below.
 
 ## Mandatory M1 governance hold
 
