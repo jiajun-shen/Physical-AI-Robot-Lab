@@ -142,6 +142,8 @@ intentional integer-ratio configuration, not a failed controller cycle. The
 hardware subsequently reaches active state and the full observation/action
 gate passes; none of these warnings is hidden.
 
-This evidence does not establish collision checking, Home -> Pose -> Home,
-MoveIt readiness, GUI rendering, physical effort fidelity, derivative limits,
-out-of-range clamping, or real-robot safety. A02-A14 remain `NOT STARTED`.
+This P1 evidence does not itself establish collision checking, Home -> Pose ->
+Home, MoveIt readiness, GUI rendering, physical effort fidelity, derivative
+limits, out-of-range clamping, or real-robot safety. At its tested commit A02-
+A14 were `NOT STARTED`; P2.2 later established the separate headless A02 gate
+in `docs/phase2_moveit_runtime_evidence.md`.

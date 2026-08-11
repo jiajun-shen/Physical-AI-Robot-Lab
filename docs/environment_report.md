@@ -205,8 +205,10 @@ remains the historical pre-install observation.
 - Gazebo Harmonic gz-sim 8.11.0: installed and headless execution verified.
 - ros_gz / gz_ros2_control / ros2_control / ros2_controllers: installed; an
   upstream trajectory action and resulting joint state were verified.
-- MoveIt 2.12.4 and MoveIt Task Constructor 0.1.5: installed and discoverable;
-  no project planning task has run yet.
+- MoveIt 2.12.4 and MoveIt Task Constructor 0.1.5: installed and discoverable.
+  At this Phase 0/1 report checkpoint no project planning task had run; the
+  later clean P2.2 MoveIt plan/execution and collision-rejection evidence is
+  recorded separately in `docs/phase2_moveit_runtime_evidence.md`.
 - Docker and CUDA Toolkit remain unavailable.
 
 Exact versions and executable evidence are in

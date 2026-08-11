@@ -12,7 +12,7 @@ must be captured again immediately before installation.
 | Robotics OS | Ubuntu 24.04.4 Noble WSL2 | `/etc/os-release` | Installed | ADOPTED |
 | ROS | ROS 2 Jazzy Desktop | apt `0.11.0-1noble.20260412.072512` | Installed, CLI verified | ADOPTED |
 | Simulator bridge | `ros-jazzy-ros-gz` / Harmonic vendor packages | apt `1.0.22-1noble.20260616.074726` | Installed; gz-sim 8.11.0 headless smoke | VERIFIED DEPENDENCY |
-| Motion planning | `ros-jazzy-moveit` | apt `2.12.4-1noble.20260617.161956` | Installed/package prefix verified; no project plan run | INSTALLED |
+| Motion planning | `ros-jazzy-moveit` | apt `2.12.4-1noble.20260617.161956` | Installed; clean project P2.2 plan/execution and collision-rejection run at `4203e81` | VERIFIED RUNTIME |
 | Task composition | MoveIt Task Constructor | apt core `0.1.5-1noble.20260617.153812` | Installed/package prefix verified | INSTALLED |
 | Simulation control | `ros-jazzy-gz-ros2-control` | apt `1.2.19-1noble.20260615.171757` | Installed; controller/action/joint-state smoke passed | VERIFIED DEPENDENCY |
 | Controllers | ros2_controllers / joint trajectory controller | apt meta `4.40.1-1noble.20260616.074625` | Installed; trajectory action passed | VERIFIED DEPENDENCY |

@@ -53,9 +53,16 @@ Phase 9 work begins.
    `281c36b`; six-joint semantics, canonical position/velocity limits, KDL,
    OMPL collision adapters, and the existing JTC action mapping pass installed
    static tests without claiming planning or execution.
-6. `P2.2` headless MoveIt/Gazebo integration: next. It must prove valid joint
-   and pose plan/execution plus intentional collision rejection before A02 can
-   change.
+6. `P2.2` headless MoveIt/Gazebo integration: `COMPLETE`, committed at
+   `4203e81`; a clean real run used one existing Gazebo/controller-manager
+   chain plus one `move_group`, planned/executed a joint route and
+   `HOME -> FK-derived tool0 Pose -> HOME`, and proved planning-scene collision
+   rejection before marking A02 `PASS`. No owned process remained, but the
+   installed `move_group` process had a SIGSEGV during requested teardown;
+   this remains KI-012, not a graceful-cleanup claim.
+7. `P3.1` modular two-finger gripper and first live laboratory objects: next.
+   It must establish a project-owned gripper command/state/collision contract
+   and a reproducible running world before attempting pick/place.
 
 ## M1 release rule
 

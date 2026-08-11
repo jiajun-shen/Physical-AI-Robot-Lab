@@ -81,7 +81,7 @@ Physical-AI-Robot-Lab/
 The layout is a target architecture, not a claim that these packages exist.
 Packages are created only in tested atomic increments.
 
-## Implemented Phase 1 slice
+## Implemented Phase 1-2 baseline
 
 `abb_lab_description` installs a full-SHA/SHA-256-locked ABB IRB1200-5/0.9
 asset subset under project-local resource URIs. Its immutable geometry entry
@@ -111,14 +111,24 @@ configuration, collision-aware motion, gripper, GUI proof, real-ABB interface,
 or out-of-range clamp proof. These boundaries remain executable tests, not only
 documentation.
 
-P2.1 adds `abb_lab_moveit_config` as a declarative arm-only overlay. Its SRDF
+P2.1 added `abb_lab_moveit_config` as a declarative arm-only overlay. Its SRDF
 defines exactly `manipulator` from `base_link` to `tool0`; its planning limits
 mirror the canonical position/velocity table and intentionally omit unverified
 dynamic limits. A single OMPL pipeline includes start-state collision checking
 and solution validation, and the controller map points to the existing JTC
-action without allowing MoveIt to create another controller manager. The
-package has no launch, plan, or execution evidence; those are P2.2 runtime
-responsibilities.
+action without allowing MoveIt to create another controller manager.
+
+P2.2 adds a headless integration launch and an installed runtime verifier. It
+reuses the one Gazebo/`gz_ros2_control` controller-manager chain from P1.3b and
+adds only one `move_group`. On clean commit `4203e81`, MoveIt planned and
+executed a normal joint route and `HOME -> FK-derived tool0 pose -> HOME`, then
+rejected pose and joint plans into a synchronously applied planning-scene
+collision object. Successful geometric plans are conservatively retimed only
+from verified canonical velocity limits; no acceleration, deceleration, or jerk
+authority is invented. The normal endpoint and returned HOME are checked with
+live joint state/FK and the collision object is read back after both addition
+and removal. The known teardown SIGSEGV is recorded separately as KI-012; it is
+not treated as graceful cleanup or as physical-robot evidence.
 
 ## Core domain contracts
 

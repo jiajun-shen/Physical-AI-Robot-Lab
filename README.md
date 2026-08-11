@@ -4,18 +4,23 @@ A long-term robotics research repository for an ABB IRB1200-5/0.9 virtual
 laboratory, multilingual task execution, classical manipulation, and an honest
 path toward ABB-adapted vision-language-action research.
 
-The project has completed its verified Phase 0 audit and is in Phase 1. The
-project-owned ABB IRB1200 now has a real, clean, headless Gazebo Harmonic and
-ros2_control runtime result: the exact model spawned, six position interfaces
-were claimed, joint-state and trajectory controllers became active, command
-limiters initialized, a bounded six-axis trajectory returned `SUCCEEDED` with
-`error_code: 0`, and cleanup was verified. This establishes A01 only; it does
-not establish MoveIt planning, collision avoidance, a gripper, perception,
-speech, TaskGraph execution, VLA readiness, GUI behavior, or real-robot safety.
-An arm-only MoveIt configuration contract is installed and static-tested, but
-its real `move_group` planning/execution integration remains the next gate.
-See `PROJECT_STATE.md`, `ACCEPTANCE_STATUS.md`, and
-`docs/phase1_abb_gazebo_control_runtime_evidence.md` for exact evidence.
+The project has completed verified Phase 0, Phase 1, and Phase 2 gates. The
+project-owned ABB IRB1200 has real clean headless Gazebo Harmonic,
+ros2_control, and MoveIt evidence: the exact model spawned, six position
+interfaces were claimed, JSB/JTC became active, command limiters initialized,
+and MoveIt planned/executed a joint route plus `HOME -> FK-derived tool0 pose
+-> HOME`. A planning-scene object made the target invalid and both pose and
+joint planning requests were rejected. This establishes A01 and A02 in
+headless simulation only; it does not establish a gripper, lab objects,
+perception, pick/place, drawing, speech, TaskGraph execution, VLA readiness,
+GUI behavior, or real-robot safety. See `PROJECT_STATE.md`,
+`ACCEPTANCE_STATUS.md`, and
+`docs/phase2_moveit_runtime_evidence.md` for exact evidence.
+
+The clean P2.2 run found no residual owned process, but observed the installed
+`move_group` process exit with SIGSEGV during requested teardown. That is
+open KI-012, not a graceful-shutdown claim, and must be resolved or otherwise
+qualified before M1/Phase 16 hardening.
 
 The local WSL2 installation has Ubuntu 24.04, ROS 2 Jazzy, Gazebo Harmonic,
 MoveIt, and the control stack at recorded apt versions. ABB asset provenance is

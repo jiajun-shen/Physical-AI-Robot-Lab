@@ -8,9 +8,11 @@
 
 ## Delivered configuration contract
 
-`abb_lab_moveit_config` is a first-party, arm-only package. It contains no
-Gazebo launch, no controller-manager process, no fake hardware, no gripper, and
-no execution claim.
+At the P2.1 tested commit, `abb_lab_moveit_config` was a first-party, arm-only
+declarative package. It contained no Gazebo launch, controller-manager process,
+fake hardware, gripper, or execution claim. P2.2 later added a separate
+headless integration launch and runtime verifier; see
+`docs/phase2_moveit_runtime_evidence.md` for the distinct real-run evidence.
 
 - The semantic model is `abb_irb1200_5_90_gz_control`, matching the project
   Gazebo-control URDF.
@@ -56,15 +58,22 @@ Results:
 
 ## Non-claims and P2.2 gate
 
-P2.1 is not a MoveIt planning or execution run. It does not change A02, which
-remains `NOT STARTED`.
+P2.1 itself was not a MoveIt planning or execution run and did not change A02.
+That historical boundary remains important even though P2.2 subsequently
+established A02 through a separate clean integrated run.
 
-P2.2 must run the project headless Gazebo/runtime with `move_group` and prove
-all of the following on a clean tested commit:
+The P2.2 gate was defined to run the project headless Gazebo/runtime with
+`move_group` and prove all of the following on a clean tested commit:
 
 1. a valid joint target and valid `tool0` pose target each plan and execute;
 2. HOME -> specified Pose -> HOME is observed through the real controller and
    `/joint_states`;
 3. an intentionally colliding scene/goal is rejected by planning-scene
    collision checking; and
-4. process cleanup is verified without starting a duplicate controller manager.
+4. owned-process cleanup is checked and reported without starting a duplicate
+   controller manager.
+
+The resulting clean run is recorded in
+`docs/phase2_moveit_runtime_evidence.md`. Its cleanup report is deliberately
+qualified: no owned process survived, but `move_group` had an abnormal SIGSEGV
+during requested teardown, so it is not represented as graceful shutdown.

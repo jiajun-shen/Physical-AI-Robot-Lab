@@ -114,3 +114,20 @@
   manipulation, perception, speech, language, or closed-loop executive
   baseline. The hold makes the user's hands-on midterm review a control-plane
   decision rather than an inferred code state.
+
+## ADR-0012: Retiming MoveIt trajectories from verified velocity limits only
+
+- Status: Accepted
+- Decision: For the P2.2 simulation verifier, omit MoveIt's time-optimal
+  response adapter because the project has no verified acceleration,
+  deceleration, or jerk authority. Retiming occurs after successful geometric
+  planning using only the canonical six-axis velocity limits, a conservative
+  safety factor, and a finite segment-duration floor; derivative arrays remain
+  empty.
+- Reason: Adding invented dynamic limits merely to satisfy a time-parameterizer
+  would create an unsupported safety/physical claim. The clean `4203e81`
+  runtime evidence records this velocity-only policy and
+  `acceleration_limits_used: false`.
+- Boundary: This schedules simulation trajectories conservatively; it does not
+  validate actuator dynamics, physical ABB timing, or out-of-range clamp
+  behavior.

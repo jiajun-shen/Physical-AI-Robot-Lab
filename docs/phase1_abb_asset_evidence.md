@@ -149,6 +149,8 @@ successful summaries, not failures.
 
 ## Acceptance boundary
 
-This evidence establishes `IRB1200_ASSET_CONTRACT=PASS`. It is not A01. A01 and
-all other acceptance items remain `NOT STARTED` until an actual ABB model is
-spawned and observed in Gazebo under the project runtime.
+This evidence establishes `IRB1200_ASSET_CONTRACT=PASS`. At this historical
+asset checkpoint it was not A01, and all acceptance items were `NOT STARTED`
+until an actual ABB model could be spawned and observed under the project
+runtime. Later acceptance status, including the separate P2.2 A02 evidence,
+is tracked in `ACCEPTANCE_STATUS.md`.

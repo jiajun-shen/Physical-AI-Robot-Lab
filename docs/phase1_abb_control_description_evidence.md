@@ -171,4 +171,6 @@ simulation, or robot motion. P1.3b must add the minimal world, controller
 configuration, headless launch, resource/controller inspection, and a bounded
 observed trajectory. That in-range trajectory proves the control chain only;
 runtime limiter initialization and an out-of-range clamp probe need their own
-evidence. A01 and A02-A14 remain `NOT STARTED`.
+evidence. At this historical static-description checkpoint A01 and A02-A14
+were `NOT STARTED`; later runtime evidence is tracked separately in the
+acceptance ledger.

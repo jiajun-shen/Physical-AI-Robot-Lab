@@ -104,5 +104,7 @@ ros2_control, and MoveIt limits before any ABB motion is accepted.
 ## Acceptance status
 
 This smoke proves the selected Gazebo Harmonic ↔ gz_ros2_control ↔ controller ↔
-action ↔ joint-state dependency chain works on the host. It does not spawn an
-ABB robot, so A01 and all other acceptance tests remain `NOT STARTED`.
+action ↔ joint-state dependency chain works on the host. At this historical
+dependency checkpoint it did not spawn an ABB robot, so A01 and all other
+acceptance tests remained `NOT STARTED`. Later real-run status is tracked in
+`ACCEPTANCE_STATUS.md`.

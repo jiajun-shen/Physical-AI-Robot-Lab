@@ -6,25 +6,25 @@ Physical-AI-Robot-Lab
 
 ## Current phase
 
-Phase 1 - ABB IRB1200 + Gazebo Harmonic + ros2_control (`IN PROGRESS`)
+Phase 3 - modular two-finger gripper + live laboratory objects (`NOT STARTED`)
 
 ## Current subtask
 
-Start `P2.2`: integrate the project MoveIt configuration with the already
-running headless ABB simulation. Do not mark A02 until a clean real run proves
-valid joint/pose plan-and-execute behavior and intentional collision rejection.
+Start `P3.1`: design a project-owned two-finger gripper and its Gazebo/
+ros2_control command, state, collision, and attachment boundary. The first live
+laboratory world must be reproducible before claiming grasp or pick/place.
 
 ## Git checkpoints
 
-- Latest known-good commit: `281c36bafd543d47752deb91d8743b09c3772644`
-- Stable commit: `281c36bafd543d47752deb91d8743b09c3772644`
+- Latest runtime-qualified feature commit: `4203e81508f91b651eb8f55e663c74f21b8ff5b0`
+- Stable feature commit: `4203e81508f91b651eb8f55e663c74f21b8ff5b0`
 - Experimental commit: none
 - Current branch: `main` tracking `origin/main`
 - Remote: `https://github.com/jiajun-shen/Physical-AI-Robot-Lab.git` (private)
 
-The P1.3b feature has a clean, commit-addressable runtime gate. Commit the
-evidence/state checkpoint before P2.1 begins so that the runtime evidence and
-M1 stop condition are immutable on `main`.
+The P2.2 feature has a clean, commit-addressable runtime gate. The evidence
+checkpoint records both the functional A02 result and the observed abnormal
+MoveIt teardown, so later phases cannot silently reinterpret either condition.
 
 ## Working features
 
@@ -37,12 +37,15 @@ M1 stop condition are immutable on `main`.
   spawn/RSP/controller startup sequence.
 - `abb_lab_moveit_config` supplies an arm-only six-joint SRDF, canonical
   position/velocity planning limits, KDL, a single OMPL pipeline, and the exact
-  existing JTC action mapping. It has no launch or execution claim.
+  existing JTC action mapping. Its headless integration launch adds one
+  `move_group` to the already owned Gazebo controller chain; it never starts a
+  second controller manager.
 - A project-owned ABB IRB1200 spawned in Gazebo as `abb_irb1200`; six position
   command interfaces were claimed, JTC/JSB were active, command-limit
   enforcement initialized, and an observed trajectory completed.
-- The full `main` history through `1228c13` is pushed to the private GitHub
-  repository under `jiajun-shen`.
+- The project is maintained on the private GitHub repository under
+  `jiajun-shen`; clean runtime checkpoints are pushed after their evidence and
+  state records are committed.
 
 ## Completed features
 
@@ -65,13 +68,26 @@ M1 stop condition are immutable on `main`.
   - Clean build/test: 3 packages, 45 records, zero errors/failures/skips.
   - The installed MoveIt builder expanded the runtime Xacro and verified the
     URDF/SRDF chain, canonical limits, collision adapters, and JTC mapping.
-  - This is not planning/execution evidence; A02 remains `NOT STARTED`.
+  - This historical static gate was not planning/execution evidence.
+- P2.2 clean headless MoveIt runtime at `4203e81`.
+  - Clean verifier completion: 2026-08-11 17:01:57 +0200.
+  - One existing `GazeboSimSystem`/controller manager, active JSB/JTC, and one
+    ready `move_group` were observed.
+  - MoveIt planned/executed a normal joint route and
+    `HOME -> FK-derived tool0 Pose -> HOME` through the existing JTC.
+  - A synchronously applied planning-scene box invalidated the target; both
+    pose and joint plans into it were rejected, and the object was read back as
+    removed.
+  - Four packages produced 58 test records with zero errors/failures/skips;
+    source manifest `ad0b91e8dc33641893fc98c2e8aebaa995d90e996944e37b41fe977b09abb968`
+    matched before and after the run.
+  - A02 is `PASS`; see `docs/phase2_moveit_runtime_evidence.md`.
 
 ## Partially completed features
 
-- The project has a static MoveIt configuration but no real MoveIt planning or
-  collision-aware Home -> Pose -> Home execution, GUI validation, gripper, or
-  out-of-range clamp probe.
+- Headless MoveIt planning/execution and collision rejection are verified, but
+  GUI validation, a gripper, live lab objects, perception, pick/place, and an
+  out-of-range clamp probe remain unverified.
 - Runtime command-limit initialization and the bounded in-range control chain
   are verified. Clamp behavior remains explicitly unverified.
 - WSLg endpoints and RViz exist, but real 3D GUI rendering is untested.
@@ -89,7 +105,16 @@ M1 stop condition are immutable on `main`.
   - Spawn, hardware resources, controllers, runtime limiter initialization,
     bounded trajectory, and cleanup: PASS.
   - Clamp probe and GUI rendering: NOT RUN; real robot: false.
-- A01: PASS. A02-A14: NOT STARTED. MoveIt project planning: NOT RUN.
+- P2.2 clean integrated MoveIt runtime: PASS at `4203e81`.
+  - `SOURCE_WORKTREE_CLEAN=true`; the before/after source manifest is
+    `ad0b91e8dc33641893fc98c2e8aebaa995d90e996944e37b41fe977b09abb968`.
+  - Four MoveIt executions, planning-scene collision rejection, and temporary
+    object removal passed. Normal pose observation error was `0.0063663304 m`
+    and `0.0629389291 rad` within explicitly configured observed execution
+    acceptance tolerances.
+  - 58 colcon records passed. No owned process remained, but requested
+    teardown observed `move_group` SIGSEGV; see KI-012.
+- A01-A02: PASS. A03-A14: NOT STARTED.
 - P2.1 clean static configuration: PASS at `281c36b`.
   - `rosdep check`: PASS.
   - 3 packages built; 45 test records passed; worktree stayed clean.
@@ -97,15 +122,17 @@ M1 stop condition are immutable on `main`.
 
 ## Current build status
 
-The clean P2.1 gate built and tested `abb_lab_description`, `abb_lab_control`,
-and `abb_lab_moveit_config` on ext4. Generated build/install/log trees and
-runtime episodes remain outside Git. The next work package adds P2.2 integration
-launch/harness material rather than changing the static contract.
+The clean P2.2 gate built and tested `abb_lab_description`, `abb_lab_control`,
+`abb_lab_gazebo`, and `abb_lab_moveit_config` on ext4. Generated
+build/install/log trees and runtime episodes remain outside Git. The next work
+package starts gripper/world work without weakening the established MoveIt
+controller ownership contract.
 
 ## Current run status
 
 - Project ABB headless Gazebo spawn/control: verified.
-- Project MoveIt planning/execution: not run.
+- Project MoveIt planning/execution and collision rejection: verified in
+  headless simulation at `4203e81`.
 - Project GUI rendering: not run.
 - Project out-of-range clamp injection: not run.
 - VLA backend: `VLA_BACKEND_UNAVAILABLE`.
@@ -118,8 +145,12 @@ launch/harness material rather than changing the static contract.
 - `abb_ros2` has no Jazzy branch/tag and is not treated as a supported driver.
 - ABB inertials are estimates and efforts are fictional. No acceleration or jerk
   limits are claimed.
-- Real runtime has not validated a GUI, collision scene, gripper, perception,
-  physical effort behavior, out-of-range clamp, or real robot.
+- The clean P2.2 run validated a headless collision scene, but not GUI,
+  gripper, perception, physical effort behavior, out-of-range clamp, or a real
+  robot.
+- The installed `move_group` process had SIGSEGV during requested P2.2 teardown
+  despite no residual owned processes; this is KI-012 and is not a graceful
+  cleanup result.
 - The GitHub repository remains private while the first-party license is open.
 - Final first-party license, speech-model pin, and VLA GPU service location are
   open design decisions.
@@ -157,10 +188,10 @@ ros2_control 4.45.2, gz_ros2_control 1.2.19, ros2_controllers 4.40.1, MoveIt
 
 ## Next exact steps
 
-1. Write failing P2.2 launch/harness contracts for a headless project Gazebo
-   runtime plus `move_group`, with no duplicate controller manager.
-2. Prove an in-range joint target and `tool0` pose target each plan and execute
-   through the existing JTC, and observe HOME -> Pose -> HOME at `/joint_states`.
-3. Add a planning-scene object/collision case and prove the invalid goal is
-   rejected. Mark A02 PASS only after a complete clean integrated run and
-   cleanup proof.
+1. Write the P3.1 gripper/world architecture and failing contracts: exact
+   gripper interfaces, ownership, collision geometry, and a deterministic
+   seeded lab scene.
+2. Add a project-owned two-finger gripper model/control path without adding a
+   second controller manager or claiming a grasp before contact evidence exists.
+3. Run a clean headless gripper open/close and live-world identity gate; keep
+   A03-A14 unchanged until their own real-run criteria are met.

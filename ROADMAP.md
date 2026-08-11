@@ -4,8 +4,8 @@
 |---:|---|---|
 | Bootstrap | COMPLETE | `main` is pushed to private remote `jiajun-shen/Physical-AI-Robot-Lab` |
 | 0 Repository/environment/architecture | COMPLETE | Reports verified and committed at `eb1b8e8` |
-| 1 ABB + Gazebo + ros2_control | IN PROGRESS | A clean project runtime gate passed at `1228c13`; next: MoveIt collision-aware planning |
-| 2 MoveIt + planning | IN PROGRESS | P2.1 static ABB MoveIt contract passed at `281c36b`; next: real headless `move_group` planning/execution and collision rejection |
+| 1 ABB + Gazebo + ros2_control | COMPLETE | A01 clean project runtime gate passed at `1228c13` |
+| 2 MoveIt + planning | COMPLETE | A02 clean real `move_group` plan/execution plus planning-scene collision rejection passed at `4203e81`; teardown SIGSEGV remains KI-012 |
 | 3 Gripper + objects | NOT STARTED | Modular gripper and deterministic solvable seeded world verified |
 | 4 Perception | NOT STARTED | Green sphere localized only from RGB-D and transformed by TF2 |
 | 5 Pick/place | NOT STARTED | Green sphere placed next to red sphere across multiple seeds |

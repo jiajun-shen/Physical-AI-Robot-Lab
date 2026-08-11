@@ -6,7 +6,7 @@ an expected result is insufficient.
 | ID | Acceptance target | Status | Evidence |
 |---|---|---|---|
 | A01 | Launch Gazebo and observe ABB IRB1200 spawned normally | PASS | Clean headless project run at `1228c13fadb8c04d348a0bfa68e2fa1d0a7ce6ee`, 2026-08-11 15:37:51 +0200; exact `abb_irb1200` persisted in world `abb_lab`; `/var/tmp/p13b-clean-1228c13/result.txt`; cleanup verified. |
-| A02 | Use MoveIt to plan and execute HOME -> specified Pose -> HOME with no collision | NOT STARTED | None |
+| A02 | Use MoveIt to plan and execute HOME -> specified Pose -> HOME with no collision | PASS | Clean headless P2.2 run at `4203e81508f91b651eb8f55e663c74f21b8ff5b0`, 2026-08-11 17:01:57 +0200. MoveIt planned/executed normal joint and FK-derived `tool0` pose routes through the existing JTC, observed HOME -> Pose -> HOME, and rejected both pose/joint goals after an injected planning-scene collision object. 58 test records passed; `/var/tmp/p22-clean-4203e81/result.txt` and `docs/phase2_moveit_runtime_evidence.md`. No owned process remained, but teardown observed `move_group` SIGSEGV; see KI-012. |
 | A03 | Randomize green sphere pose and localize it in vision mode without ground truth | NOT STARTED | None |
 | A04 | Green sphere is picked and placed next to red sphere over multiple seeds | NOT STARTED | None |
 | A05 | Robot draws a heart from a generated Cartesian mathematical curve | NOT STARTED | None |
@@ -22,7 +22,7 @@ an expected result is insufficient.
 
 ## M1: mandatory midterm acceptance gate (after Phase 8, before Phase 9)
 
-`M1` is `NOT STARTED`. Its lifecycle is `PENDING -> PAUSED - AWAITING USER
+`M1` is `PENDING`. Its lifecycle is `PENDING -> PAUSED - AWAITING USER
 MIDTERM ACCEPTANCE -> ACCEPTED`. After Phase 8's implementation and real-run
 evidence are complete, development must stop in the paused state. Phase 9 may
 start only when both conditions hold: every row below is `PASS` on the tested
@@ -34,7 +34,7 @@ pre-M1 evidence must be rerun if the integrated path changes.
 |---|---|---|---|
 | M1.01 | ABB IRB1200 runs normally in the project Gazebo world | PRE-M1 EVIDENCE | Active world/model, joint state, and runtime logs. Current A01 headless run is a predecessor, not final M1 evidence. |
 | M1.02 | ros2_control actually controls ABB | PRE-M1 EVIDENCE | Active JSB/JTC, claimed interfaces, action feedback, and real joint changes. Current P1.3b run is a predecessor, not final M1 evidence. |
-| M1.03 | MoveIt plans and executes collision-aware motion | NOT STARTED | Real plan/execution plus planning-scene collision proof; a raw ros2_control trajectory is insufficient. |
+| M1.03 | MoveIt plans and executes collision-aware motion | PRE-M1 EVIDENCE | Current A02 clean run proves real normal plan/execution and planning-scene collision rejection at `4203e81`; it is a predecessor only and must be rerun as part of the Phase-8-final integrated M1 evidence. |
 | M1.04 | Two-finger gripper opens, closes, and grasps an object | NOT STARTED | Command/state plus contact or successful lift/transport; animation alone is insufficient. |
 | M1.05 | Live lab contains a table, red/green balls, cubes, drawing board, and collision geometry | NOT STARTED | Running-world model/scene evidence, not just SDF source. |
 | M1.06 | RGB-D plus TF determines object positions | NOT STARTED | RGB, depth, CameraInfo, TF, and pose output. `vision` must not consume Gazebo ground truth; ground truth is offline comparison only. |
