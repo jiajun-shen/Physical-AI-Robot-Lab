@@ -192,6 +192,22 @@ class ABBLabLabSourceTests(unittest.TestCase):
             [entry["pose"] for entry in first["obstacles"]],
             [entry["pose"] for entry in alternate["obstacles"]],
         )
+        for name in SEEDABLE_STATIC_MODELS | DYNAMIC_MODELS:
+            with self.subTest(model=name):
+                first_entry = next(
+                    entry
+                    for entry in first["obstacles"] + first["objects"]
+                    if entry["name"] == name
+                )
+                alternate_entry = next(
+                    entry
+                    for entry in alternate["obstacles"] + alternate["objects"]
+                    if entry["name"] == name
+                )
+                self.assertNotEqual(
+                    first_entry["pose"]["rpy_rad"][2],
+                    alternate_entry["pose"]["rpy_rad"][2],
+                )
         self.generator.assert_manifest_valid(first)
         self.generator.assert_manifest_valid(alternate)
 
@@ -218,6 +234,45 @@ class ABBLabLabSourceTests(unittest.TestCase):
         }
         self.assertGreater(len(obstacle_positions), 1)
         self.assertGreater(len(obstacle_yaws), 1)
+        for name in SEEDABLE_STATIC_MODELS | DYNAMIC_MODELS:
+            with self.subTest(model=name):
+                entries = [
+                    next(
+                        entry
+                        for entry in manifest["obstacles"] + manifest["objects"]
+                        if entry["name"] == name
+                    )
+                    for manifest in manifests
+                ]
+                self.assertGreater(
+                    len({entry["pose"]["rpy_rad"][2] for entry in entries}), 1
+                )
+                expected_symmetric = name in {"green_ball", "red_ball"}
+                self.assertTrue(
+                    all(
+                        entry["orientation_is_geometrically_symmetric"]
+                        == expected_symmetric
+                        for entry in entries
+                    )
+                )
+
+    def test_seeded_yaw_uses_primitive_specific_level_contract(self) -> None:
+        config = self.generator.load_scene_config(CONFIG_PATH)
+        manifest = self.generator.build_scene_manifest(config, 20260811)
+        placement = config["placement"]
+        yaw_candidates_by_primitive = {
+            "sphere": placement["sphere_yaw_candidates_rad"],
+            "box": placement["cube_yaw_candidates_rad"],
+        }
+        for entry in manifest["objects"]:
+            with self.subTest(model=entry["name"]):
+                roll, pitch, yaw = entry["pose"]["rpy_rad"]
+                self.assertEqual((roll, pitch), (0.0, 0.0))
+                self.assertIn(yaw, yaw_candidates_by_primitive[entry["primitive"]])
+                self.assertEqual(
+                    entry["orientation_is_geometrically_symmetric"],
+                    entry["primitive"] == "sphere",
+                )
 
     def test_generated_manifest_is_inside_reachable_bounds_and_nonoverlapping(self) -> None:
         config = self.generator.load_scene_config(CONFIG_PATH)
@@ -311,6 +366,10 @@ class ABBLabLabSourceTests(unittest.TestCase):
         self.assertEqual(config["scene_schema_version"], 1)
         self.assertEqual(set(config["objects"]), DYNAMIC_MODELS)
         self.assertEqual(set(config["obstacles"]), SEEDABLE_STATIC_MODELS)
+        placement = config["placement"]
+        self.assertEqual(len(placement["obstacle_yaw_candidates_rad"]), 3)
+        self.assertEqual(len(placement["cube_yaw_candidates_rad"]), 4)
+        self.assertEqual(len(placement["sphere_yaw_candidates_rad"]), 4)
 
 
 if __name__ == "__main__":

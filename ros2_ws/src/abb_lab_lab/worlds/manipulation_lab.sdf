@@ -170,7 +170,7 @@
     </model>
 
     <model name="green_ball">
-      <pose>0.79 0 0.785 0 0 0</pose>
+      <pose>0.79 0 0.785 0 0 -1.2</pose>
       <static>false</static>
       <link name="green_ball_link">
         <inertial>
@@ -198,7 +198,7 @@
     </model>
 
     <model name="red_ball">
-      <pose>0.47 0 0.785 0 0 0</pose>
+      <pose>0.47 0 0.785 0 0 -1.2</pose>
       <static>false</static>
       <link name="red_ball_link">
         <inertial>
@@ -226,7 +226,7 @@
     </model>
 
     <model name="blue_cube">
-      <pose>0.63 -0.20 0.78 0 0 0</pose>
+      <pose>0.63 -0.20 0.78 0 0 -0.25</pose>
       <static>false</static>
       <link name="blue_cube_link">
         <inertial>
@@ -254,7 +254,7 @@
     </model>
 
     <model name="yellow_cube">
-      <pose>0.47 -0.20 0.78 0 0 0</pose>
+      <pose>0.47 -0.20 0.78 0 0 -0.75</pose>
       <static>false</static>
       <link name="yellow_cube_link">
         <inertial>

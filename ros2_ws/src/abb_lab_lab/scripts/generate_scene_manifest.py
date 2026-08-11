@@ -53,6 +53,15 @@ def _bounds(value: Any, label: str) -> list[float]:
     return bounds
 
 
+def _yaw_candidates(value: Any, label: str, length: int) -> list[float]:
+    candidates = _number_list(value, label, length)
+    if len(set(candidates)) != len(candidates):
+        raise SceneConfigurationError(f"{label} must contain unique values")
+    if any(abs(candidate) > math.pi for candidate in candidates):
+        raise SceneConfigurationError(f"{label} values must be within [-pi, pi]")
+    return candidates
+
+
 def _validate_config(config: Any) -> None:
     if not isinstance(config, dict):
         raise SceneConfigurationError("scene configuration must be a mapping")
@@ -91,10 +100,20 @@ def _validate_config(config: Any) -> None:
     y_values = _number_list(grid.get("y_m"), "placement.candidate_grid_m.y_m", 3)
     if len(set(x_values)) != len(x_values) or len(set(y_values)) != len(y_values):
         raise SceneConfigurationError("placement candidates must be unique")
-    _number_list(
+    _yaw_candidates(
         placement.get("obstacle_yaw_candidates_rad"),
         "placement.obstacle_yaw_candidates_rad",
         3,
+    )
+    _yaw_candidates(
+        placement.get("cube_yaw_candidates_rad"),
+        "placement.cube_yaw_candidates_rad",
+        4,
+    )
+    _yaw_candidates(
+        placement.get("sphere_yaw_candidates_rad"),
+        "placement.sphere_yaw_candidates_rad",
+        4,
     )
 
     obstacles = config.get("obstacles")
@@ -260,8 +279,18 @@ def build_scene_manifest(config: dict[str, Any], seed: int) -> dict[str, Any]:
 
     placed: list[dict[str, Any]] = []
 
+    obstacle_yaw_candidates = [
+        float(value) for value in placement["obstacle_yaw_candidates_rad"]
+    ]
+    cube_yaw_candidates = [
+        float(value) for value in placement["cube_yaw_candidates_rad"]
+    ]
+    sphere_yaw_candidates = [
+        float(value) for value in placement["sphere_yaw_candidates_rad"]
+    ]
+
     def place_entries(
-        names: tuple[str, ...], section: str, *, static: bool, vary_yaw: bool
+        names: tuple[str, ...], section: str, *, static: bool
     ) -> list[dict[str, Any]]:
         entries: list[dict[str, Any]] = []
         for name in names:
@@ -284,15 +313,13 @@ def build_scene_manifest(config: dict[str, Any], seed: int) -> dict[str, Any]:
                 raise SceneConfigurationError(
                     f"no safe candidate remained for {name} with seed {seed}"
                 )
-            yaw_value = (
-                _seeded_yaw(
-                    seed,
-                    name,
-                    [float(value) for value in placement["obstacle_yaw_candidates_rad"]],
-                )
-                if vary_yaw
-                else 0.0
-            )
+            if static:
+                yaw_candidates = obstacle_yaw_candidates
+            elif entry_config["primitive"] == "sphere":
+                yaw_candidates = sphere_yaw_candidates
+            else:
+                yaw_candidates = cube_yaw_candidates
+            yaw_value = _seeded_yaw(seed, name, yaw_candidates)
             if entry_config["primitive"] == "sphere":
                 support_offset = float(entry_config["radius_m"])
                 geometry = {"radius_m": support_offset}
@@ -308,6 +335,11 @@ def build_scene_manifest(config: dict[str, Any], seed: int) -> dict[str, Any]:
                 "support_offset_m": support_offset,
                 "geometry": geometry,
                 "static": static,
+                # Sphere yaw is retained so all seeded models expose the same
+                # pose representation; it has no observable directional
+                # geometry for a spherical primitive.
+                "orientation_is_geometrically_symmetric": entry_config["primitive"]
+                == "sphere",
                 "pose": {
                     "position_m": [selected[0], selected[1], float(entry_config["z_center_m"])],
                     "rpy_rad": [0.0, 0.0, yaw_value],
@@ -319,12 +351,8 @@ def build_scene_manifest(config: dict[str, Any], seed: int) -> dict[str, Any]:
             entries.append(entry)
         return entries
 
-    obstacles = place_entries(
-        OBSTACLE_ORDER, "obstacles", static=True, vary_yaw=True
-    )
-    objects = place_entries(
-        OBJECT_ORDER, "objects", static=False, vary_yaw=False
-    )
+    obstacles = place_entries(OBSTACLE_ORDER, "obstacles", static=True)
+    objects = place_entries(OBJECT_ORDER, "objects", static=False)
 
     manifest = {
         "scene_schema_version": SCHEMA_VERSION,
@@ -433,6 +461,17 @@ def assert_manifest_valid(manifest: dict[str, Any]) -> None:
         if roll != 0.0 or pitch != 0.0:
             raise SceneConfigurationError(
                 f"manifest.{entry['name']} must remain level on the table"
+            )
+        orientation_is_geometrically_symmetric = entry.get(
+            "orientation_is_geometrically_symmetric"
+        )
+        if not isinstance(orientation_is_geometrically_symmetric, bool):
+            raise SceneConfigurationError(
+                f"manifest.{entry['name']} must declare orientation symmetry"
+            )
+        if orientation_is_geometrically_symmetric != (primitive == "sphere"):
+            raise SceneConfigurationError(
+                f"manifest.{entry['name']} has inconsistent orientation symmetry"
             )
         if x_value - radius < bounds_x[0] or x_value + radius > bounds_x[1]:
             raise SceneConfigurationError(f"manifest.{entry['name']} is outside x bounds")
