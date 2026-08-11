@@ -1,0 +1,63 @@
+# Schema consumed by scripts/generate_scene_manifest.py.  Every placement is
+# expressed in the Gazebo world frame and lies on the work-table surface.
+scene_schema_version: 1
+default_seed: 314159
+frame_id: world
+
+table:
+  model_name: work_table
+  surface_z_m: 0.75
+  reachable_bounds_m:
+    x_m: [0.39, 0.87]
+    y_m: [-0.30, 0.30]
+
+placement:
+  minimum_pairwise_gap_m: 0.03
+  candidate_grid_m:
+    x_m: [0.47, 0.63, 0.79]
+    y_m: [-0.20, 0.00, 0.20]
+  obstacle_yaw_candidates_rad: [-0.5, 0.0, 0.5]
+
+obstacles:
+  obstacle_left:
+    primitive: box
+    size_m: [0.10, 0.10, 0.20]
+    mass_kg: 3.0
+    z_center_m: 0.85
+    footprint_radius_m: 0.07071067811865475
+  obstacle_right:
+    primitive: box
+    size_m: [0.10, 0.10, 0.20]
+    mass_kg: 3.0
+    z_center_m: 0.85
+    footprint_radius_m: 0.07071067811865475
+
+objects:
+  green_ball:
+    primitive: sphere
+    color: green
+    radius_m: 0.035
+    mass_kg: 0.065
+    z_center_m: 0.785
+    footprint_radius_m: 0.035
+  red_ball:
+    primitive: sphere
+    color: red
+    radius_m: 0.035
+    mass_kg: 0.065
+    z_center_m: 0.785
+    footprint_radius_m: 0.035
+  blue_cube:
+    primitive: box
+    color: blue
+    size_m: [0.06, 0.06, 0.06]
+    mass_kg: 0.080
+    z_center_m: 0.78
+    footprint_radius_m: 0.04242640687119285
+  yellow_cube:
+    primitive: box
+    color: yellow
+    size_m: [0.06, 0.06, 0.06]
+    mass_kg: 0.080
+    z_center_m: 0.78
+    footprint_radius_m: 0.04242640687119285

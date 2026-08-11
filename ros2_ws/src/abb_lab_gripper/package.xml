@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>abb_lab_gripper</name>
+  <version>0.1.0</version>
+  <description>
+    Isolated simulation-only ABB IRB1200-5/0.9 two-finger gripper profile.
+    It provides a combined robot description and controller configuration;
+    object attachment, force control, runtime bringup, and hardware use are
+    deliberately outside this package.
+  </description>
+  <maintainer email="maintainers@example.invalid">Physical-AI-Robot-Lab maintainers</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>abb_lab_description</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>gz_ros2_control</exec_depend>
+  <exec_depend>joint_state_broadcaster</exec_depend>
+  <exec_depend>joint_trajectory_controller</exec_depend>
+  <exec_depend>parallel_gripper_controller</exec_depend>
+  <exec_depend>xacro</exec_depend>
+
+  <test_depend>ament_cmake_pytest</test_depend>
+  <test_depend>python3-yaml</test_depend>
+  <test_depend>urdf</test_depend>
+  <test_depend>xacro</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+    <architecture_independent/>
+  </export>
+</package>

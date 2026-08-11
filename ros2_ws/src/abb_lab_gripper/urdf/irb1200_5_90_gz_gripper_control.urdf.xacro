@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<robot name="abb_irb1200_5_90_gz_gripper_control" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:arg name="prefix" default=""/>
+  <xacro:arg name="controller_config_file" default="$(find abb_lab_gripper)/config/irb1200_gripper_controllers.yaml"/>
+
+  <!-- This wrapper deliberately reuses only the pinned ABB geometry macro.
+       It does not include the existing arm-only control profile. -->
+  <xacro:include filename="$(find abb_lab_description)/urdf/irb1200_5_90_macro.project.xacro"/>
+  <xacro:include filename="$(find abb_lab_gripper)/urdf/two_finger_gripper.xacro"/>
+  <xacro:include filename="$(find abb_lab_gripper)/urdf/irb1200_5_90_gz_gripper_ros2_control.xacro"/>
+
+  <xacro:property name="prefix" value="$(arg prefix)"/>
+  <xacro:property name="controller_config_file" value="$(arg controller_config_file)"/>
+  <xacro:property name="arm_joint_limits" value="${xacro.load_yaml('$(find abb_lab_description)/config/irb1200_5_90_control_limits.yaml')['joint_limits']}"/>
+  <xacro:property name="gripper_joint_limits" value="${xacro.load_yaml('$(find abb_lab_gripper)/config/two_finger_gripper_limits.yaml')['joint_limits']}"/>
+  <xacro:property name="gripper_initial_positions" value="${xacro.load_yaml('$(find abb_lab_gripper)/config/two_finger_gripper_limits.yaml')['initial_positions']}"/>
+
+  <link name="world"/>
+  <joint name="${prefix}world_to_base" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child link="${prefix}base_link"/>
+  </joint>
+
+  <xacro:abb_irb1200_5_90 prefix="${prefix}"/>
+  <xacro:abb_lab_two_finger_gripper
+    prefix="${prefix}"
+    parent_link="${prefix}tool0"
+    gripper_limits="${gripper_joint_limits}"/>
+  <xacro:abb_irb1200_5_90_gz_gripper_ros2_control
+    name="GazeboSimSystem"
+    prefix="${prefix}"
+    arm_joint_limits="${arm_joint_limits}"
+    gripper_joint_limits="${gripper_joint_limits}"
+    gripper_initial_positions="${gripper_initial_positions}"/>
+
+  <gazebo>
+    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <!-- First preserve project-wide command-limit enforcement, then layer
+           this profile's controller definitions on top. -->
+      <parameters>$(find abb_lab_description)/config/controller_manager_safety.yaml</parameters>
+      <parameters>$(arg controller_config_file)</parameters>
+      <hold_joints>true</hold_joints>
+      <!-- GazeboSimSystem maps a position error to joint velocity through this
+           documented proportional gain.  1.0 keeps the 40 mm finger stroke
+           below its 0.08 m/s hardware limit while reaching free-space action
+           goals before the controller's stall timeout. -->
+      <position_proportional_gain>1.0</position_proportional_gain>
+    </plugin>
+  </gazebo>
+</robot>

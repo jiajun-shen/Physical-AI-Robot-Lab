@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- Project-owned, geometry-only two-finger end effector. The controller
+       exposes the right finger; the left finger follows through URDF mimic. -->
+  <xacro:macro name="abb_lab_two_finger_gripper" params="prefix parent_link gripper_limits">
+    <link name="${prefix}gripper_base">
+      <inertial>
+        <origin xyz="0.040 0 0" rpy="0 0 0"/>
+        <mass value="0.45"/>
+        <inertia ixx="0.0012" ixy="0" ixz="0" iyy="0.0015" iyz="0" izz="0.0016"/>
+      </inertial>
+      <visual>
+        <!-- Keep the palm behind the finger rails.  The rail collisions begin
+             at x=0.095, while this body ends at x=0.080, so the two moving
+             fingers never start embedded in the palm. -->
+        <origin xyz="0.040 0 0" rpy="0 0 0"/>
+        <geometry><box size="0.080 0.080 0.050"/></geometry>
+        <material name="abb_lab_gripper_dark"><color rgba="0.18 0.20 0.24 1"/></material>
+      </visual>
+      <collision>
+        <origin xyz="0.040 0 0" rpy="0 0 0"/>
+        <geometry><box size="0.080 0.080 0.050"/></geometry>
+      </collision>
+    </link>
+
+    <joint name="${prefix}tool0_to_gripper_base" type="fixed">
+      <origin xyz="0.055 0 0" rpy="0 0 0"/>
+      <parent link="${parent_link}"/>
+      <child link="${prefix}gripper_base"/>
+    </joint>
+
+    <link name="${prefix}gripper_tcp"/>
+    <joint name="${prefix}gripper_base_to_gripper_tcp" type="fixed">
+      <origin xyz="0.155 0 0" rpy="0 0 0"/>
+      <parent link="${prefix}gripper_base"/>
+      <child link="${prefix}gripper_tcp"/>
+    </joint>
+
+    <link name="${prefix}two_finger_right_link">
+      <inertial>
+        <origin xyz="0.030 0 0" rpy="0 0 0"/>
+        <mass value="0.04"/>
+        <inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00002" iyz="0" izz="0.00001"/>
+      </inertial>
+      <visual>
+        <origin xyz="0.030 0 0" rpy="0 0 0"/>
+        <geometry><box size="0.060 0.012 0.050"/></geometry>
+        <material name="abb_lab_gripper_dark"><color rgba="0.18 0.20 0.24 1"/></material>
+      </visual>
+      <collision>
+        <origin xyz="0.030 0 0" rpy="0 0 0"/>
+        <geometry><box size="0.060 0.012 0.050"/></geometry>
+      </collision>
+    </link>
+    <joint name="${prefix}two_finger_right_joint" type="prismatic">
+      <origin xyz="0.095 0.006 0" rpy="0 0 0"/>
+      <parent link="${prefix}gripper_base"/>
+      <child link="${prefix}two_finger_right_link"/>
+      <axis xyz="0 1 0"/>
+      <limit
+        lower="${gripper_limits['two_finger_right_joint']['min_position']}"
+        upper="${gripper_limits['two_finger_right_joint']['max_position']}"
+        effort="100.0"
+        velocity="${gripper_limits['two_finger_right_joint']['max_velocity']}"/>
+      <dynamics damping="5.0" friction="0.0"/>
+    </joint>
+
+    <link name="${prefix}two_finger_left_link">
+      <inertial>
+        <origin xyz="0.030 0 0" rpy="0 0 0"/>
+        <mass value="0.04"/>
+        <inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00002" iyz="0" izz="0.00001"/>
+      </inertial>
+      <visual>
+        <origin xyz="0.030 0 0" rpy="0 0 0"/>
+        <geometry><box size="0.060 0.012 0.050"/></geometry>
+        <material name="abb_lab_gripper_dark"><color rgba="0.18 0.20 0.24 1"/></material>
+      </visual>
+      <collision>
+        <origin xyz="0.030 0 0" rpy="0 0 0"/>
+        <geometry><box size="0.060 0.012 0.050"/></geometry>
+      </collision>
+    </link>
+    <joint name="${prefix}two_finger_left_joint" type="prismatic">
+      <origin xyz="0.095 -0.006 0" rpy="0 0 0"/>
+      <parent link="${prefix}gripper_base"/>
+      <child link="${prefix}two_finger_left_link"/>
+      <axis xyz="0 1 0"/>
+      <limit
+        lower="-${gripper_limits['two_finger_right_joint']['max_position']}"
+        upper="0.0"
+        effort="100.0"
+        velocity="${gripper_limits['two_finger_right_joint']['max_velocity']}"/>
+      <dynamics damping="5.0" friction="0.0"/>
+      <mimic joint="${prefix}two_finger_right_joint" multiplier="-1" offset="0"/>
+    </joint>
+  </xacro:macro>
+</robot>

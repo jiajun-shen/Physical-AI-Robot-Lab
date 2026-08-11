@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>abb_lab_lab</name>
+  <version>0.1.0</version>
+  <description>
+    Project-owned static and seedable Gazebo manipulation-lab scene resources.
+  </description>
+  <maintainer email="maintainers@example.invalid">Physical-AI-Robot-Lab maintainers</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <test_depend>ament_cmake_pytest</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+    <architecture_independent/>
+  </export>
+</package>

@@ -1,0 +1,45 @@
+schema_version: 1
+profile: ABB_IRB1200_TWO_FINGER_GRIPPER
+scope: SIMULATION_ONLY
+
+units:
+  finger_position: m
+  finger_velocity: m_per_second
+
+source:
+  arm_description: abb_lab_description/irb1200_5_90_macro.project.xacro
+  gripper_geometry: PROJECT_OWNED_PRIMITIVES
+  control_system: gz_ros2_control/GazeboSimSystem
+
+# The action controller commands the right-finger displacement, not the total
+# jaw opening. The left finger follows through the URDF mimic relationship.
+joint_limits:
+  two_finger_right_joint:
+    has_position_limits: true
+    min_position: 0.0
+    max_position: 0.040
+    has_velocity_limits: true
+    max_velocity: 0.080
+
+initial_positions:
+  # GazeboSimSystem's ros2_control state seed. This is not a claim about the
+  # physical spawn opening; runtime evidence must observe actual joint states
+  # before making any open/close assertion.
+  two_finger_right_joint: 0.020
+
+safe_commands:
+  # Both values are per-finger displacement and stay within the single
+  # actuated joint limit. They are named commands, not verified grasp states.
+  closed_clearance_position: 0.004
+  open_position: 0.035
+
+safety_status:
+  object_attachment: NOT_IMPLEMENTED
+  force_control: NOT_CONFIGURED
+  contact_success_inference: NOT_IMPLEMENTED
+  real_robot_ready: false
+
+notes:
+  - The URDF effort limit is structural metadata only; this profile exports no gripper effort command interface.
+  - A commanded close is not evidence that an object is retained or that contact is safe.
+  - Runtime limit enforcement and contact behavior require a dedicated integration verification.

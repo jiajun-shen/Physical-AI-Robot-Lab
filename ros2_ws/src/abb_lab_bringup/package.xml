@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>abb_lab_bringup</name>
+  <version>0.1.0</version>
+  <description>
+    Headless Gazebo bringup for the project-owned ABB IRB1200 with the
+    two-finger gripper in the manipulation laboratory. This package creates
+    the sole robot model and reuses its Gazebo-hosted control resources.
+  </description>
+  <maintainer email="maintainers@example.invalid">Physical-AI-Robot-Lab maintainers</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <exec_depend>abb_lab_gripper</exec_depend>
+  <exec_depend>abb_lab_lab</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>joint_state_broadcaster</exec_depend>
+  <exec_depend>joint_trajectory_controller</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>parallel_gripper_controller</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
+  <exec_depend>ros_gz_sim</exec_depend>
+  <exec_depend>rosgraph_msgs</exec_depend>
+  <exec_depend>xacro</exec_depend>
+
+  <test_depend>ament_cmake_pytest</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+    <architecture_independent/>
+  </export>
+</package>
