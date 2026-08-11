@@ -1,0 +1,69 @@
+# ROS 2 / colcon
+build/
+install/
+log/
+.colcon/
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+.python-version
+
+# C/C++ and CMake
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+compile_commands.json
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*.json
+
+# Robotics runtime artifacts
+*.bag
+*.db3
+*.mcap
+rosbags/
+gazebo_logs/
+
+# Datasets, checkpoints, and experiment outputs
+data/
+datasets/
+checkpoints/
+models/
+artifacts/
+runs/
+wandb/
+*.ckpt
+*.safetensors
+*.onnx
+*.pt
+*.pth
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
+
