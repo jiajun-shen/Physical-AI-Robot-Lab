@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+<!--
+  Semantic model for the fixed-base ABB IRB1200-5/0.9 Gazebo-control robot.
+  This is intentionally arm-only: the end effector is tool0 and no gripper
+  group is declared until the gripper phase has a verified model.
+-->
+<robot name="abb_irb1200_5_90_gz_control">
+  <group name="manipulator">
+    <chain base_link="base_link" tip_link="tool0"/>
+  </group>
+
+  <group_state name="home" group="manipulator">
+    <joint name="joint_1" value="0"/>
+    <joint name="joint_2" value="0"/>
+    <joint name="joint_3" value="0"/>
+    <joint name="joint_4" value="0"/>
+    <joint name="joint_5" value="0"/>
+    <joint name="joint_6" value="0"/>
+  </group_state>
+</robot>

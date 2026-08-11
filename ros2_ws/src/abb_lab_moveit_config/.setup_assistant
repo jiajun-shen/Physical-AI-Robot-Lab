@@ -1,0 +1,10 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: abb_lab_description
+    relative_path: urdf/irb1200_5_90_gz_control.urdf.xacro
+  SRDF:
+    relative_path: config/irb1200_5_90_gz_control.srdf
+  CONFIG:
+    author_name: Physical-AI-Robot-Lab maintainers
+    author_email: maintainers@example.invalid
+    generated_timestamp: '2026-08-11'
