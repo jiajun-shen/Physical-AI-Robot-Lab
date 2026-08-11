@@ -10,14 +10,14 @@ Phase 1 - ABB IRB1200 + Gazebo Harmonic + ros2_control (`IN PROGRESS`)
 
 ## Current subtask
 
-Start `P2.1`: create a project-owned MoveIt configuration contract for the
-already running ABB simulation. Build and static-contract test it first; do not
-claim planning or execution until P2.2 produces a clean real integrated run.
+Start `P2.2`: integrate the project MoveIt configuration with the already
+running headless ABB simulation. Do not mark A02 until a clean real run proves
+valid joint/pose plan-and-execute behavior and intentional collision rejection.
 
 ## Git checkpoints
 
-- Latest known-good commit: `1228c13fadb8c04d348a0bfa68e2fa1d0a7ce6ee`
-- Stable commit: `1228c13fadb8c04d348a0bfa68e2fa1d0a7ce6ee`
+- Latest known-good commit: `281c36bafd543d47752deb91d8743b09c3772644`
+- Stable commit: `281c36bafd543d47752deb91d8743b09c3772644`
 - Experimental commit: none
 - Current branch: `main` tracking `origin/main`
 - Remote: `https://github.com/jiajun-shen/Physical-AI-Robot-Lab.git` (private)
@@ -35,6 +35,9 @@ M1 stop condition are immutable on `main`.
 - `abb_lab_control` supplies six-axis position JTC/JSB controller policy.
 - `abb_lab_gazebo` supplies the minimal headless world and ordered
   spawn/RSP/controller startup sequence.
+- `abb_lab_moveit_config` supplies an arm-only six-joint SRDF, canonical
+  position/velocity planning limits, KDL, a single OMPL pipeline, and the exact
+  existing JTC action mapping. It has no launch or execution claim.
 - A project-owned ABB IRB1200 spawned in Gazebo as `abb_irb1200`; six position
   command interfaces were claimed, JTC/JSB were active, command-limit
   enforcement initialized, and an observed trajectory completed.
@@ -58,10 +61,15 @@ M1 stop condition are immutable on `main`.
   - 41 colcon records and one separate harness unittest passed with zero errors,
     failures, or skips.
 - A01 is `PASS`; see `docs/phase1_abb_gazebo_control_runtime_evidence.md`.
+- P2.1 static MoveIt configuration contract at `281c36b`.
+  - Clean build/test: 3 packages, 45 records, zero errors/failures/skips.
+  - The installed MoveIt builder expanded the runtime Xacro and verified the
+    URDF/SRDF chain, canonical limits, collision adapters, and JTC mapping.
+  - This is not planning/execution evidence; A02 remains `NOT STARTED`.
 
 ## Partially completed features
 
-- Phase 1 has a real headless ABB control path, but no project MoveIt planning,
+- The project has a static MoveIt configuration but no real MoveIt planning or
   collision-aware Home -> Pose -> Home execution, GUI validation, gripper, or
   out-of-range clamp probe.
 - Runtime command-limit initialization and the bounded in-range control chain
@@ -82,12 +90,17 @@ M1 stop condition are immutable on `main`.
     bounded trajectory, and cleanup: PASS.
   - Clamp probe and GUI rendering: NOT RUN; real robot: false.
 - A01: PASS. A02-A14: NOT STARTED. MoveIt project planning: NOT RUN.
+- P2.1 clean static configuration: PASS at `281c36b`.
+  - `rosdep check`: PASS.
+  - 3 packages built; 45 test records passed; worktree stayed clean.
+  - Evidence: `docs/phase2_moveit_config_evidence.md`.
 
 ## Current build status
 
-The clean P1.3b gate built and tested `abb_lab_description`, `abb_lab_control`,
-and `abb_lab_gazebo` on ext4. Generated build/install/log trees and runtime
-episodes remain outside Git. `abb_lab_moveit_config` does not exist yet.
+The clean P2.1 gate built and tested `abb_lab_description`, `abb_lab_control`,
+and `abb_lab_moveit_config` on ext4. Generated build/install/log trees and
+runtime episodes remain outside Git. The next work package adds P2.2 integration
+launch/harness material rather than changing the static contract.
 
 ## Current run status
 
@@ -144,11 +157,10 @@ ros2_control 4.45.2, gz_ros2_control 1.2.19, ros2_controllers 4.40.1, MoveIt
 
 ## Next exact steps
 
-1. Write failing P2.1 contracts for a six-joint `manipulator` SRDF
-   (`base_link` -> `tool0`), canonical MoveIt limits, kinematics, OMPL, and the
-   exact `/joint_trajectory_controller/follow_joint_trajectory` mapping.
-2. Add `abb_lab_moveit_config` with no gripper and no fabricated acceleration or
-   jerk values; build and test it on ext4.
-3. In P2.2, launch the existing project Gazebo runtime plus `move_group`, prove
-   a joint and `tool0` pose plan/execution, and prove an intentional collision
-   is rejected. Mark A02 PASS only after that complete clean integrated run.
+1. Write failing P2.2 launch/harness contracts for a headless project Gazebo
+   runtime plus `move_group`, with no duplicate controller manager.
+2. Prove an in-range joint target and `tool0` pose target each plan and execute
+   through the existing JTC, and observe HOME -> Pose -> HOME at `/joint_states`.
+3. Add a planning-scene object/collision case and prove the invalid goal is
+   rejected. Mark A02 PASS only after a complete clean integrated run and
+   cleanup proof.

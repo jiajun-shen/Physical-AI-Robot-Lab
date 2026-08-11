@@ -49,9 +49,13 @@ Phase 9 work begins.
    inspection, and bounded observed trajectory: `COMPLETE`, committed at
    `1228c13`; a clean real runtime gate observed the ABB spawn, active
    controllers, initialized limiters, bounded trajectory, and cleanup.
-5. `P2.1` project-owned MoveIt configuration and collision-aware planning
-   contract: next. It must not claim execution until a real project run has
-   planned and executed a collision-checked motion.
+5. `P2.1` project-owned MoveIt configuration contract: `COMPLETE`, committed at
+   `281c36b`; six-joint semantics, canonical position/velocity limits, KDL,
+   OMPL collision adapters, and the existing JTC action mapping pass installed
+   static tests without claiming planning or execution.
+6. `P2.2` headless MoveIt/Gazebo integration: next. It must prove valid joint
+   and pose plan/execution plus intentional collision rejection before A02 can
+   change.
 
 ## M1 release rule
 

@@ -111,6 +111,15 @@ configuration, collision-aware motion, gripper, GUI proof, real-ABB interface,
 or out-of-range clamp proof. These boundaries remain executable tests, not only
 documentation.
 
+P2.1 adds `abb_lab_moveit_config` as a declarative arm-only overlay. Its SRDF
+defines exactly `manipulator` from `base_link` to `tool0`; its planning limits
+mirror the canonical position/velocity table and intentionally omit unverified
+dynamic limits. A single OMPL pipeline includes start-state collision checking
+and solution validation, and the controller map points to the existing JTC
+action without allowing MoveIt to create another controller manager. The
+package has no launch, plan, or execution evidence; those are P2.2 runtime
+responsibilities.
+
 ## Core domain contracts
 
 - `SpeechCommand`: transcript, detected language, confidence, timestamp.

@@ -12,6 +12,8 @@ limiters initialized, a bounded six-axis trajectory returned `SUCCEEDED` with
 `error_code: 0`, and cleanup was verified. This establishes A01 only; it does
 not establish MoveIt planning, collision avoidance, a gripper, perception,
 speech, TaskGraph execution, VLA readiness, GUI behavior, or real-robot safety.
+An arm-only MoveIt configuration contract is installed and static-tested, but
+its real `move_group` planning/execution integration remains the next gate.
 See `PROJECT_STATE.md`, `ACCEPTANCE_STATUS.md`, and
 `docs/phase1_abb_gazebo_control_runtime_evidence.md` for exact evidence.
 
