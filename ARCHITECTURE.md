@@ -83,14 +83,31 @@ Packages are created only in tested atomic increments.
 
 ## Implemented Phase 1 slice
 
-`abb_lab_description` now exists as a geometry-only ROS 2 package. It installs
-a full-SHA/SHA-256-locked ABB IRB1200-5/0.9 asset subset under project-local
-resource URIs and expands to 10 links, 6 revolute joints, 3 fixed joints, and 14
-mesh references. The snapshot, source locks, license, and tests live inside the
-package, so it builds and tests after being copied alone to a differently
-nested colcon workspace. It intentionally has no world joint, Gazebo plugin,
-ros2_control block, transmission, MoveIt config, gripper, or real-hardware
-dependency. Those boundaries are executable tests, not only documentation.
+`abb_lab_description` installs a full-SHA/SHA-256-locked ABB IRB1200-5/0.9
+asset subset under project-local resource URIs. Its immutable geometry entry
+point still expands to 10 links, 6 revolute joints, 3 fixed joints, and 14 mesh
+references, with no world, simulator, control, MoveIt, gripper, or hardware
+content. The snapshot, locks, license, and tests are package-local, so the
+package builds and tests after being copied alone to a differently nested
+colcon workspace.
+
+P1.3a adds a separate simulation-only composition without altering that
+geometry contract. It expands to 11 links and 10 kinematic joints, fixes
+`base_link` to `world`, and declares one `GazeboSimSystem` with exactly six
+position command interfaces and position/velocity/effort state interfaces.
+Position command bounds and the ordinary URDF values are checked against one
+canonical table derived from the pinned source. The Harmonic system plugin is
+declared with `hold_joints=true`, and its controller-manager parameter file
+sets startup-only command-limit enforcement to true. The package exports its
+installed share parent as a Gazebo model resource root so converted
+`model://abb_lab_description/...` mesh URIs resolve in a clean overlay.
+
+This is a pre-runtime description contract. It contains no controller
+definitions or activation configuration, no Gazebo world/SDF or launch file,
+no motion target or invented initial state, and no MoveIt limit table, gripper,
+or real-ABB interface. Gazebo has not loaded this project description, and
+runtime enforcement/clamping is explicitly unverified. Those boundaries are
+executable tests, not only documentation.
 
 ## Core domain contracts
 

@@ -78,3 +78,22 @@
   after a real smoke test. Until then expose `VLA_BACKEND_UNAVAILABLE`.
 - Reason: Upstream does not support Ubuntu 24.04, the local 8151 MiB GPU is below
   the strict `> 8 GB` requirement, and no ABB-tuned checkpoint exists.
+
+## ADR-0010: Keep geometry provenance separate from simulation control
+
+- Status: Accepted
+- Decision: Preserve the P1.2 geometry Xacro as an exact audited derivative and
+  add Gazebo Harmonic control only through a separate project-owned composition.
+  Use one simulation-only position/velocity table to verify the pinned URDF and
+  ros2_control position interface bounds. Configure controller-manager command
+  enforcement at startup, but do not call limiter initialization verified until
+  a project runtime exposes the true parameter and the expected six limiters.
+  A bounded in-range trajectory proves the control chain, not clamping; clamp
+  verification requires a separately observed out-of-range injection.
+- Reason: Editing the source-derived geometry to consume operational policy
+  would weaken its byte-equivalence proof. Static configuration, runtime
+  initialization, and physical-robot safety are different evidence levels and
+  must remain distinguishable.
+- P1.3a boundary (2026-08-11): No Gazebo launch, controller activation,
+  trajectory, MoveIt configuration, acceleration/jerk value, or real-robot
+  readiness is claimed.

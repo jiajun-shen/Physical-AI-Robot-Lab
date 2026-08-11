@@ -41,6 +41,9 @@ if(BUILD_TESTING)
   ament_add_pytest_test(abb_description_source_contract
     "${CMAKE_CURRENT_SOURCE_DIR}/test/test_abb_description_source.py"
     TIMEOUT 30)
+  ament_add_pytest_test(abb_control_description_source_contract
+    "${CMAKE_CURRENT_SOURCE_DIR}/test/test_abb_control_description_source.py"
+    TIMEOUT 30)
 endif()
 
 ament_package()

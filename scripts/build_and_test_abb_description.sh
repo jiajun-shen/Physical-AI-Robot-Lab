@@ -48,6 +48,7 @@ readonly build_base="${output_root}/build"
 readonly install_base="${output_root}/install"
 readonly log_base="${output_root}/log"
 readonly generated_urdf="${output_root}/irb1200_5_90_geometry_only.urdf"
+readonly generated_control_urdf="${output_root}/irb1200_5_90_gz_control.urdf"
 
 mkdir -p "${output_root}"
 
@@ -73,6 +74,12 @@ xacro "$(ros2 pkg prefix --share abb_lab_description)/urdf/irb1200_5_90_geometry
 check_urdf "${generated_urdf}"
 python3 "${package_root}/test/verify_expanded_abb_urdf.py" "${generated_urdf}"
 
+xacro "$(ros2 pkg prefix --share abb_lab_description)/urdf/irb1200_5_90_gz_control.urdf.xacro" \
+  >"${generated_control_urdf}"
+check_urdf "${generated_control_urdf}"
+python3 "${package_root}/test/verify_expanded_abb_control_urdf.py" \
+  "${generated_control_urdf}"
+
 colcon --log-base "${output_root}/test-log" test \
   --build-base "${build_base}" \
   --install-base "${install_base}" \
@@ -85,3 +92,4 @@ colcon --log-base "${output_root}/test-result-log" test-result \
 echo "ABB_DESCRIPTION_BUILD=PASS"
 echo "OUTPUT_ROOT=${output_root}"
 echo "GENERATED_URDF=${generated_urdf}"
+echo "GENERATED_CONTROL_URDF=${generated_control_urdf}"

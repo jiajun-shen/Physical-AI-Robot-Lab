@@ -7,9 +7,12 @@ honest path toward ABB-adapted vision-language-action research.
 The repository has completed its verified Phase 0 environment, dependency, and
 architecture audit and has entered Phase 1. The installed upstream Gazebo /
 gz_ros2_control dependency path has passed a real headless trajectory smoke,
-and the pinned ABB IRB1200 geometry-only package builds, expands, and passes its
-asset contract. No ABB Gazebo/control runtime, project laboratory, perception,
-speech, or VLA capability is claimed working yet. See
+and the pinned ABB IRB1200 package now passes both its immutable geometry
+contract and a static fixed-base Harmonic control-description contract. The
+project control description has not been spawned, no project controller has
+been activated, and command-limit enforcement has not been observed at
+runtime. No ABB Gazebo runtime, project laboratory, perception, speech, or VLA
+capability is claimed working yet. See
 `PROJECT_STATE.md` for the exact tested state and next commands.
 
 The local WSL2 installation now has Ubuntu 24.04, ROS 2 Jazzy, Gazebo Harmonic,
@@ -17,7 +20,8 @@ MoveIt, and the control stack at recorded apt versions. The ABB asset source is
 pinned, but its complete upstream driver is not treated as Jazzy-compatible.
 See `docs/environment_report.md`, `docs/upstream_compatibility_report.md`, and
 `docs/phase1_dependency_smoke.md`. ABB asset/build evidence is in
-`docs/phase1_abb_asset_evidence.md`.
+`docs/phase1_abb_asset_evidence.md`; the separate pre-runtime control evidence
+is in `docs/phase1_abb_control_description_evidence.md`.
 
 ## Engineering order
 
