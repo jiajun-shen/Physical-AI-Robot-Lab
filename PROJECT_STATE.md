@@ -10,9 +10,9 @@ Phase 1 — ABB IRB1200 + Gazebo Harmonic + ros2_control (`IN PROGRESS`)
 
 ## Current subtask
 
-Capture the exact pre-install Jazzy apt snapshot, install the selected simulator,
-planning, and control dependencies, and pass the upstream gz_ros2_control
-headless smoke test before importing ABB assets.
+Install the exact top-level packages recorded in
+`config/ros-jazzy-apt.lock.yaml`, capture post-install versions, and pass the
+upstream gz_ros2_control headless smoke test before importing ABB assets.
 
 ## Git checkpoints
 
@@ -77,6 +77,8 @@ is claimed working.
 - Upstream ABB source inspection: six revolute joints, meshes, base/flange/tool
   frames, and conflicting limit sources observed at pinned commit.
 - Phase 0 documentation checkpoint: committed as `eb1b8e8`.
+- Phase 1 pre-install apt candidates captured for the simulator, control,
+  MoveIt, and MoveIt Task Constructor packages.
 - Phase 0 documentation consistency checks: PASS on 2026-08-11:
   - 14 required files present and non-empty
   - all required files strict UTF-8 decodable
@@ -184,9 +186,10 @@ Build/run/test commands will be added only after they actually exist and run.
 
 ## Next exact steps
 
-1. Capture a fresh `apt-cache policy` snapshot for the exact Phase 1 packages
-   in a committed lock/evidence file.
-2. Install the selected Jazzy/Harmonic/MoveIt/control packages in WSL, record
+1. Commit `config/ros-jazzy-apt.lock.yaml` after checking its candidate values
+   against a second `apt-cache policy` query.
+2. Install those exact top-level Jazzy/Harmonic/MoveIt/control packages in WSL,
+   record
    exact installed versions, and run upstream `gz_ros2_control` headless smoke
    launch before adding ABB assets.
 3. If the upstream control smoke passes, pin/import the ABB model assets in a

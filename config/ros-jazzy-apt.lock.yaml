@@ -1,0 +1,37 @@
+schema_version: 1
+captured_at: "2026-08-11T04:25:00+02:00"
+platform:
+  os: ubuntu
+  release: "24.04"
+  codename: noble
+  architecture: amd64
+  ros_distro: jazzy
+repository:
+  uri: http://packages.ros.org/ros2/ubuntu
+  suite: noble
+  component: main
+state: pre_install_candidates
+
+# These are exact direct-package candidates observed with apt-cache policy.
+# They are not proof of installation. Transitive packages will be captured in
+# a separate post-install manifest from dpkg-query.
+packages:
+  ros-jazzy-ros-gz: 1.0.22-1noble.20260616.074726
+  ros-jazzy-gz-ros2-control: 1.2.19-1noble.20260615.171757
+  ros-jazzy-gz-ros2-control-demos: 1.2.19-1noble.20260616.073637
+  ros-jazzy-ros2-control: 4.45.2-1noble.20260615.175135
+  ros-jazzy-ros2-controllers: 4.40.1-1noble.20260616.074625
+  ros-jazzy-moveit: 2.12.4-1noble.20260617.161956
+  ros-jazzy-moveit-task-constructor-core: 0.1.5-1noble.20260617.153812
+  ros-jazzy-moveit-task-constructor-capabilities: 0.1.5-1noble.20260617.155543
+  ros-jazzy-moveit-task-constructor-msgs: 0.1.5-1noble.20260615.120353
+  ros-jazzy-moveit-task-constructor-visualization: 0.1.5-1noble.20260617.155544
+
+verification_command: >-
+  apt-cache policy ros-jazzy-ros-gz ros-jazzy-gz-ros2-control
+  ros-jazzy-gz-ros2-control-demos ros-jazzy-ros2-control
+  ros-jazzy-ros2-controllers ros-jazzy-moveit
+  ros-jazzy-moveit-task-constructor-core
+  ros-jazzy-moveit-task-constructor-capabilities
+  ros-jazzy-moveit-task-constructor-msgs
+  ros-jazzy-moveit-task-constructor-visualization
