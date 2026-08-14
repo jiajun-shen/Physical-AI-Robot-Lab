@@ -13,6 +13,8 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 GRIPPER_ROOT = PACKAGE_ROOT.parent / "abb_lab_gripper"
 LAB_ROOT = PACKAGE_ROOT.parent / "abb_lab_lab"
 LAUNCH_PATH = PACKAGE_ROOT / "launch" / "irb1200_gripper_lab_headless.launch.py"
+RGBD_LAUNCH_PATH = PACKAGE_ROOT / "launch" / "irb1200_gripper_lab_rgbd_headless.launch.py"
+RGBD_WORLD_PATH = LAB_ROOT / "worlds" / "manipulation_lab_rgbd.sdf"
 
 
 def read_required(path: Path) -> str:
@@ -42,9 +44,11 @@ class ABBLabBringupSourceContracts(unittest.TestCase):
             PACKAGE_ROOT / "CMakeLists.txt",
             PACKAGE_ROOT / "package.xml",
             LAUNCH_PATH,
+            RGBD_LAUNCH_PATH,
             GRIPPER_ROOT / "urdf" / "irb1200_5_90_gz_gripper_control.urdf.xacro",
             GRIPPER_ROOT / "config" / "irb1200_gripper_controllers.yaml",
             LAB_ROOT / "worlds" / "manipulation_lab.sdf",
+            RGBD_WORLD_PATH,
         )
         for path in required_paths:
             with self.subTest(path=path):
@@ -155,6 +159,8 @@ class ABBLabBringupSourceContracts(unittest.TestCase):
                 "robot_state_publisher",
                 "ros_gz_bridge",
                 "ros_gz_sim",
+                "sensor_msgs",
+                "tf2_ros",
                 "xacro",
             }
             <= dependencies
@@ -176,6 +182,63 @@ class ABBLabBringupSourceContracts(unittest.TestCase):
         self.assertIn('PATTERN "*.pyc" EXCLUDE', cmake)
         self.assertIn("ament_add_pytest_test(abb_lab_bringup_source_contract", cmake)
         self.assertNotIn("verify_", cmake)
+
+    def test_rgbd_wrapper_reuses_the_p3_control_chain_and_bridges_only_sensors(self) -> None:
+        source = read_required(RGBD_LAUNCH_PATH)
+        ast.parse(source, filename=str(RGBD_LAUNCH_PATH))
+        required_tokens = (
+            "irb1200_gripper_lab_headless.launch.py",
+            "manipulation_lab_rgbd.sdf",
+            'package="ros_gz_bridge"',
+            'executable="parameter_bridge"',
+            "/lab_camera/image@sensor_msgs/msg/Image[gz.msgs.Image",
+            "/lab_camera/depth_image@sensor_msgs/msg/Image[gz.msgs.Image",
+            "/lab_camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
+            "override_frame_id:=lab_camera_optical_frame",
+            'package="tf2_ros"',
+            "lab_camera_link",
+            "lab_camera_optical_frame",
+        )
+        for token in required_tokens:
+            with self.subTest(token=token):
+                self.assertIn(token, source)
+        for forbidden in (
+            "ros2_control_node",
+            "controller_manager",
+            "gz model",
+            "model_pose",
+            "ground_truth",
+            "gazebo_msgs",
+            "ros_gz_interfaces",
+        ):
+            with self.subTest(forbidden=forbidden):
+                self.assertNotIn(forbidden, source.lower())
+        self.assertEqual(source.count('executable="parameter_bridge"'), 1)
+        self.assertEqual(source.count('static_transform_publisher'), 2)
+
+    def test_rgbd_world_is_separate_and_has_one_static_sensor_camera(self) -> None:
+        original = read_required(LAB_ROOT / "worlds" / "manipulation_lab.sdf")
+        rgbd_root = ET.parse(RGBD_WORLD_PATH).getroot()
+        self.assertEqual(rgbd_root.tag, "sdf")
+        world = rgbd_root.find("world")
+        self.assertIsNotNone(world)
+        assert world is not None
+        self.assertEqual(world.attrib.get("name"), "manipulation_lab")
+        self.assertIn("gz-sim-sensors-system", read_required(RGBD_WORLD_PATH))
+        self.assertIn("ogre2", read_required(RGBD_WORLD_PATH))
+        self.assertNotIn("gz-sim-sensors-system", original)
+        models = {model.attrib.get("name"): model for model in world.findall("model")}
+        camera = models.get("lab_rgbd_camera")
+        self.assertIsNotNone(camera)
+        assert camera is not None
+        self.assertEqual(camera.findtext("static"), "true")
+        sensor = camera.find("link/sensor")
+        self.assertIsNotNone(sensor)
+        assert sensor is not None
+        self.assertEqual(sensor.attrib.get("type"), "rgbd_camera")
+        self.assertEqual(sensor.findtext("topic"), "/lab_camera")
+        self.assertEqual(sensor.findtext("camera/image/width"), "640")
+        self.assertEqual(sensor.findtext("camera/image/height"), "480")
 
 
 if __name__ == "__main__":

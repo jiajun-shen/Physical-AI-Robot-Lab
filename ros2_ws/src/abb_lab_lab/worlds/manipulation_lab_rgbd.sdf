@@ -1,0 +1,124 @@
+<?xml version="1.0"?>
+<!--
+  Phase-4 RGB-D laboratory profile.  This is deliberately separate from the
+  Phase-3 world: the P3 world and its historical ten-model contract remain
+  unchanged.  The seed generator may replace only the existing lab-model
+  poses; lab_rgbd_camera is static and is not a perception input by itself.
+-->
+<sdf version="1.10">
+  <world name="manipulation_lab">
+    <physics name="one_millisecond_step" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <gravity>0 0 -9.81</gravity>
+
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+    <light name="sun" type="directional">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 10 0 0 0</pose>
+      <diffuse>0.8 0.8 0.8 1</diffuse>
+      <specular>0.2 0.2 0.2 1</specular>
+      <attenuation><range>1000</range><constant>0.9</constant><linear>0.01</linear><quadratic>0.001</quadratic></attenuation>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="ground_plane_link">
+        <collision name="collision"><geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry><surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface></collision>
+        <visual name="visual"><geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry><material><ambient>0.28 0.28 0.28 1</ambient><diffuse>0.48 0.48 0.48 1</diffuse><specular>0.01 0.01 0.01 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="work_table">
+      <pose>0.65 0 0.375 0 0 0</pose><static>true</static>
+      <link name="work_table_link">
+        <collision name="collision"><geometry><box><size>1.0 0.9 0.75</size></box></geometry><surface><friction><ode><mu>0.8</mu><mu2>0.8</mu2></ode></friction></surface></collision>
+        <visual name="visual"><geometry><box><size>1.0 0.9 0.75</size></box></geometry><material><ambient>0.28 0.18 0.08 1</ambient><diffuse>0.46 0.30 0.12 1</diffuse><specular>0.05 0.05 0.05 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="drawing_board">
+      <pose>1.10 0 0.975 0 0 0</pose><static>true</static>
+      <link name="drawing_board_link">
+        <collision name="collision"><geometry><box><size>0.03 0.70 0.45</size></box></geometry><surface><friction><ode><mu>0.6</mu><mu2>0.6</mu2></ode></friction></surface></collision>
+        <visual name="visual"><geometry><box><size>0.03 0.70 0.45</size></box></geometry><material><ambient>0.78 0.78 0.75 1</ambient><diffuse>0.92 0.92 0.88 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="obstacle_left">
+      <pose>0.79 0.20 0.85 0 0 0</pose><static>true</static>
+      <link name="obstacle_left_link">
+        <collision name="collision"><geometry><box><size>0.10 0.10 0.20</size></box></geometry><surface><friction><ode><mu>0.7</mu><mu2>0.7</mu2></ode></friction></surface></collision>
+        <visual name="visual"><geometry><box><size>0.10 0.10 0.20</size></box></geometry><material><ambient>0.20 0.20 0.24 1</ambient><diffuse>0.32 0.32 0.38 1</diffuse><specular>0.06 0.06 0.06 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="obstacle_right">
+      <pose>0.47 0.20 0.85 0 0 -0.5</pose><static>true</static>
+      <link name="obstacle_right_link">
+        <collision name="collision"><geometry><box><size>0.10 0.10 0.20</size></box></geometry><surface><friction><ode><mu>0.7</mu><mu2>0.7</mu2></ode></friction></surface></collision>
+        <visual name="visual"><geometry><box><size>0.10 0.10 0.20</size></box></geometry><material><ambient>0.20 0.20 0.24 1</ambient><diffuse>0.32 0.32 0.38 1</diffuse><specular>0.06 0.06 0.06 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="green_ball">
+      <pose>0.79 0 0.785 0 0 -1.2</pose><static>false</static>
+      <link name="green_ball_link">
+        <inertial><mass>0.065</mass><inertia><ixx>0.00003185</ixx><iyy>0.00003185</iyy><izz>0.00003185</izz></inertia></inertial>
+        <collision name="collision"><geometry><sphere><radius>0.035</radius></sphere></geometry><surface><friction><ode><mu>0.55</mu><mu2>0.55</mu2></ode></friction></surface></collision>
+        <visual name="visual"><geometry><sphere><radius>0.035</radius></sphere></geometry><material><ambient>0.03 0.45 0.09 1</ambient><diffuse>0.05 0.75 0.15 1</diffuse><specular>0.2 0.2 0.2 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="red_ball">
+      <pose>0.47 0 0.785 0 0 -1.2</pose><static>false</static>
+      <link name="red_ball_link">
+        <inertial><mass>0.065</mass><inertia><ixx>0.00003185</ixx><iyy>0.00003185</iyy><izz>0.00003185</izz></inertia></inertial>
+        <collision name="collision"><geometry><sphere><radius>0.035</radius></sphere></geometry><surface><friction><ode><mu>0.55</mu><mu2>0.55</mu2></ode></friction></surface></collision>
+        <visual name="visual"><geometry><sphere><radius>0.035</radius></sphere></geometry><material><ambient>0.48 0.03 0.03 1</ambient><diffuse>0.80 0.05 0.05 1</diffuse><specular>0.2 0.2 0.2 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="blue_cube">
+      <pose>0.63 -0.20 0.78 0 0 -0.25</pose><static>false</static>
+      <link name="blue_cube_link">
+        <inertial><mass>0.080</mass><inertia><ixx>0.000048</ixx><iyy>0.000048</iyy><izz>0.000048</izz></inertia></inertial>
+        <collision name="collision"><geometry><box><size>0.06 0.06 0.06</size></box></geometry><surface><friction><ode><mu>0.6</mu><mu2>0.6</mu2></ode></friction></surface></collision>
+        <visual name="visual"><geometry><box><size>0.06 0.06 0.06</size></box></geometry><material><ambient>0.03 0.15 0.52 1</ambient><diffuse>0.05 0.25 0.85 1</diffuse><specular>0.2 0.2 0.2 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="yellow_cube">
+      <pose>0.47 -0.20 0.78 0 0 -0.75</pose><static>false</static>
+      <link name="yellow_cube_link">
+        <inertial><mass>0.080</mass><inertia><ixx>0.000048</ixx><iyy>0.000048</iyy><izz>0.000048</izz></inertia></inertial>
+        <collision name="collision"><geometry><box><size>0.06 0.06 0.06</size></box></geometry><surface><friction><ode><mu>0.6</mu><mu2>0.6</mu2></ode></friction></surface></collision>
+        <visual name="visual"><geometry><box><size>0.06 0.06 0.06</size></box></geometry><material><ambient>0.58 0.47 0.03 1</ambient><diffuse>0.95 0.80 0.05 1</diffuse><specular>0.2 0.2 0.2 1</specular></material></visual>
+      </link>
+    </model>
+
+    <model name="lab_rgbd_camera">
+      <!-- Local +X looks from the front-left of the table toward the board. -->
+      <pose>0.10 -1.30 1.80 0 0.601 1.107</pose><static>true</static>
+      <link name="lab_camera_link">
+        <sensor name="lab_rgbd" type="rgbd_camera">
+          <always_on>1</always_on><update_rate>15</update_rate><visualize>false</visualize>
+          <topic>/lab_camera</topic>
+          <camera>
+            <horizontal_fov>1.2217304764</horizontal_fov>
+            <image><width>640</width><height>480</height><format>R8G8B8</format></image>
+            <clip><near>0.1</near><far>4.0</far></clip>
+          </camera>
+        </sensor>
+      </link>
+    </model>
+  </world>
+</sdf>
