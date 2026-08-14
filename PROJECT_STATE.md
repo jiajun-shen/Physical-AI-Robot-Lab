@@ -6,16 +6,17 @@ Physical-AI-Robot-Lab
 
 ## Current phase
 
-Phase 4 - RGB-D perception (`AUTHORIZED - NOT STARTED`)
+Phase 4 - RGB-D perception (`IN PROGRESS - P4.1 EVIDENCE CONTRACT`)
 
-Project state: `PHASE 4 AUTHORIZED - PRE-IMPLEMENTATION CHECKPOINT`.
+Project state: `PHASE 4 IN PROGRESS - P4.1 CAMERA CONTRACT`.
 
 ## Current subtask
 
-The user explicitly accepted the saved Phase-3 two-seed real-run evidence on
-2026-08-14. Begin Phase 4 with P4.1: define and verify the RGB-D CameraInfo/TF
-contract in `vision` mode. This release does not alter the Phase-3 capability
-boundary and does not replace the later mandatory M1 hold after Phase 8.
+The Phase-4 evidence contract is recorded at
+`docs/phase4_perception_evidence_contract.md`. Implement P4.1: a separate
+RGB-D world, ROS CameraInfo transport, and a real TF chain in `vision` mode.
+This work must preserve the P3 world and its position-only/no-contact boundary
+and does not replace the later mandatory M1 hold after Phase 8.
 
 ## Git checkpoints
 
@@ -252,10 +253,9 @@ ros2_control 4.45.2, gz_ros2_control 1.2.19, ros2_controllers 4.40.1, MoveIt
 
 ## Next exact steps
 
-1. Define P4.1's real-run evidence contract, then implement and verify RGB-D,
-   CameraInfo, and TF transport in `vision` mode without consuming Gazebo
-   ground truth. Keep A03 `NOT STARTED` until the complete real vision-mode
-   acceptance run passes.
+1. Implement and verify P4.1 RGB-D, CameraInfo, and TF transport in `vision`
+   mode without consuming Gazebo ground truth. Keep A03 `NOT STARTED` until
+   the complete real vision-mode acceptance run passes.
 2. Build the remaining Phase-4 detection, depth-projection, and typed pose
    pipeline in atomic checkpoints with saved evidence and clean tested commits.
 3. Preserve the Phase-8 M1 hold unchanged: even after any later Phase-4--8
