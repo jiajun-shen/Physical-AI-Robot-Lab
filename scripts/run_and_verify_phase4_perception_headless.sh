@@ -265,7 +265,7 @@ run_seed() {
   local capture_log="${runtime_root}/offline_capture.txt"
   local evaluator_log="${runtime_root}/offline_evaluator.txt"
   local seed_partition="physical_ai_p4_${ROS_DOMAIN_ID}_${seed}_${BASHPID}"
-  local deadline topics
+  local deadline node_info_deadline topics
   mkdir -p "${scene_root}" "${runtime_root}" "${seed_root}/offline_gt"
   {
     cat "${OUTPUT_ROOT}/run_metadata.txt"
@@ -321,8 +321,20 @@ run_seed() {
     grep -Fxq "${expected_topic}" "${topic_log}" ||
       die "seed ${seed} did not expose required topic ${expected_topic}"
   done
-  timeout --kill-after=1s 8s ros2 node info /vision_localizer \
-    >"${node_info_log}" 2>&1 || die "seed ${seed} cannot inspect vision node"
+  # DDS graph discovery can lag topic discovery by a short interval.  Require
+  # the actual subscription list, rather than accepting a transient node-info
+  # lookup failure immediately after the topics first appear.
+  node_info_deadline=$((SECONDS + 25))
+  while (( SECONDS < node_info_deadline )); do
+    if timeout --kill-after=1s 8s ros2 node info /vision_localizer \
+        >"${node_info_log}" 2>&1 &&
+        grep -Fq '/lab_camera/color/image_raw' "${node_info_log}" &&
+        grep -Fq '/lab_camera/depth/image_raw' "${node_info_log}" &&
+        grep -Fq '/lab_camera/color/camera_info' "${node_info_log}"; then
+      break
+    fi
+    sleep 0.5
+  done
   grep -Fq '/lab_camera/color/image_raw' "${node_info_log}" ||
     die "seed ${seed} vision node does not subscribe to RGB"
   grep -Fq '/lab_camera/depth/image_raw' "${node_info_log}" ||
