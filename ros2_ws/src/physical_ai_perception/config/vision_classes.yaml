@@ -1,0 +1,54 @@
+# Class priors define only image appearance and physical shape dimensions.
+classes:
+  - class_id: green_ball
+    hsv_ranges:
+      - lower: [35, 60, 35]
+        upper: [95, 255, 255]
+    min_pixels: 90
+    max_pixels: 3000
+    min_aspect_ratio: 0.55
+    max_aspect_ratio: 1.80
+    center_offset_m: 0.035
+    geometry_kind: surface_ray
+  - class_id: red_ball
+    hsv_ranges:
+      - lower: [0, 70, 35]
+        upper: [12, 255, 255]
+      - lower: [165, 70, 35]
+        upper: [179, 255, 255]
+    min_pixels: 90
+    max_pixels: 3000
+    min_aspect_ratio: 0.55
+    max_aspect_ratio: 1.80
+    center_offset_m: 0.035
+    geometry_kind: surface_ray
+  - class_id: blue_cube
+    hsv_ranges:
+      - lower: [92, 65, 30]
+        upper: [135, 255, 255]
+    min_pixels: 110
+    max_pixels: 3000
+    min_aspect_ratio: 0.45
+    max_aspect_ratio: 2.20
+    center_offset_m: 0.032
+    geometry_kind: surface_ray
+  - class_id: yellow_cube
+    hsv_ranges:
+      - lower: [22, 65, 65]
+        upper: [38, 255, 255]
+    min_pixels: 110
+    max_pixels: 2500
+    min_aspect_ratio: 0.45
+    max_aspect_ratio: 2.20
+    center_offset_m: 0.032
+    geometry_kind: surface_ray
+  - class_id: drawing_board
+    hsv_ranges:
+      - lower: [20, 0, 60]
+        upper: [40, 30, 150]
+    min_pixels: 800
+    max_pixels: 35000
+    min_aspect_ratio: 1.10
+    max_aspect_ratio: 20.0
+    center_offset_m: 0.015
+    geometry_kind: planar_rectangle
