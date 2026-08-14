@@ -69,18 +69,18 @@ Phase 9 work begins.
    for both directional cubes. This is position-only gripper evidence: no
    contact, force, attachment, grasp, arm-in-lab MoveIt execution, or
    pick/place was claimed. See `docs/phase3_gripper_lab_runtime_evidence.md`.
-8. Phase-3 acceptance hold: `PAUSED - AWAITING USER PHASE-3 ACCEPTANCE`.
-   Do not begin Phase 4 until the user explicitly accepts the final Phase-3
-   evidence. This local hold does not satisfy or release M1.
+8. Phase-3 acceptance hold: `RELEASED ON 2026-08-14` after the user explicitly
+   accepted the final Phase-3 evidence. Phase 4 is authorized; this local
+   release does not satisfy or release M1.
 
 ## Phase-3 release rule
 
 After the final Phase-3 real-run evidence is complete, the project state is
-`PAUSED - AWAITING USER PHASE-3 ACCEPTANCE`. Phase 4 may begin only after the
-user explicitly accepts the Phase-3 review. The evidence must remain tied to
-the tested clean commit and include the selected live Gazebo scenes rather than
-only generated manifest/SDF files. This release permits no claim about
-perception, contact, grasp, pick/place, or any M1 row.
+`PAUSED - AWAITING USER PHASE-3 ACCEPTANCE` until the user explicitly accepts
+the review. That authorization was recorded on 2026-08-14, permitting Phase 4
+to begin. The evidence remains tied to the tested clean commit and selected
+live Gazebo scenes rather than only generated manifest/SDF files. The release
+permits no claim about perception, contact, grasp, pick/place, or any M1 row.
 
 ## M1 release rule
 

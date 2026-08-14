@@ -155,10 +155,12 @@ pick/place, M1.04 grasp, MoveIt-with-gripper laboratory motion, arm execution
 in the lab, GUI rendering, vision, real robot control, or physical safety.
 A03, A04, and M1.04 remain `NOT STARTED`.
 
-## Phase-3 acceptance hold
+## Phase-3 acceptance record
 
 Phase 3 is complete within its stated gripper-and-live-laboratory scope and is
-now `PAUSED - AWAITING USER PHASE-3 ACCEPTANCE`. Phase 4 is blocked until the
-user explicitly accepts this Phase-3 evidence. This earlier hold only governs
-entry to Phase 4; it does not mark any M1 item `PASS` and does not weaken the
-separate mandatory Phase-8 M1 hold before Phase 9.
+recorded as user accepted on 2026-08-14. P3.03 is `PASS` and Phase 4 is
+authorized. This earlier release only governs entry to Phase 4; it does not
+mark any M1 item `PASS` and does not weaken the separate mandatory Phase-8 M1
+hold before Phase 9. The accepted evidence remains position-only free-space
+gripper behavior plus live seeded-scene variation, not contact, force,
+attachment, grasp, lifting, transport, perception, or pick/place evidence.

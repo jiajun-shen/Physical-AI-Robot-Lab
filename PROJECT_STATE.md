@@ -6,22 +6,25 @@ Physical-AI-Robot-Lab
 
 ## Current phase
 
-Phase 3 - modular two-finger gripper + live laboratory objects (`COMPLETED`)
+Phase 4 - RGB-D perception (`AUTHORIZED - NOT STARTED`)
 
-Project state: `PAUSED - AWAITING USER PHASE-3 ACCEPTANCE`.
+Project state: `PHASE 4 AUTHORIZED - PRE-IMPLEMENTATION CHECKPOINT`.
 
 ## Current subtask
 
-Stop at the completed Phase-3 acceptance gate. Do not start Phase 4 until the
-user explicitly accepts the saved Phase-3 real-run evidence. This is an earlier
-project hold and does not replace the later mandatory M1 hold after Phase 8.
+The user explicitly accepted the saved Phase-3 two-seed real-run evidence on
+2026-08-14. Begin Phase 4 with P4.1: define and verify the RGB-D CameraInfo/TF
+contract in `vision` mode. This release does not alter the Phase-3 capability
+boundary and does not replace the later mandatory M1 hold after Phase 8.
 
 ## Git checkpoints
 
 - Latest runtime-qualified feature commit: `f6907ff6b6a4ed2ea91c4c21af68f4b78eb60d63`
 - Stable feature commit: `f6907ff6b6a4ed2ea91c4c21af68f4b78eb60d63`
 - Experimental commit: none
-- Current branch: `main` tracking `origin/main`
+- Stable base branch: `main` at `f994fd651e4817f053121227383a8c89bb23b0ed`
+- Active Phase-4 branch: `agent/phase4-perception` tracking
+  `origin/agent/phase4-perception`
 - Remote: `https://github.com/jiajun-shen/Physical-AI-Robot-Lab.git` (private)
 
 The Phase-3 final evidence is clean and commit-addressable: two separately
@@ -164,9 +167,10 @@ perception, or MoveIt-with-gripper result.
 The final Phase-3 gates each built and tested `abb_lab_description`,
 `abb_lab_control`, `abb_lab_gazebo`, `abb_lab_moveit_config`,
 `abb_lab_gripper`, `abb_lab_lab`, and `abb_lab_bringup` on ext4. Generated
-build/install/log trees and runtime episodes remain outside Git. The phase is
-complete at the user-approved foundational gripper-and-objects scope and the
-project is paused rather than starting Phase 4.
+build/install/log trees and runtime episodes remain outside Git. Phase 3 is
+complete at the user-approved foundational gripper-and-objects scope; its
+explicit user acceptance now authorizes Phase 4, but no Phase-4 runtime claim
+exists at this checkpoint.
 
 ## Current run status
 
@@ -207,14 +211,13 @@ project is paused rather than starting Phase 4.
 - Final first-party license, speech-model pin, and VLA GPU service location are
   open design decisions.
 
-## Mandatory Phase-3 acceptance hold
+## Phase-3 acceptance record (released 2026-08-14)
 
-Phase 3 is complete at the user-approved foundational gripper-and-objects
-scope. Its state is `PAUSED - AWAITING USER PHASE-3 ACCEPTANCE`. Phase 4 must
-not begin until the user explicitly accepts the final two-seed real-run
-evidence. A passing test, source code, or a model cannot release this hold.
-This earlier authorization does not make a contact/grasp claim and does not
-modify the separate Phase-8 M1 stop condition below.
+The user explicitly accepted the final two-seed Phase-3 real-run evidence at
+`f6907ff6b6a4ed2ea91c4c21af68f4b78eb60d63` and authorized Phase 4 on
+2026-08-14. P3.03 is therefore `PASS`. This recorded authorization does not
+make a contact/grasp claim and does not modify the separate Phase-8 M1 stop
+condition below.
 
 ## Mandatory M1 stop condition
 
@@ -249,11 +252,12 @@ ros2_control 4.45.2, gz_ros2_control 1.2.19, ros2_controllers 4.40.1, MoveIt
 
 ## Next exact steps
 
-1. Wait for the user's explicit Phase-3 acceptance. Do not begin Phase 4
-   perception work before it is received.
-2. On acceptance, begin Phase 4 with RGB-D/CameraInfo/TF evidence that does
-   not consume Gazebo ground truth; keep A03 `NOT STARTED` until that real
-   vision-mode acceptance runs.
+1. Define P4.1's real-run evidence contract, then implement and verify RGB-D,
+   CameraInfo, and TF transport in `vision` mode without consuming Gazebo
+   ground truth. Keep A03 `NOT STARTED` until the complete real vision-mode
+   acceptance run passes.
+2. Build the remaining Phase-4 detection, depth-projection, and typed pose
+   pipeline in atomic checkpoints with saved evidence and clean tested commits.
 3. Preserve the Phase-8 M1 hold unchanged: even after any later Phase-4--8
    work, Phase 9 requires final integrated M1 evidence and separate explicit
    user acceptance.

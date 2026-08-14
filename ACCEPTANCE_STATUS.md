@@ -20,19 +20,19 @@ an expected result is insufficient.
 | A13 | ABB demonstration episode is collected and converted to LeRobot format | NOT STARTED | None |
 | A14 | openpi training config/dry-run validates; optional small overfit if feasible | NOT STARTED | None |
 
-## Phase-3 acceptance hold (before Phase 4)
+## Phase-3 acceptance record (release to Phase 4)
 
 The scoped Phase-3 implementation and final real-run evidence are complete at
-`f6907ff6b6a4ed2ea91c4c21af68f4b78eb60d63`. The project is now
-`PAUSED - AWAITING USER PHASE-3 ACCEPTANCE`; Phase 4 is locked until the user
-explicitly accepts this review. It is a separate gate from M1 and does not
-advance A03, A04, M1.04, or any later acceptance item.
+`f6907ff6b6a4ed2ea91c4c21af68f4b78eb60d63`. On 2026-08-14 the user explicitly
+accepted the saved Phase-3 review and authorized Phase 4. This release is
+separate from M1 and does not advance A03, A04, M1.04, or any later acceptance
+item.
 
 | ID | Phase-3 real-run proof | Status | Immutable evidence |
 |---|---|---|---|
 | P3.01 | The project ABB model with the two-finger profile, one active Gazebo control chain, and a free-space open/close/open action operates in Gazebo | PASS | Two clean runs on `f6907ff`, one per selected seed, each report active `GazeboSimSystem`, JSB/JTC/gripper controller, live named joint states, `ParallelGripperCommand` action success, and mirrored finger state. `/var/tmp/p3-final-f6907ff-seed42` and `/var/tmp/p3-final-f6907ff-seed43`. |
 | P3.02 | Two distinct selected seeds are actually launched and show live seeded-scene variation | PASS | Captured `gz model --list` and `gz model -p` evidence after the free-space actions for seeds 42 and 43; comparison `/var/tmp/p3-final-f6907ff-seed-comparison.json` records six material position deltas and both directional-cube yaw deltas. |
-| P3.03 | User accepts the Phase-3 review and authorizes Phase 4 | PENDING USER ACCEPTANCE | Explicit user approval is required; tests, code, or this ledger cannot release the hold. |
+| P3.03 | User accepts the Phase-3 review and authorizes Phase 4 | PASS | The user explicitly accepted the saved two-seed Phase-3 real-run evidence on 2026-08-14. This records authorization only; it is not a new runtime result and does not change the position-only/no-contact boundary. |
 
 P3.01 is deliberately position-only and free-space evidence. It is not force,
 contact, attachment, grasp, lifting, transport, perception, or pick/place

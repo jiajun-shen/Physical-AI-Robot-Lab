@@ -20,9 +20,9 @@ yaw variation, and completed a real free-space gripper
 `open -> closed clearance -> reopen` action sequence with mirrored finger
 states. This is not a contact, force, attachment, grasp, arm-in-lab MoveIt,
 perception, pick/place, GUI, or real-robot result. A03, A04, and M1.04 remain
-`NOT STARTED`. The project is now paused for the user's explicit Phase-3
-acceptance; see `PROJECT_STATE.md`, `ACCEPTANCE_STATUS.md`, and
-`docs/phase3_gripper_lab_runtime_evidence.md`.
+`NOT STARTED`. The user explicitly accepted the saved Phase-3 evidence on
+2026-08-14, authorizing Phase 4 perception work; see `PROJECT_STATE.md`,
+`ACCEPTANCE_STATUS.md`, and `docs/phase3_gripper_lab_runtime_evidence.md`.
 
 The clean P2.2 run found no residual owned process, but observed the installed
 `move_group` process exit with SIGSEGV during requested teardown. That is
@@ -43,12 +43,12 @@ remain gated by the unresolved first-party license.
 3. Integrate VLA inference behind explicit ABB observation, action, and safety
    adapters without misrepresenting an unadapted checkpoint as ABB-ready.
 
-## Phase-3 acceptance hold
+## Phase-3 acceptance record
 
-Phase 3 is `PAUSED - AWAITING USER PHASE-3 ACCEPTANCE`. Phase 4 must not begin
-until the user explicitly accepts the saved final Phase-3 real-run evidence.
-This earlier hold releases, at most, later Phase-4--8 work; it does not mark
-any M1 item as passed or replace the separate Phase-8 M1 hold below.
+The user explicitly accepted the saved final Phase-3 real-run evidence on
+2026-08-14. Phase 4 is authorized. This release permits, at most, later
+Phase-4--8 work; it does not mark any M1 item as passed or replace the separate
+Phase-8 M1 hold below.
 
 ## Mandatory midterm hold
 

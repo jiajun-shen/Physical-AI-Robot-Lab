@@ -199,14 +199,13 @@ Typed recovery covers at least object-not-found, IK/planning/collision/grasp/
 trajectory failures, moved objects, VLA invalid/timeout, uncertain speech, and
 unknown instructions. Failures are never silent.
 
-## Mandatory Phase-3 acceptance hold
+## Phase-3 acceptance record
 
 The user-approved foundational P3 scope is complete only after saved clean
-real runs of the gripper and live seeded laboratory. Its completion state is
-`PAUSED - AWAITING USER PHASE-3 ACCEPTANCE`. Phase 4 cannot be created or run
-until the user explicitly accepts P3. This release is limited to Phase 4--8
-work and neither supplies contact/grasp evidence nor releases the separate M1
-hold below.
+real runs of the gripper and live seeded laboratory. The user explicitly
+accepted that evidence on 2026-08-14, so P3.03 is `PASS` and Phase 4 is
+authorized. This release is limited to Phase 4--8 work and neither supplies
+contact/grasp evidence nor releases the separate M1 hold below.
 
 ## Mandatory M1 governance hold
 
