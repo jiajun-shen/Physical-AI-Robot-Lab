@@ -6,17 +6,18 @@ Physical-AI-Robot-Lab
 
 ## Current phase
 
-Phase 4 - RGB-D perception (`IN PROGRESS - P4.1 EVIDENCE CONTRACT`)
+Phase 4 - RGB-D perception (`PARTIAL - P4.1 RUNTIME PASS`)
 
-Project state: `PHASE 4 IN PROGRESS - P4.1 CAMERA CONTRACT`.
+Project state: `PHASE 4 IN PROGRESS - P4.2 THROUGH P4.7`.
 
 ## Current subtask
 
-The Phase-4 evidence contract is recorded at
-`docs/phase4_perception_evidence_contract.md`. Implement P4.1: a separate
-RGB-D world, ROS CameraInfo transport, and a real TF chain in `vision` mode.
-This work must preserve the P3 world and its position-only/no-contact boundary
-and does not replace the later mandatory M1 hold after Phase 8.
+P4.1 passed its clean-commit real transport run at `feca6ba`; see
+`docs/phase4_perception_runtime_evidence.md`. Next implement P4.2--P4.7:
+typed vision-only RGB/depth/CameraInfo/TF2 localization, evidence sealing,
+and an offline-only Gazebo comparison. This work must preserve the P3 world
+and its position-only/no-contact boundary and does not replace the later
+mandatory M1 hold after Phase 8.
 
 ## Git checkpoints
 
@@ -170,8 +171,13 @@ The final Phase-3 gates each built and tested `abb_lab_description`,
 `abb_lab_gripper`, `abb_lab_lab`, and `abb_lab_bringup` on ext4. Generated
 build/install/log trees and runtime episodes remain outside Git. Phase 3 is
 complete at the user-approved foundational gripper-and-objects scope; its
-explicit user acceptance now authorizes Phase 4, but no Phase-4 runtime claim
-exists at this checkpoint.
+explicit user acceptance authorized Phase 4, but no complete Phase-4
+perception runtime claim exists at this checkpoint.
+
+P4.1 independently built and tested the project camera transport source at
+`feca6ba`, then observed real CameraInfo, RGB/depth ROS topics, and the
+`world -> lab_camera_optical_frame` chain from the separate RGB-D world. It
+did not start a perception node and is not an A03 result.
 
 ## Current run status
 
@@ -181,6 +187,9 @@ exists at this checkpoint.
 - Project gripper/laboratory profile: verified as free-space position action
   plus captured live selected-seed variation at `f6907ff`; no arm motion,
   contact, force, attachment, or grasp claim.
+- P4.1 RGB-D sensor transport and static TF: verified headlessly at `feca6ba`;
+  detection, depth projection, and vision-mode object localization remain
+  unverified.
 - Project GUI rendering: not run.
 - Project out-of-range clamp injection: not run.
 - VLA backend: `VLA_BACKEND_UNAVAILABLE`.
@@ -253,11 +262,12 @@ ros2_control 4.45.2, gz_ros2_control 1.2.19, ros2_controllers 4.40.1, MoveIt
 
 ## Next exact steps
 
-1. Implement and verify P4.1 RGB-D, CameraInfo, and TF transport in `vision`
-   mode without consuming Gazebo ground truth. Keep A03 `NOT STARTED` until
-   the complete real vision-mode acceptance run passes.
-2. Build the remaining Phase-4 detection, depth-projection, and typed pose
-   pipeline in atomic checkpoints with saved evidence and clean tested commits.
+1. Implement P4.2--P4.5: project-owned typed outputs, real RGB/depth
+   inspection, CameraInfo back-projection, and timestamped TF2 world poses in
+   `vision` mode without consuming Gazebo ground truth.
+2. Run P4.6--P4.7 on seeded worlds 42 and 43, seal vision evidence before the
+   separate offline Gazebo comparison, and keep A03 `NOT STARTED` until that
+   full real vision-mode gate passes.
 3. Preserve the Phase-8 M1 hold unchanged: even after any later Phase-4--8
    work, Phase 9 requires final integrated M1 evidence and separate explicit
    user acceptance.
