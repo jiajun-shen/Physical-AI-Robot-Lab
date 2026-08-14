@@ -160,20 +160,21 @@ run_directory=""
 stop_process_group() {
   local group_pid="$1"
   if [[ -z "${group_pid}" ]] || ! kill -0 "${group_pid}" 2>/dev/null; then
-    return
+    return 0
   fi
   kill -INT -- "-${group_pid}" 2>/dev/null || true
   for _ in {1..24}; do
-    kill -0 "${group_pid}" 2>/dev/null || return
+    kill -0 "${group_pid}" 2>/dev/null || { wait "${group_pid}" 2>/dev/null || true; return 0; }
     sleep 0.2
   done
   kill -TERM -- "-${group_pid}" 2>/dev/null || true
   for _ in {1..12}; do
-    kill -0 "${group_pid}" 2>/dev/null || return
+    kill -0 "${group_pid}" 2>/dev/null || { wait "${group_pid}" 2>/dev/null || true; return 0; }
     sleep 0.2
   done
   kill -KILL -- "-${group_pid}" 2>/dev/null || true
   wait "${group_pid}" 2>/dev/null || true
+  return 0
 }
 cleanup_active_run() {
   stop_process_group "${run_node_pid}"
