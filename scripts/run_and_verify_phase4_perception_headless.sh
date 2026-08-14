@@ -159,30 +159,36 @@ run_node_pid=""
 run_directory=""
 stop_process_group() {
   local group_pid="$1"
-  if [[ -z "${group_pid}" ]] || ! kill -0 "${group_pid}" 2>/dev/null; then
+  # The setsid leader can exit before a simulator child does.  Test and signal
+  # the whole process group so an orphaned Gazebo process cannot contaminate a
+  # later isolated seed run.
+  if [[ -z "${group_pid}" ]] || ! kill -0 -- "-${group_pid}" 2>/dev/null; then
     return 0
   fi
   kill -INT -- "-${group_pid}" 2>/dev/null || true
   for _ in {1..24}; do
-    kill -0 "${group_pid}" 2>/dev/null || { wait "${group_pid}" 2>/dev/null || true; return 0; }
+    kill -0 -- "-${group_pid}" 2>/dev/null || { wait "${group_pid}" 2>/dev/null || true; return 0; }
     sleep 0.2
   done
   kill -TERM -- "-${group_pid}" 2>/dev/null || true
   for _ in {1..12}; do
-    kill -0 "${group_pid}" 2>/dev/null || { wait "${group_pid}" 2>/dev/null || true; return 0; }
+    kill -0 -- "-${group_pid}" 2>/dev/null || { wait "${group_pid}" 2>/dev/null || true; return 0; }
     sleep 0.2
   done
   kill -KILL -- "-${group_pid}" 2>/dev/null || true
-  wait "${group_pid}" 2>/dev/null || true
-  return 0
+  for _ in {1..8}; do
+    kill -0 -- "-${group_pid}" 2>/dev/null || { wait "${group_pid}" 2>/dev/null || true; return 0; }
+    sleep 0.2
+  done
+  return 1
 }
 cleanup_active_run() {
   stop_process_group "${run_node_pid}"
   stop_process_group "${run_launch_pid}"
-  if [[ -n "${run_node_pid}" ]] && kill -0 "${run_node_pid}" 2>/dev/null; then
+  if [[ -n "${run_node_pid}" ]] && kill -0 -- "-${run_node_pid}" 2>/dev/null; then
     die "vision node process group survived cleanup"
   fi
-  if [[ -n "${run_launch_pid}" ]] && kill -0 "${run_launch_pid}" 2>/dev/null; then
+  if [[ -n "${run_launch_pid}" ]] && kill -0 -- "-${run_launch_pid}" 2>/dev/null; then
     die "launch process group survived cleanup"
   fi
   run_node_pid=""
