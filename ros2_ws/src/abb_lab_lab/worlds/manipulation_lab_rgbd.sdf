@@ -106,8 +106,8 @@
     </model>
 
     <model name="lab_rgbd_camera">
-      <!-- Local +X looks from the front-left of the table toward the board. -->
-      <pose>0.10 -1.30 2.40 0 0.833 1.107</pose><static>true</static>
+      <!-- Local +X looks from the table side toward the board. -->
+      <pose>0.80 -1.45 2.40 0 0.833 1.674</pose><static>true</static>
       <link name="lab_camera_link">
         <sensor name="lab_rgbd" type="rgbd_camera">
           <always_on>1</always_on><update_rate>15</update_rate><visualize>false</visualize>
