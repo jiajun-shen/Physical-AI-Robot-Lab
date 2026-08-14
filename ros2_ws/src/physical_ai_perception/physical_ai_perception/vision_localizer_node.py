@@ -333,7 +333,13 @@ def main(args: list[str] | None = None) -> None:
     node: VisionLocalizer | None = None
     try:
         node = VisionLocalizer()
-        rclpy.spin(node)
+        try:
+            rclpy.spin(node)
+        except KeyboardInterrupt:
+            pass
+        except Exception:
+            if rclpy.ok():
+                raise
     finally:
         if node is not None:
             node.destroy_node()

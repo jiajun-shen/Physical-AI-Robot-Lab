@@ -173,6 +173,7 @@ stop_process_group() {
     sleep 0.2
   done
   kill -KILL -- "-${group_pid}" 2>/dev/null || true
+  wait "${group_pid}" 2>/dev/null || true
 }
 cleanup_active_run() {
   stop_process_group "${run_node_pid}"
