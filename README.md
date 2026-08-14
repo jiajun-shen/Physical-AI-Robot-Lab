@@ -4,8 +4,8 @@ A long-term robotics research repository for an ABB IRB1200-5/0.9 virtual
 laboratory, multilingual task execution, classical manipulation, and an honest
 path toward ABB-adapted vision-language-action research.
 
-The project has completed verified Phase 0, Phase 1, Phase 2, and the scoped
-Phase-3 gripper/live-laboratory gate. The project-owned ABB IRB1200 has real
+The project has completed verified Phase 0 through Phase 4. The project-owned
+ABB IRB1200 has real
 clean headless Gazebo Harmonic, ros2_control, and MoveIt evidence: the exact
 model spawned, six position interfaces were claimed, JSB/JTC became active,
 command limiters initialized, and MoveIt planned/executed a joint route plus
@@ -18,11 +18,22 @@ observed the ten required laboratory models and captured their live Gazebo
 poses, proved material seeded object-position variation and directional-cube
 yaw variation, and completed a real free-space gripper
 `open -> closed clearance -> reopen` action sequence with mirrored finger
-states. This is not a contact, force, attachment, grasp, arm-in-lab MoveIt,
-perception, pick/place, GUI, or real-robot result. A03, A04, and M1.04 remain
-`NOT STARTED`. The user explicitly accepted the saved Phase-3 evidence on
-2026-08-14, authorizing Phase 4 perception work; see `PROJECT_STATE.md`,
-`ACCEPTANCE_STATUS.md`, and `docs/phase3_gripper_lab_runtime_evidence.md`.
+states. This P3 evidence is not a contact, force, attachment, grasp,
+arm-in-lab MoveIt, pick/place, GUI, or real-robot result. The user explicitly
+accepted the saved Phase-3 evidence on 2026-08-14, authorizing Phase 4
+perception work.
+
+Phase 4 then completed a project-owned simulation RGB-D pipeline at clean
+feature commit `62dc9c8`. Two isolated seeded worlds (42 and 43) supplied
+real RGB, 32FC1 depth, CameraInfo, and TF to the vision node only. It emitted
+typed detections/poses for green/red balls, blue/yellow cubes, and the drawing
+board, sealed `ground_truth_input_used: false` evidence before a separate
+offline live-Gazebo comparison, and passed every localization threshold.
+A03 is `PASS`; the green-ball errors were 0.0103339 m and 0.0150882 m. This
+does not change A04 or establish contact, grasp, lift, transport, placement,
+arbitrary-scene robustness, GUI, or real-camera evidence. See
+`PROJECT_STATE.md`, `ACCEPTANCE_STATUS.md`, and
+`docs/phase4_perception_runtime_evidence.md`.
 
 The clean P2.2 run found no residual owned process, but observed the installed
 `move_group` process exit with SIGSEGV during requested teardown. That is
@@ -46,9 +57,9 @@ remain gated by the unresolved first-party license.
 ## Phase-3 acceptance record
 
 The user explicitly accepted the saved final Phase-3 real-run evidence on
-2026-08-14. Phase 4 is authorized. This release permits, at most, later
-Phase-4--8 work; it does not mark any M1 item as passed or replace the separate
-Phase-8 M1 hold below.
+2026-08-14. Phase 4 subsequently completed at `62dc9c8`, including A03.
+Phase 5 is not started. No result here replaces the separate Phase-8 M1 hold
+below.
 
 ## Mandatory midterm hold
 

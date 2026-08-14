@@ -50,7 +50,7 @@ real RGB-D/CameraInfo/TF observations -> seal vision evidence ->
 separate `gz model -p` capture -> offline error comparison
 ```
 
-The sealed vision record must state `GROUND_TRUTH_INPUT_USED=false`, include
+The sealed vision record must state `ground_truth_input_used: false`, include
 hashes of its source artifacts, and be written before the first ground-truth
 query.  Static source tests must reject Gazebo/model-pose/scene-manifest
 imports, Gazebo command execution, and ground-truth terms in
@@ -69,7 +69,7 @@ For each seed, retain an external, immutable evidence root containing at least:
 - typed detections plus camera-frame and world-frame poses, including pixel
   coordinates, valid-depth statistics, source timestamp, and frame IDs;
 - a sealed vision-evidence manifest with SHA-256 values for the preceding
-  artifacts and `GROUND_TRUTH_INPUT_USED=false`;
+  artifacts and `ground_truth_input_used: false`;
 - separately captured raw live Gazebo-pose responses, their hashes, and an
   offline comparison JSON; and
 - build/test results, source manifest before/after, controlled cleanup result,
@@ -102,3 +102,17 @@ Phase 4 is `COMPLETE` only after implementation, build, unit/static tests,
 both real runtime executions, visual/result inspection, evidence retention,
 documentation, a clean tested commit, and push all succeed.  Until then it is
 reported as `PARTIAL`; Phase 5 remains locked.
+
+## Completion record (2026-08-14)
+
+This contract was satisfied by the clean tested feature commit
+`62dc9c8d0d682239dd2e4567f311a3ce2551ca4a`. The isolated two-seed gate at
+`/var/tmp/physical-ai-p4.Kn4hFG` built/tested 29 records with zero errors,
+failures, or skips; sealed real vision-only evidence for seeds 42 and 43;
+then performed its separate offline live-Gazebo comparison. All five labels
+passed both runs, and A03's green-ball errors were 0.0103339 m and 0.0150882 m
+against the 0.05 m threshold. The final evidence and limitations are recorded
+in `docs/phase4_perception_runtime_evidence.md`.
+
+Phase 4 is therefore `COMPLETE`. This record does not begin, implement, or
+validate Phase 5, and it does not change A04 or any contact/grasp boundary.

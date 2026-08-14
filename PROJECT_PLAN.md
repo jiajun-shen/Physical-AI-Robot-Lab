@@ -72,6 +72,13 @@ Phase 9 work begins.
 8. Phase-3 acceptance hold: `RELEASED ON 2026-08-14` after the user explicitly
    accepted the final Phase-3 evidence. Phase 4 is authorized; this local
    release does not satisfy or release M1.
+9. `P4.1`--`P4.7` project-owned RGB-D perception: `COMPLETE` on clean tested
+   feature commit `62dc9c8d0d682239dd2e4567f311a3ce2551ca4a`. Two isolated
+   seeded worlds (42 and 43) passed real RGB/depth/CameraInfo/TF2 input,
+   typed five-object vision localization, sealed-before-offline-Gazebo
+   comparison, and A03. This is simulation-only perception evidence; A04
+   remains `NOT STARTED` and Phase 5 is not started or automatically
+   authorized by this checkpoint.
 
 ## Phase-3 release rule
 

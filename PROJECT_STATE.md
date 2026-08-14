@@ -6,23 +6,25 @@ Physical-AI-Robot-Lab
 
 ## Current phase
 
-Phase 4 - RGB-D perception (`PARTIAL - P4.1 RUNTIME PASS`)
+Phase 4 - RGB-D perception (`COMPLETE`)
 
-Project state: `PHASE 4 IN PROGRESS - P4.2 THROUGH P4.7`.
+Project state: `PHASE 4 COMPLETE - STOP; PHASE 5 NOT STARTED`.
 
 ## Current subtask
 
-P4.1 passed its clean-commit real transport run at `feca6ba`; see
-`docs/phase4_perception_runtime_evidence.md`. Next implement P4.2--P4.7:
-typed vision-only RGB/depth/CameraInfo/TF2 localization, evidence sealing,
-and an offline-only Gazebo comparison. This work must preserve the P3 world
-and its position-only/no-contact boundary and does not replace the later
-mandatory M1 hold after Phase 8.
+Phase 4 completed at clean tested feature commit
+`62dc9c8d0d682239dd2e4567f311a3ce2551ca4a`; see
+`docs/phase4_perception_runtime_evidence.md`. Its two real seeded RGB-D runs
+received only RGB, depth, CameraInfo, and TF in `vision` mode, sealed that
+evidence before a separate offline live-Gazebo comparison, and passed all five
+typed localizations plus A03. Phase 5 is not started in this session. Preserve
+the P3 position-only/no-contact boundary and the mandatory M1 hold after Phase
+8.
 
 ## Git checkpoints
 
-- Latest runtime-qualified feature commit: `f6907ff6b6a4ed2ea91c4c21af68f4b78eb60d63`
-- Stable feature commit: `f6907ff6b6a4ed2ea91c4c21af68f4b78eb60d63`
+- Latest runtime-qualified feature commit: `62dc9c8d0d682239dd2e4567f311a3ce2551ca4a`
+- Stable feature commit: `62dc9c8d0d682239dd2e4567f311a3ce2551ca4a`
 - Experimental commit: none
 - Stable base branch: `main` at `f994fd651e4817f053121227383a8c89bb23b0ed`
 - Active Phase-4 branch: `agent/phase4-perception` tracking
@@ -54,10 +56,20 @@ perception, or MoveIt-with-gripper result.
 - `abb_lab_lab` supplies a static default laboratory template plus an explicit
   deterministic external scene generator; it is the generator/harness, not the
   default launch alone, that selects randomized scenes.
+- The original P3 `manipulation_lab.sdf` and P3 harness remain unchanged.
+  The separate `manipulation_lab_rgbd.sdf` owns the RGB-D sensor used only by
+  the Phase-4 launch and seeded Phase-4 harness.
 - `abb_lab_bringup` starts the separate gripper/lab profile with one
   Gazebo-hosted controller manager and the JSB -> arm JTC -> gripper action
   controller sequence. It selects Bullet Featherstone only for this mimicked
   gripper profile.
+- `physical_ai_interfaces` provides the project-owned typed
+  `ObjectDetection`/`ObjectPose` messages. `physical_ai_perception` consumes
+  only ROS RGB, depth, CameraInfo, and TF, produces camera/world typed poses,
+  and has no Gazebo/model-pose/manifest/seed input dependency.
+- The independent Phase-4 harness seals the vision artifacts before its
+  separate live-Gazebo capture/evaluator process and verifies all owned
+  process groups are cleaned up.
 - A project-owned ABB IRB1200 spawned in Gazebo as `abb_irb1200`; six position
   command interfaces were claimed, JTC/JSB were active, command-limit
   enforcement initialized, and an observed trajectory completed.
@@ -115,14 +127,26 @@ perception, or MoveIt-with-gripper result.
     manifest.
   - Each run had 82 colcon test records with zero errors, failures, or skips;
     cleanup passed. See `docs/phase3_gripper_lab_runtime_evidence.md`.
+- Phase 4 final RGB-D perception runtime at `62dc9c8`.
+  - The clean two-seed harness built/tests 29 records with zero errors,
+    failures, or skips, then ran seeds 42 and 43 in isolated Gazebo worlds.
+  - Real `rgb8` RGB, `32FC1` metre depth, CameraInfo, and the
+    `world -> lab_camera_optical_frame` TF chain drove five OpenCV/depth/TF2
+    typed localizations in `PERCEPTION_MODE=vision`.
+  - Vision evidence was sealed with `ground_truth_input_used: false` before
+    separate offline live-Gazebo captures. All object errors were within the
+    0.05 m object / 0.06 m board thresholds; the green-ball errors were
+    0.01033 m (seed 42) and 0.01509 m (seed 43), so A03 is `PASS`.
+  - Evidence root: `/var/tmp/physical-ai-p4.Kn4hFG`; cleanup and source
+    manifest equality passed. See `docs/phase4_perception_runtime_evidence.md`.
 
 ## Partially completed features
 
-- Headless MoveIt planning/execution and collision rejection are verified, and
+- Headless MoveIt planning/execution and collision rejection are verified,
   Phase 3 verified a position-only free-space gripper plus two live seeded lab
-  scenes. GUI validation, RGB-D perception, contact/force/attachment/grasp,
-  arm/MoveIt execution in the gripper lab, pick/place, and an out-of-range
-  clamp probe remain unverified.
+  scenes, and Phase 4 verified simulation-only RGB-D object localization.
+  GUI validation, contact/force/attachment/grasp, arm/MoveIt execution in the
+  gripper lab, pick/place, and an out-of-range clamp probe remain unverified.
 - Runtime command-limit initialization and the bounded in-range control chain
   are verified. Clamp behavior remains explicitly unverified.
 - WSLg endpoints and RViz exist, but real 3D GUI rendering is untested.
@@ -158,7 +182,14 @@ perception, or MoveIt-with-gripper result.
     plus yaw variation for `blue_cube` and `yellow_cube`.
   - `GRASP_STATE=NOT_DETERMINED_NO_CONTACT_EVIDENCE`, force control is not
     configured, and attachment is not implemented in both runs.
-- A01-A02: PASS. A03-A14: NOT STARTED.
+- A01-A03: PASS. A04-A14: NOT STARTED.
+- Phase-4 final clean runtime: PASS at `62dc9c8` for selected seeds 42 and 43.
+  - `P4_RGB_TRANSPORT`, `P4_DEPTH_TRANSPORT`, `P4_CAMERA_INFO`,
+    `P4_TF_CHAIN`, `P4_DEPTH_PROJECTION`, `P4_ALL_FIVE_DETECTIONS`,
+    `P4_VISION_GROUND_TRUTH_BOUNDARY`, `P4_OFFLINE_EVALUATION`, and
+    `P4_TWO_SEED_VISION_ONLY_LOCALIZATION` are all PASS.
+  - `A03=PASS`, `A04=NOT_STARTED`, and
+    `GRASP_STATE=NOT_DETERMINED_NO_CONTACT_EVIDENCE`.
 - P2.1 clean static configuration: PASS at `281c36b`.
   - `rosdep check`: PASS.
   - 3 packages built; 45 test records passed; worktree stayed clean.
@@ -172,12 +203,14 @@ The final Phase-3 gates each built and tested `abb_lab_description`,
 build/install/log trees and runtime episodes remain outside Git. Phase 3 is
 complete at the user-approved foundational gripper-and-objects scope; its
 explicit user acceptance authorized Phase 4, but no complete Phase-4
-perception runtime claim exists at this checkpoint.
+perception runtime claim existed at that historical checkpoint.
 
-P4.1 independently built and tested the project camera transport source at
-`feca6ba`, then observed real CameraInfo, RGB/depth ROS topics, and the
-`world -> lab_camera_optical_frame` chain from the separate RGB-D world. It
-did not start a perception node and is not an A03 result.
+The final Phase-4 gate built/tested the Phase-4 dependency closure on ext4 and
+recorded 29 test records with zero errors, failures, or skips. At `62dc9c8`,
+the clean-worktree two-seed runtime sealed each real vision-only evidence
+bundle before offline ground-truth comparison. Its source-manifest SHA-256 was
+`efa51900468bba2a5a6ce2741b95aed458e0e04fa8f58a973485a270582aee54` before
+and after the run.
 
 ## Current run status
 
@@ -187,9 +220,9 @@ did not start a perception node and is not an A03 result.
 - Project gripper/laboratory profile: verified as free-space position action
   plus captured live selected-seed variation at `f6907ff`; no arm motion,
   contact, force, attachment, or grasp claim.
-- P4.1 RGB-D sensor transport and static TF: verified headlessly at `feca6ba`;
-  detection, depth projection, and vision-mode object localization remain
-  unverified.
+- Phase-4 RGB-D perception: verified headlessly at `62dc9c8` on seeds 42 and
+  43, including real RGB/depth/CameraInfo/TF2, five vision-only typed poses,
+  sealed evidence, and subsequent offline live-pose comparison. A03 is PASS.
 - Project GUI rendering: not run.
 - Project out-of-range clamp injection: not run.
 - VLA backend: `VLA_BACKEND_UNAVAILABLE`.
@@ -207,13 +240,16 @@ did not start a perception node and is not an A03 result.
   added an isolated free-space gripper/lab profile, not a MoveIt-with-gripper
   execution.
 - Phase 3 is complete only at the user-approved foundational gripper-and-live-
-  objects boundary. There is no valid finger-force signal, contact sensor,
-  attachment, grasp inference, lift, transport, RGB-D observation, or
-  pick/place result; see KI-013.
+  objects boundary. Phase 4 adds simulation-only RGB-D localization, but
+  there is still no valid finger-force signal, contact sensor, attachment,
+  grasp inference, lift, transport, or pick/place result; see KI-013.
 - The P3 final runs show step-goal position-rate limiter interventions. They
   are not an out-of-range clamp probe or a general clamp behavior claim.
 - The default lab launch is static; only the explicit generator/harness selects
   the seeded worlds used in the final evidence.
+- Phase 4's OpenCV baseline is verified only for the defined five labels in
+  the two seeded simulation scenes. It is not real-camera, arbitrary-occlusion,
+  instance-segmentation, grasp, or placement evidence; see KI-014.
 - The installed `move_group` process had SIGSEGV during requested P2.2 teardown
   despite no residual owned processes; this is KI-012 and is not a graceful
   cleanup result.
@@ -262,12 +298,12 @@ ros2_control 4.45.2, gz_ros2_control 1.2.19, ros2_controllers 4.40.1, MoveIt
 
 ## Next exact steps
 
-1. Implement P4.2--P4.5: project-owned typed outputs, real RGB/depth
-   inspection, CameraInfo back-projection, and timestamped TF2 world poses in
-   `vision` mode without consuming Gazebo ground truth.
-2. Run P4.6--P4.7 on seeded worlds 42 and 43, seal vision evidence before the
-   separate offline Gazebo comparison, and keep A03 `NOT STARTED` until that
-   full real vision-mode gate passes.
+1. Stop after this Phase-4 documentation checkpoint. Do not begin Phase 5 in
+   this session; await explicit user direction.
+2. If Phase 5 is later authorized, start with a new, separately reviewed
+   pick/place safety and evidence contract. It must preserve the vision-only
+   ground-truth boundary and make no contact/grasp claim before fresh runtime
+   evidence exists.
 3. Preserve the Phase-8 M1 hold unchanged: even after any later Phase-4--8
    work, Phase 9 requires final integrated M1 evidence and separate explicit
    user acceptance.

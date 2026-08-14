@@ -1,8 +1,46 @@
 # Codex Project Handoff — Physical-AI-Robot-Lab
 
-> Snapshot date: 2026-08-14.  This handoff is deliberately operational rather
-> than promotional.  It records the real repository state and the user-imposed
-> stop gate so that a new Codex session can resume safely.
+> Historical Phase-3 snapshot date: 2026-08-14. This handoff is deliberately
+> operational rather than promotional. The historical snapshot is retained
+> below; the current, superseding Phase-4 completion addendum comes first.
+
+## Current superseding Phase-4 completion addendum (2026-08-14)
+
+Repository state must be established from `git status`, `PROJECT_STATE.md`,
+`ACCEPTANCE_STATUS.md`, and the committed evidence before acting. At this
+checkpoint:
+
+- Active branch: `agent/phase4-perception`, tracking
+  `origin/agent/phase4-perception`; `main` remains preserved at
+  `f994fd651e4817f053121227383a8c89bb23b0ed`.
+- The user accepted the saved Phase-3 evidence on 2026-08-14. P3.03 is
+  `PASS`; the former Phase-3 hold is released and the instructions below that
+  say “do not begin Phase 4” are historical only.
+- Phase 4 is `COMPLETE` at clean tested feature commit
+  `62dc9c8d0d682239dd2e4567f311a3ce2551ca4a`.
+- The final isolated two-seed runtime root is
+  `/var/tmp/physical-ai-p4.Kn4hFG`. It built/tested 29 records with zero
+  errors, failures, or skips; source-manifest equality and cleanup passed.
+- Both seed 42 and seed 43 received real RGB, `32FC1` depth in metres,
+  CameraInfo, and TF only in `PERCEPTION_MODE=vision`, then emitted all five
+  required typed object poses. The sealed records state
+  `ground_truth_input_used: false`; only afterward did a separate process
+  capture live Gazebo poses for offline comparison.
+- A03 is `PASS`: green-ball errors are 0.0103339 m (seed 42) and 0.0150882 m
+  (seed 43), and the later comparison proves a 0.3200000 m live green-ball
+  position difference. A04 remains `NOT STARTED`.
+- Phase 5 is **not started**. Stop after the Phase-4 documentation checkpoint
+  and await explicit user direction before any Phase-5 implementation. The
+  first future atomic task, if authorized, is a separate pick/place safety and
+  evidence contract; it must not turn this visual-localization result into a
+  contact/grasp claim.
+- The Phase-8/M1 mandatory hold remains unchanged. M1.06 is only
+  `PRE-M1 EVIDENCE`, not final M1 acceptance.
+
+Read `docs/phase4_perception_runtime_evidence.md` after the root state files.
+The old current-progress table, Phase-3 hold instructions, and next-session
+instructions below describe the pre-acceptance snapshot and must not override
+this addendum.
 
 ## Snapshot and source of truth
 

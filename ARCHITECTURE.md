@@ -207,6 +207,18 @@ accepted that evidence on 2026-08-14, so P3.03 is `PASS` and Phase 4 is
 authorized. This release is limited to Phase 4--8 work and neither supplies
 contact/grasp evidence nor releases the separate M1 hold below.
 
+## Phase-4 perception completion boundary
+
+The Phase-4 RGB-D baseline completed at clean tested commit `62dc9c8` on two
+isolated seeded simulation runs. `physical_ai_perception` remains structurally
+limited to RGB, depth, CameraInfo, and TF; it does not import or receive
+Gazebo model poses, manifests, seeds, or world coordinates. The harness seals
+vision output with `ground_truth_input_used: false` before a separate offline
+live-Gazebo evaluator process compares results. This passed A03, but it does
+not establish contact, grasp, lift, transport, placement, real-camera
+performance, or any M1 final acceptance. Phase 5 is not started by this
+checkpoint.
+
 ## Mandatory M1 governance hold
 
 Phase 8 completion cannot directly enable Phase 9:

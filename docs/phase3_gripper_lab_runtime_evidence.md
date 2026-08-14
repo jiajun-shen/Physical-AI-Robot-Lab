@@ -150,10 +150,11 @@ The selected final runs reported `publish_async_failures_ 0` at teardown and
 completed requested cleanup with launch exit status 0. This does not turn the
 profile into a real-hardware or force/contact-fidelity result.
 
-This Phase-3 evidence does not establish A03 RGB-D localization, A04
+This Phase-3 evidence itself does not establish A03 RGB-D localization, A04
 pick/place, M1.04 grasp, MoveIt-with-gripper laboratory motion, arm execution
 in the lab, GUI rendering, vision, real robot control, or physical safety.
-A03, A04, and M1.04 remain `NOT STARTED`.
+A03 was subsequently passed only by the separate Phase-4 vision-only runtime
+at `62dc9c8`; A04 and M1.04 remain `NOT STARTED`.
 
 ## Phase-3 acceptance record
 
