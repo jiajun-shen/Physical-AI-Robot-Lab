@@ -16,9 +16,9 @@ from launch_ros.substitutions import FindPackageShare
 
 CAMERA_X_M = "0.10"
 CAMERA_Y_M = "-1.30"
-CAMERA_Z_M = "1.80"
+CAMERA_Z_M = "2.40"
 CAMERA_ROLL_RAD = "0"
-CAMERA_PITCH_RAD = "0.601"
+CAMERA_PITCH_RAD = "0.833"
 CAMERA_YAW_RAD = "1.107"
 HALF_PI_RAD = "1.57079632679"
 
