@@ -1,0 +1,1 @@
+"""Parametric Cartesian drawing geometry."""

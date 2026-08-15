@@ -1,0 +1,1 @@
+"""Verified manipulation skill contracts."""
