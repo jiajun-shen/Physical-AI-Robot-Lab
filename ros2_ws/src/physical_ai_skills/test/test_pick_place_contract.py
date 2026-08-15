@@ -1,3 +1,5 @@
+import pytest
+
 from physical_ai_skills.pick_place_contract import (
     PickPlaceEvidence, Pose3, REQUIRED_STAGES, episode_passes, validate_pick_place,
 )
@@ -18,8 +20,9 @@ def _good():
     )
 
 
-def test_good_episode_passes():
-    assert episode_passes(_good())
+def test_self_attested_dataclass_can_never_claim_phase5_acceptance():
+    with pytest.raises(RuntimeError, match="not Phase-5 acceptance"):
+        episode_passes(_good())
 
 
 def test_finger_animation_without_lift_cannot_pass():
@@ -27,10 +30,12 @@ def test_finger_animation_without_lift_cannot_pass():
     e = PickPlaceEvidence(**{**e.__dict__, "lifted_green": Pose3(0.50, 0.10, 0.06)})
     checks = validate_pick_place(e)
     assert not checks["lift_proves_retention"]
-    assert not episode_passes(e)
+    with pytest.raises(RuntimeError, match="not Phase-5 acceptance"):
+        episode_passes(e)
 
 
 def test_ground_truth_decision_boundary_cannot_pass():
     e = _good()
     e = PickPlaceEvidence(**{**e.__dict__, "vision_only_after": False})
-    assert not episode_passes(e)
+    with pytest.raises(RuntimeError, match="not Phase-5 acceptance"):
+        episode_passes(e)

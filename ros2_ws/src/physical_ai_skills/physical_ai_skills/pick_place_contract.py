@@ -1,6 +1,11 @@
-"""Machine-checkable Phase-5 pick/place evidence rules.
+"""Legacy Phase-5 checklist helpers; never an acceptance authority.
 
-This module deliberately validates evidence; it does not manufacture a grasp result.
+The original dataclass can contain caller-attested booleans and four arbitrary
+poses, so it cannot establish a verified grasp, retention, or placement.  The
+only Phase-5 acceptance authority is the sealed runtime evidence evaluated by
+``scripts/evaluate_p5_pick_place_evidence.py``.  These helpers remain for
+teaching/checklist compatibility, but ``episode_passes`` fails closed rather
+than turning self-attestation into a PASS claim.
 """
 
 from dataclasses import dataclass
@@ -25,6 +30,7 @@ REQUIRED_STAGES = (
 MIN_LIFT_M = 0.05
 MAX_BESIDE_DISTANCE_M = 0.12
 MIN_NON_OVERLAP_DISTANCE_M = 0.075
+RUNTIME_ACCEPTANCE_AUTHORITY = "scripts/evaluate_p5_pick_place_evidence.py"
 
 
 @dataclass(frozen=True)
@@ -66,4 +72,10 @@ def validate_pick_place(e: PickPlaceEvidence) -> Mapping[str, bool]:
 
 
 def episode_passes(e: PickPlaceEvidence) -> bool:
-    return all(validate_pick_place(e).values())
+    """Refuse to elevate self-attested dataclass fields into Phase-5 PASS."""
+
+    del e
+    raise RuntimeError(
+        "PickPlaceEvidence is a legacy checklist, not Phase-5 acceptance; "
+        f"use sealed runtime evidence with {RUNTIME_ACCEPTANCE_AUTHORITY}"
+    )

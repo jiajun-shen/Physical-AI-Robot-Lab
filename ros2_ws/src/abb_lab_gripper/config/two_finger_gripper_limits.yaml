@@ -34,10 +34,23 @@ safe_commands:
   open_position: 0.035
 
 safety_status:
-  object_attachment: NOT_IMPLEMENTED
+  # Phase 5 adds Gazebo's DetachableJoint dynamically only after its
+  # vision/TCP/close gate; it is logged as a simulation mechanism, never
+  # force evidence.  The static P3/P4 robot description has no attachment.
+  object_attachment: PHASE5_GUARDED_SIMULATION_ONLY
   force_control: NOT_CONFIGURED
   contact_success_inference: NOT_IMPLEMENTED
   real_robot_ready: false
+
+phase5_simulation_grasp:
+  mechanism: gz_sim_detachable_joint
+  activation: dynamic_entity_system_add_after_guard
+  detach_topic: /phase5/grasp/detach
+  state_topic: /phase5/grasp/state
+  # 37 mm per finger leaves a narrow 74 mm jaw aperture around the 70 mm
+  # sphere diameter.  This is an auditable geometric pinch envelope, not an
+  # inference of finger force or real-world contact quality.
+  pinch_envelope_position: 0.037
 
 notes:
   - The URDF effort limit is structural metadata only; this profile exports no gripper effort command interface.

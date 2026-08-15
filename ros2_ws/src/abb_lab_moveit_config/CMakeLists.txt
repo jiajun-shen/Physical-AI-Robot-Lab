@@ -18,6 +18,9 @@ if(BUILD_TESTING)
   ament_add_pytest_test(abb_lab_moveit_config_source_contract
     "${CMAKE_CURRENT_SOURCE_DIR}/test/test_abb_lab_moveit_config_source.py"
     TIMEOUT 30)
+  ament_add_pytest_test(phase5_static_obstacle_vision_source_contract
+    "${CMAKE_CURRENT_SOURCE_DIR}/test/test_phase5_static_obstacle_vision_source.py"
+    TIMEOUT 30)
 endif()
 
 ament_package()

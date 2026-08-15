@@ -3,10 +3,10 @@
   <name>abb_lab_moveit_config</name>
   <version>0.1.0</version>
   <description>
-    Project-owned, arm-only MoveIt configuration and headless integration
-    launch for the ABB IRB1200-5/0.9 simulation model. The launch reuses the
-    project Gazebo control chain and does not itself establish planning or
-    execution acceptance evidence.
+    Project-owned MoveIt configuration and headless integration launches for
+    the ABB IRB1200-5/0.9 simulation model, including the Phase-5 gripper
+    profile. The launches reuse the project Gazebo control chain and do not
+    themselves establish planning or execution acceptance evidence.
   </description>
   <maintainer email="maintainers@example.invalid">Physical-AI-Robot-Lab maintainers</maintainer>
   <license>Apache-2.0</license>
@@ -14,10 +14,13 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <exec_depend>abb_lab_control</exec_depend>
+  <exec_depend>abb_lab_bringup</exec_depend>
   <exec_depend>abb_lab_description</exec_depend>
+  <exec_depend>abb_lab_gripper</exec_depend>
   <exec_depend>abb_lab_gazebo</exec_depend>
   <exec_depend>action_msgs</exec_depend>
   <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>abb_lab_lab</exec_depend>
   <exec_depend>builtin_interfaces</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>launch</exec_depend>
@@ -28,9 +31,12 @@
   <exec_depend>moveit_planners_ompl</exec_depend>
   <exec_depend>moveit_ros_move_group</exec_depend>
   <exec_depend>moveit_simple_controller_manager</exec_depend>
+  <exec_depend>physical_ai_perception</exec_depend>
   <exec_depend>python3-yaml</exec_depend>
   <exec_depend>rclpy</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
   <exec_depend>shape_msgs</exec_depend>
   <exec_depend>xacro</exec_depend>
 

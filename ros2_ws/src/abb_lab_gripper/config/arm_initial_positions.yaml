@@ -1,0 +1,10 @@
+# Preserve the established P3/P4 startup pose.  The P5-only launch overrides
+# this file with phase5_safe_arm_initial_positions.yaml so it never begins
+# with a gripper/table collision.
+initial_positions:
+  joint_1: 0.0
+  joint_2: 0.0
+  joint_3: 0.0
+  joint_4: 0.0
+  joint_5: 0.0
+  joint_6: 0.0

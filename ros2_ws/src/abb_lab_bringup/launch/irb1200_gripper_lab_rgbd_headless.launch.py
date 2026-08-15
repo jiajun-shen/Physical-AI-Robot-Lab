@@ -28,6 +28,8 @@ def generate_launch_description() -> LaunchDescription:
     use_sim_time = LaunchConfiguration("use_sim_time")
     world_path = LaunchConfiguration("world_path")
     world_name = LaunchConfiguration("world_name")
+    arm_initial_positions_file = LaunchConfiguration("arm_initial_positions_file")
+    world_to_base_z = LaunchConfiguration("world_to_base_z")
     base_bringup = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution(
@@ -42,6 +44,8 @@ def generate_launch_description() -> LaunchDescription:
             "use_sim_time": use_sim_time,
             "world_path": world_path,
             "world_name": world_name,
+            "arm_initial_positions_file": arm_initial_positions_file,
+            "world_to_base_z": world_to_base_z,
         }.items(),
     )
     camera_bridge = Node(
@@ -130,6 +134,22 @@ def generate_launch_description() -> LaunchDescription:
                 "world_name",
                 default_value="manipulation_lab",
                 description="Name of the SDF world that receives the ABB model.",
+            ),
+            DeclareLaunchArgument(
+                "arm_initial_positions_file",
+                default_value=PathJoinSubstitution(
+                    [
+                        FindPackageShare("abb_lab_gripper"),
+                        "config",
+                        "arm_initial_positions.yaml",
+                    ]
+                ),
+                description="Forward an optional P5-safe arm startup state.",
+            ),
+            DeclareLaunchArgument(
+                "world_to_base_z",
+                default_value="0",
+                description="Forward an optional simulation-only base mount height.",
             ),
             base_bringup,
             camera_bridge,

@@ -1,0 +1,53 @@
+# P5-only RGB-D class specifications for static-obstacle collision coverage.
+#
+# This is intentionally separate from physical_ai_perception's five-class
+# Phase-4 configuration.  It is consumed by a second, remapped
+# vision_localizer_node after the P5 graph is stable; that process subscribes
+# only to RGB, depth, CameraInfo, and TF, then publishes only to the P5 topic
+# below.  It does not receive Gazebo state, a seed, a manifest, or any object
+# coordinate.
+#
+# The two high-saturation visual-only cylinders are centered on the top face
+# of the seedable obstacle boxes in manipulation_lab_phase5_rgbd.sdf.  A P5
+# collision-scene client must convert each observed marker point to a box
+# center by subtracting marker_top_to_box_center_z_offset_m from world Z, then
+# add an axis-aligned box with collision_box_size_xyz_m.  The 160 mm XY box is
+# deliberately conservative: it covers the 100 mm square at all allowed
+# seeded yaws plus vision localization error, so yaw need not be inferred.
+phase5_static_obstacle_geometry:
+  output_topic: /phase5/perception/static_obstacle_poses
+  expected_marker_class_ids:
+    - p5_orange_top_fiducial
+    - p5_violet_top_fiducial
+  marker_top_to_box_center_z_offset_m: 0.104
+  collision_box_size_xyz_m: [0.160, 0.160, 0.220]
+  confidence_floor: 0.60
+  source: rgbd_camera_info_tf_only
+
+classes:
+  - class_id: p5_orange_top_fiducial
+    # Gazebo's rendered material lands at H=22; it is deliberately a small
+    # component, below P4 yellow's 110-pixel floor, while P5 admits it here.
+    hsv_ranges:
+      - lower: [21, 80, 35]
+        upper: [26, 255, 255]
+    min_pixels: 25
+    max_pixels: 1800
+    min_aspect_ratio: 0.45
+    max_aspect_ratio: 2.50
+    # The marker is a flat top surface.  The P5 collision client applies the
+    # documented vertical top-to-box-centre offset above, rather than a
+    # viewing-ray offset intended for a sphere.
+    center_offset_m: 0.0
+    geometry_kind: surface_ray
+  - class_id: p5_violet_top_fiducial
+    # Hue 138..160 is between P4's blue (<=135) and red (>=165) ranges.
+    hsv_ranges:
+      - lower: [138, 80, 35]
+        upper: [160, 255, 255]
+    min_pixels: 25
+    max_pixels: 1800
+    min_aspect_ratio: 0.45
+    max_aspect_ratio: 2.50
+    center_offset_m: 0.0
+    geometry_kind: surface_ray

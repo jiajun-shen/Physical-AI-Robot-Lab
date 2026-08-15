@@ -58,7 +58,7 @@ def test_profile_is_a_new_self_contained_package() -> None:
     assert "irb1200_5_90_gz_control.urdf.xacro" not in profile_text
 
 
-def test_no_object_attachment_or_simulated_grasp_mechanism_is_embedded() -> None:
+def test_profile_has_no_embedded_attachment_and_declares_p5_dynamic_guard() -> None:
     prohibited_mechanisms = (
         "gazebo_ros_link_attacher",
         "gazebo_grasp_plugin",
@@ -76,11 +76,20 @@ def test_no_object_attachment_or_simulated_grasp_mechanism_is_embedded() -> None
     )
     assert not any(token in profile_text for token in prohibited_mechanisms)
 
+    default_robot = _expanded_robot()
+    assert default_robot.findall("./gazebo/plugin[@name='gz::sim::systems::DetachableJoint']") == []
+
     limits = _load_yaml(LIMITS_YAML)
     assert limits["scope"] == "SIMULATION_ONLY"
-    assert limits["safety_status"]["object_attachment"] == "NOT_IMPLEMENTED"
+    assert limits["safety_status"]["object_attachment"] == "PHASE5_GUARDED_SIMULATION_ONLY"
     assert limits["safety_status"]["force_control"] == "NOT_CONFIGURED"
     assert limits["safety_status"]["real_robot_ready"] is False
+    phase5 = limits["phase5_simulation_grasp"]
+    assert phase5["mechanism"] == "gz_sim_detachable_joint"
+    assert phase5["activation"] == "dynamic_entity_system_add_after_guard"
+    assert phase5["detach_topic"] == "/phase5/grasp/detach"
+    assert phase5["state_topic"] == "/phase5/grasp/state"
+    assert 0.0 < phase5["pinch_envelope_position"] <= 0.040
 
 
 def test_expanded_profile_has_one_combined_gazebo_system_and_expected_interfaces() -> None:

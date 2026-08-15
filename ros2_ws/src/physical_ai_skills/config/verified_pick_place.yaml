@@ -1,0 +1,157 @@
+schema_version: 1
+scope: SIMULATION_ONLY
+
+# All online object locations come from the sealed RGB-D/CameraInfo/TF Phase-4
+# output.  This file contains only fixed robot/lab dimensions and runtime
+# thresholds; it contains no seed layout, model pose, or Gazebo ground truth.
+robot:
+  group_name: manipulator
+  planning_frame: world
+  tcp_link: gripper_tcp
+  gazebo_attachment_parent_link: link_6
+  arm_joint_names: [joint_1, joint_2, joint_3, joint_4, joint_5, joint_6]
+  gripper_joint: two_finger_right_joint
+  velocity_limits_rad_per_sec:
+    joint_1: 5.027
+    joint_2: 4.189
+    joint_3: 5.236
+    joint_4: 6.981
+    joint_5: 7.069
+    joint_6: 10.472
+  # Descending, non-vertical side-grasp candidates. Each local +X direction
+  # defines the final 30 mm TCP lead and the 140 mm collision-checked approach
+  # vector; local ±Y still straddles the ball. Purely horizontal reaches fold
+  # this gripper into the ABB wrist, while pure vertical reaches collide with
+  # the table. These calibrated 25–45 degree side approaches were retained
+  # only after live MoveIt IK, self-collision and full RGB-D PlanningScene
+  # checks. Runtime probes every candidate again in the current scene and
+  # executes only the first accepted pair; these are never seed-layout or
+  # Gazebo-pose input.
+  side_grasp_candidates:
+    # This candidate has an observed free-space gripper endpoint under the
+    # live robot/object geometry. The P5-only +Y guard camera preserves its
+    # post-approach visual retention without changing the sealed P4 camera.
+    - id: y_plus_down_45_roll_180
+      orientation_xyzw: [0.65328148, 0.65328148, -0.27059805, 0.27059805]
+    - id: y_minus_down_45_roll_180
+      orientation_xyzw: [-0.65328148, 0.65328148, 0.27059805, 0.27059805]
+    - id: y_plus_down_45_roll_90
+      orientation_xyzw: [0.27059805, 0.65328148, 0.27059805, 0.65328148]
+    - id: y_plus_down_25_roll_180
+      orientation_xyzw: [0.69034553, 0.69034553, -0.15304592, 0.15304592]
+    - id: northwest_down_45_roll_90
+      orientation_xyzw: [0.0, 0.70710678, 0.5, 0.5]
+    - id: y_minus_down_45_roll_270
+      orientation_xyzw: [-0.27059805, 0.65328148, -0.27059805, 0.65328148]
+    - id: y_minus_down_25_roll_270
+      orientation_xyzw: [-0.3799282, 0.59636781, -0.3799282, 0.59636781]
+  # gripper_tcp is 30 mm ahead of the finger-rail pinch centre along +X.
+  tcp_ahead_of_pinch_center_m: 0.030
+  # Keep nominal rail geometry 10 mm above the visual ball centre so its
+  # angled side-grasp collision volume clears the tabletop. Attachment
+  # remains gated by observed <= 50 mm TCP/ball proximity, and no force claim
+  # is made.
+  grasp_center_height_clearance_m: 0.010
+
+planner:
+  pipeline_id: ompl
+  planner_id: RRTConnectkConfigDefault
+  planning_attempts: 3
+  allowed_planning_time_sec: 4.0
+  velocity_scaling: 0.16
+  position_tolerance_m: 0.010
+  orientation_tolerance_rad: 0.10
+  retime_safety_factor: 2.0
+  minimum_segment_duration_sec: 0.20
+  service_wait_timeout_sec: 20.0
+  service_call_timeout_sec: 12.0
+  action_result_timeout_sec: 55.0
+  endpoint_observation_timeout_sec: 8.0
+  endpoint_samples: 3
+  observed_joint_tolerance_rad: 0.035
+
+gripper:
+  open_position_m: 0.040
+  # 74 mm jaw aperture around the 70 mm sphere.  This is an envelope check,
+  # not a claim of force or physical contact quality. A controller-stalled
+  # close is acceptable only when repeated joint state samples remain in this
+  # bounded physical contact range; visual lift/transport remains the grasp
+  # proof.
+  pinch_envelope_position_m: 0.037
+  minimum_contact_position_m: 0.020
+  observed_position_tolerance_m: 0.003
+  action_timeout_sec: 12.0
+
+geometry:
+  ball_radius_m: 0.035
+  cube_size_m: 0.060
+  table:
+    id: p5_work_table
+    center_xyz_m: [0.65, 0.0, 0.375]
+    size_xyz_m: [1.0, 0.9, 0.75]
+    surface_z_m: 0.75
+  drawing_board:
+    id: p5_drawing_board
+    center_xyz_m: [1.10, 0.0, 0.975]
+    size_xyz_m: [0.03, 0.70, 0.45]
+  # Fixed public lab bounds, used only to reject a bad placement candidate.
+  placement_bounds_xy_m:
+    x: [0.20, 1.10]
+    y: [-0.35, 0.35]
+
+motion:
+  pregrasp_offset_m: 0.140
+  # Stop at this visual checkpoint while the ball is still in front of the
+  # fingers. A 50 mm backoff left the ball only 20--30 mm behind the TCP and
+  # therefore intermittently occluded it; 75 mm gives the RGB-D guard a
+  # repeatable visible separation. Across the independent RGB-D observers,
+  # the time-aligned TCP norm at this calibrated pose is 64--83 mm; 90 mm is
+  # a bounded gate, not an attachment-at-distance allowance. MoveIt
+  # collision-checks the remaining bounded insertion before closing.
+  visual_checkpoint_backoff_m: 0.075
+  visual_checkpoint_max_tcp_distance_m: 0.090
+  # This bounds the first post-attachment vision/TCP sample. It is distinct
+  # from the approach guard: camera calibration and the attached rail offset
+  # yield a 43--104 mm measured norm across the independent RGB-D views.
+  # Later samples must remain within the 40 mm relative-drift envelope below.
+  retention_sample_max_tcp_distance_m: 0.115
+  lift_target_m: 0.085
+  release_clearance_m: 0.020
+  # P5's startup posture has this measured collision-free TCP position. The
+  # post-release MoveIt plan returns to it so the primary Phase-4 RGB-D view
+  # has an unobstructed observation of every object.
+  post_release_retreat_tcp_xyz_m: [0.10, -0.19, 1.12]
+  grasp_tcp_proximity_m: 0.050
+  # Explicit visual tracking gates. A loss, stale sample, or relative-offset
+  # drift outside this envelope stops the state machine.
+  min_lift_m: 0.050
+  minimum_transport_m: 0.050
+  # Transport requires three fresh follow samples. Lift needs an independent
+  # fresh RGB-D/TCP observation proving the object rose; the lower endpoint is
+  # immediately followed by release and fresh post-release RGB-D evidence.
+  minimum_retention_samples: 3
+  lift_retention_samples: 1
+  lower_retention_samples: 1
+  max_visual_tracking_gap_sec: 3.0
+  max_tcp_relative_drift_m: 0.040
+  post_release_settle_sec: 2.0
+
+placement:
+  target_distance_m: 0.100
+  minimum_non_overlap_distance_m: 0.075
+  maximum_beside_distance_m: 0.120
+  dynamic_clearance_m: 0.015
+  support_height_tolerance_m: 0.035
+
+attachment:
+  world_name: manipulation_lab
+  robot_model_name: abb_irb1200_gripper
+  child_model_name: green_ball
+  child_link_name: green_ball_link
+  add_system_service: /world/manipulation_lab/entity/system/add
+  detach_topic: /phase5/grasp/detach
+  state_topic: /phase5/grasp/state
+  dynamic_plugin_filename: gz-sim-detachable-joint-system
+  dynamic_plugin_name: gz::sim::systems::DetachableJoint
+  activation_timeout_sec: 8.0
+  state_timeout_sec: 8.0

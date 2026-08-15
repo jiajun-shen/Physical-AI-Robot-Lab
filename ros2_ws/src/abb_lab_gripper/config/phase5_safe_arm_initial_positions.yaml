@@ -1,0 +1,11 @@
+# P5-specific safe initial state, checked with the full P5 MoveIt planning
+# scene (table, board, and vision-derived static objects).  It puts the TCP
+# at approximately [0.10, -0.19, 1.12] m rather than intersecting the table.
+# It is only supplied by the P5 launch; P3/P4 continue to use their default.
+initial_positions:
+  joint_1: 0.4
+  joint_2: -0.8
+  joint_3: 0.0
+  joint_4: -1.57
+  joint_5: 0.0
+  joint_6: 0.0

@@ -38,6 +38,8 @@ def generate_launch_description() -> LaunchDescription:
     use_sim_time = LaunchConfiguration("use_sim_time")
     world_path = LaunchConfiguration("world_path")
     world_name = LaunchConfiguration("world_name")
+    arm_initial_positions_file = LaunchConfiguration("arm_initial_positions_file")
+    world_to_base_z = LaunchConfiguration("world_to_base_z")
     description_path = PathJoinSubstitution(
         [
             FindPackageShare("abb_lab_gripper"),
@@ -60,6 +62,10 @@ def generate_launch_description() -> LaunchDescription:
                 description_path,
                 " controller_config_file:=",
                 controller_config,
+                " arm_initial_positions_file:=",
+                arm_initial_positions_file,
+                " world_to_base_z:=",
+                world_to_base_z,
             ]
         ),
         value_type=str,
@@ -209,6 +215,22 @@ def generate_launch_description() -> LaunchDescription:
                 "world_name",
                 default_value="manipulation_lab",
                 description="Name of the SDF world that receives the ABB model.",
+            ),
+            DeclareLaunchArgument(
+                "arm_initial_positions_file",
+                default_value=PathJoinSubstitution(
+                    [
+                        FindPackageShare("abb_lab_gripper"),
+                        "config",
+                        "arm_initial_positions.yaml",
+                    ]
+                ),
+                description="Bounded arm state-interface initial values.",
+            ),
+            DeclareLaunchArgument(
+                "world_to_base_z",
+                default_value="0",
+                description="Fixed simulation mount height for base_link in metres.",
             ),
             gazebo,
             clock_bridge,

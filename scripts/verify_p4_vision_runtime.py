@@ -38,6 +38,7 @@ from physical_ai_interfaces.msg import (
     ObjectPoseArray,
 )
 from sensor_msgs.msg import CameraInfo, Image
+from std_msgs.msg import Header
 from tf2_ros import Buffer, TransformException, TransformListener
 
 
@@ -365,6 +366,34 @@ def decode_depth(bridge: CvBridge, message: Image) -> np.ndarray:
     return depth
 
 
+def wait_for_world_to_camera_transform(
+    verifier: VisionEvidenceVerifier, source_header: Header
+):
+    """Return the observed static/dynamic TF without racing DDS discovery.
+
+    The RGB-D stream may produce a coherent first observation before a fresh
+    verifier's ``TransformListener`` has received the latched ``/tf_static``
+    camera chain.  This is a readiness race, not evidence of a valid TF path.
+    Keep the original source timestamp and wait only until the verifier's
+    existing deadline; a missing path remains an explicit failure.
+    """
+
+    last_error: TransformException | None = None
+    while time.monotonic() < verifier.deadline:
+        try:
+            return verifier.tf_buffer.lookup_transform(
+                "world",
+                source_header.frame_id,
+                Time.from_msg(source_header.stamp),
+                timeout=Duration(seconds=0.25),
+            )
+        except TransformException as exc:
+            last_error = exc
+            rclpy.spin_once(verifier, timeout_sec=0.1)
+    detail = str(last_error) if last_error is not None else "no TF lookup attempted"
+    raise VerifierError(f"cannot record world-to-camera TF before deadline: {detail}")
+
+
 def save_evidence(
     output_root: Path,
     verifier: VisionEvidenceVerifier,
@@ -427,15 +456,7 @@ def save_evidence(
         },
     )
     source_header = world_poses.poses[0].source_header
-    try:
-        transform = verifier.tf_buffer.lookup_transform(
-            "world",
-            source_header.frame_id,
-            Time.from_msg(source_header.stamp),
-            timeout=Duration(seconds=0.5),
-        )
-    except TransformException as exc:
-        raise VerifierError(f"cannot record world-to-camera TF: {exc}") from exc
+    transform = wait_for_world_to_camera_transform(verifier, source_header)
     tf_path = evidence_root / "tf_chain.json"
     atomic_write_json(tf_path, transform_dict(transform))
     output_path = evidence_root / "vision_outputs.json"

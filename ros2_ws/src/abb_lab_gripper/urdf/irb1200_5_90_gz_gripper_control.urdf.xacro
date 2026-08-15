@@ -2,6 +2,10 @@
 <robot name="abb_irb1200_5_90_gz_gripper_control" xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:arg name="prefix" default=""/>
   <xacro:arg name="controller_config_file" default="$(find abb_lab_gripper)/config/irb1200_gripper_controllers.yaml"/>
+  <xacro:arg name="world_to_base_z" default="0"/>
+  <!-- Keep the P3/P4 zero pose as the default.  Phase 5 passes a separate,
+       collision-free initial-state file through its isolated launch path. -->
+  <xacro:arg name="arm_initial_positions_file" default="$(find abb_lab_gripper)/config/arm_initial_positions.yaml"/>
 
   <!-- This wrapper deliberately reuses only the pinned ABB geometry macro.
        It does not include the existing arm-only control profile. -->
@@ -11,13 +15,15 @@
 
   <xacro:property name="prefix" value="$(arg prefix)"/>
   <xacro:property name="controller_config_file" value="$(arg controller_config_file)"/>
+  <xacro:property name="world_to_base_z" value="$(arg world_to_base_z)"/>
   <xacro:property name="arm_joint_limits" value="${xacro.load_yaml('$(find abb_lab_description)/config/irb1200_5_90_control_limits.yaml')['joint_limits']}"/>
   <xacro:property name="gripper_joint_limits" value="${xacro.load_yaml('$(find abb_lab_gripper)/config/two_finger_gripper_limits.yaml')['joint_limits']}"/>
   <xacro:property name="gripper_initial_positions" value="${xacro.load_yaml('$(find abb_lab_gripper)/config/two_finger_gripper_limits.yaml')['initial_positions']}"/>
+  <xacro:property name="arm_initial_positions" value="${xacro.load_yaml('$(arg arm_initial_positions_file)')['initial_positions']}"/>
 
   <link name="world"/>
   <joint name="${prefix}world_to_base" type="fixed">
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="0 0 ${world_to_base_z}" rpy="0 0 0"/>
     <parent link="world"/>
     <child link="${prefix}base_link"/>
   </joint>
@@ -31,6 +37,7 @@
     name="GazeboSimSystem"
     prefix="${prefix}"
     arm_joint_limits="${arm_joint_limits}"
+    arm_initial_positions="${arm_initial_positions}"
     gripper_joint_limits="${gripper_joint_limits}"
     gripper_initial_positions="${gripper_initial_positions}"/>
 
@@ -48,4 +55,5 @@
       <position_proportional_gain>1.0</position_proportional_gain>
     </plugin>
   </gazebo>
+
 </robot>
