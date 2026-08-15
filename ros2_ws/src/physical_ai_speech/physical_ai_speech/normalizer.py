@@ -12,6 +12,7 @@ class SpeechCommand:
     transcript: str
     language: str
     confidence: float
+    timestamp_ns: int
     intent: str
 
 
@@ -33,15 +34,23 @@ def _canon(text: str) -> str:
     return re.sub(r"[\s,.!?;:，。！？；：'\"]+", " ", text.strip().lower()).strip()
 
 
-def normalize(transcript: str, language: str, confidence: float) -> SpeechCommand:
+def normalize(transcript: str, language: str, confidence: float, timestamp_ns: int) -> SpeechCommand:
     if language not in SUPPORTED_LANGUAGES:
         raise ValueError("UNSUPPORTED_LANGUAGE")
     if not 0.0 <= confidence <= 1.0:
         raise ValueError("INVALID_CONFIDENCE")
     if confidence < MIN_CONFIDENCE:
         raise ValueError("UNCERTAIN_SPEECH")
+    if timestamp_ns <= 0:
+        raise ValueError("INVALID_TIMESTAMP")
     text = _canon(transcript)
     for intent, variants in PHRASES.items():
         if any(_canon(v) in text for v in variants[language]):
-            return SpeechCommand(transcript=transcript, language=language, confidence=confidence, intent=intent)
+            return SpeechCommand(
+                transcript=transcript,
+                language=language,
+                confidence=confidence,
+                timestamp_ns=timestamp_ns,
+                intent=intent,
+            )
     raise ValueError("UNKNOWN_SPEECH_INTENT")

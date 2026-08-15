@@ -8,9 +8,9 @@
 | 2 MoveIt + planning | COMPLETE | A02 clean real `move_group` plan/execution plus planning-scene collision rejection passed at `4203e81`; teardown SIGSEGV remains KI-012 |
 | 3 Gripper + objects | COMPLETE / USER ACCEPTED | Final clean runs at `f6907ff` launched and captured live Gazebo poses for distinct selected seeds 42 and 43; free-space gripper action and live scene variation passed. No contact/grasp claim. |
 | 4 Perception | COMPLETE | Clean two-seed vision-only RGB-D/CameraInfo/TF2 runtime at `62dc9c8` passed all five labels plus A03; evidence was sealed before separate offline live-Gazebo comparison. |
-| 5 Pick/place | NOT STARTED | Not authorized by the Phase-4 checkpoint; future multi-seed green-sphere placement requires a separate safety/evidence contract. |
-| 6 Drawing | NOT STARTED | Mathematical Cartesian heart path executes on board |
-| 7 Speech | NOT STARTED | zh/en/fr microphone commands normalize and execute |
+| 5 Pick/place | PARTIAL / RUNTIME PENDING | Safety/evidence contract and machine-checkable lift/retention/placement validator implemented on `agent/phase5-7`; integrated vision + MoveIt + gripper multi-seed Gazebo execution still required for A04. |
+| 6 Drawing | PARTIAL / RUNTIME PENDING | Runtime mathematical heart generator and scale tests implemented on `agent/phase5-7`; real Cartesian execution on the drawing board still required for A05. |
+| 7 Speech | PARTIAL / RUNTIME PENDING | zh/en/fr normalization, timestamp/confidence integrity, and rejection rules implemented on `agent/phase5-7`; ASR backend selection plus three real microphone runs remain required for A06-A08. |
 | 8 Task AI/executive | NOT STARTED | Long command executes stepwise with observe/verify/replan |
 | M1 Midterm acceptance gate | PENDING | Lifecycle: `PENDING -> PAUSED - AWAITING USER MIDTERM ACCEPTANCE -> ACCEPTED`. All 12 targets must pass as real integrated runs on the tested Phase-8-final commit, then await explicit user acceptance. |
 | 9 System Explorer | BLOCKED BY M1 | May start only after the user marks M1 `ACCEPTED`; it never auto-starts after tests pass. |
@@ -22,8 +22,4 @@
 | 15 Mode benchmark | NOT STARTED | Honest reproducible CLASSICAL/HYBRID/VLA comparison |
 | 16 Hardening/CI | NOT STARTED | Clean build/run/regression docs and acceptance ledger |
 
-Detailed atomic next commands live in `PROJECT_STATE.md`. A phase stays
-`PARTIAL` until it is implemented, built, tested, run, inspected, documented,
-and committed. Phase 3 was user accepted and Phase 4 is now complete; Phase 5
-is not started. This does not change the later M1 rule. M1 is stricter: code
-or unit tests alone cannot advance it.
+Detailed atomic next commands live in `PROJECT_STATE.md`; for Phase 5–7 continuation also read `docs/phase5_7_implementation_status.md`. A phase stays `PARTIAL` until it is implemented, built, tested, run, inspected, documented, and committed. The Phase-8 M1 rule is unchanged.
