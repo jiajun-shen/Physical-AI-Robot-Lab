@@ -154,7 +154,8 @@ This Phase-3 evidence itself does not establish A03 RGB-D localization, A04
 pick/place, M1.04 grasp, MoveIt-with-gripper laboratory motion, arm execution
 in the lab, GUI rendering, vision, real robot control, or physical safety.
 A03 was subsequently passed only by the separate Phase-4 vision-only runtime
-at `62dc9c8`; A04 and M1.04 remain `NOT STARTED`.
+at `62dc9c8`; A04 was later passed by the separate Phase-5 two-seed runtime,
+while M1.04 remains `NOT STARTED`.
 
 ## Phase-3 acceptance record
 

@@ -1,16 +1,20 @@
-# Phase 5–7 Implementation Status — 2026-08-15
+# Phase 5–7 Implementation Status
 
-This file supersedes older statements that Phase 5 has not begun. It does **not** supersede runtime acceptance rules in `ACCEPTANCE_STATUS.md`.
+> Current update (2026-08-23): Phase 5 is complete and A04 is PASS from the
+> saved two-seed runtime at `7e682d4`. Phase 6 and Phase 7 are not started in
+> the current plan. Historical implementation notes below do not supersede the
+> root state files or constitute acceptance evidence.
 
 ## Current status
 
 - Phase 4: `COMPLETE` at runtime-qualified feature commit `62dc9c8`; documentation checkpoint `265a5dc`.
-- Phase 5: `PARTIAL — CONTRACT/VALIDATOR IMPLEMENTED; INTEGRATED GAZEBO RUN PENDING`.
-- Phase 6: `PARTIAL — PARAMETRIC HEART GENERATOR IMPLEMENTED; CARTESIAN GAZEBO EXECUTION PENDING`.
-- Phase 7: `PARTIAL — zh/en/fr NORMALIZATION CONTRACT IMPLEMENTED; ASR BACKEND + MICROPHONE RUNS PENDING`.
-- A04–A08 remain `NOT STARTED` for acceptance purposes because no qualifying real runtime evidence has been produced for them yet.
+- Phase 5: `COMPLETE — TWO-SEED VERIFIED PICK/PLACE RUNTIME PASS`; see
+  `docs/phase5_pick_place_runtime_evidence.md`.
+- Phase 6: `NOT STARTED`.
+- Phase 7: `NOT STARTED`.
+- A04 is `PASS`; A05–A08 remain `NOT STARTED`.
 
-## Implemented in `agent/phase5-7`
+## Historical implementation notes in `agent/phase5-7`
 
 ### Phase 5
 

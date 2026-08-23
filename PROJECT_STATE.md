@@ -1,9 +1,8 @@
 # Project State
 
-> Current Phase-5 checkpoint (2026-08-23): this addendum supersedes the
-> historical Phase-4-only wording below. Phase 5 is `PARTIAL / RUNTIME
-> PENDING`; A04 is `NOT PASS / RUNTIME PENDING`. Phase 6 and Phase 7 are not
-> started.
+> Current Phase-5 completion addendum (2026-08-23): this addendum supersedes
+> the historical Phase-4-only wording below. Phase 5 is `COMPLETE`; A04 is
+> `PASS`. Phase 6 and Phase 7 are not started.
 
 ## Project name
 
@@ -11,48 +10,44 @@ Physical-AI-Robot-Lab
 
 ## Current phase
 
-Phase 5 - vision-driven pick/place (`PARTIAL / RUNTIME PENDING`)
+Phase 5 - vision-driven verified pick/place (`COMPLETE`)
 
-Project state: `PHASE 5 PARTIAL - A04 NOT PASS - AWAITING CONTACT-CLOSE
-RUNTIME REVALIDATION`.
+Project state: `PHASE 5 COMPLETE - A04 PASS - PHASE 6/7 NOT STARTED`.
 
 ## Current subtask
 
 Phase 4 remains complete at clean tested feature commit
 `62dc9c8d0d682239dd2e4567f311a3ce2551ca4a`; its vision-only two-seed RGB-D
-evidence remains the A03 baseline. Phase-5 implementation was stabilized first
-at `b7d97b68832fc5f87379511300751211d5a25c16`; the current contact-close
-checkpoint is `636221ae787dd79d6a58ab46cdbee6d05c6138f7`.
+evidence remains the A03 baseline. Phase 5 completed on runtime-tested code
+commit `7e682d45e6c666060bbb84b192fd2ab756987b73` with the final isolated
+evidence root `/var/tmp/physical-ai-p5.lift-trajectory.final.20260823`.
 
-The latest completed Phase-5 runtime is seed 42 retry28 at
-`/var/tmp/physical-ai-p5.diagonal-camera.retry28.20260823`. Pre-CLOSE stages
-passed, then `pinch_envelope_close` returned controller status `6` with
-`stalled: true` and `reached_goal: false`. The three observed `/joint_states`
-endpoints were approximately `0.02764275 m`, inside the calibrated physical
-contact-close range, but the older exact-37-mm rule rejected it. This is a
-runtime failure, not a grasp claim.
+The final harness built the seven-package Phase-5 closure and passed 67 test
+records (zero errors, failures, or skips), then separately launched seeds 42
+and 43. Each passed the full RGB-D -> collision-aware MoveIt -> open ->
+contact-close -> visually verified lift/transport -> place/release/retreat ->
+fresh Phase-4 RGB-D sequence. Seed 42 recorded lift `0.0781464666 m`,
+transport `0.5405326913 m`, and final green/red planar distance
+`0.0794259254 m`; seed 43 recorded `0.0812261127 m`, `0.0605447531 m`, and
+`0.1189200508 m`. Both final distances are within `[0.075, 0.120] m`.
 
-The current patch accepts only an explicit, action-accepted bounded
-contact-close endpoint (`0.020 m <= observed <= 0.040 m`), either a normal
-successful close or the exact aborted/stalled status-6 combination. It neither
-uses force/effort nor treats that endpoint as grasp success: a future episode
-must still prove a fresh RGB-D lift and three fresh TCP-relative transport
-retention samples before it can pass. OPEN and RELEASE still require successful
-action status and an in-tolerance endpoint.
-
-Static checks at this checkpoint: the directly related tests report `25
-passed`; the lightweight installed-source Phase 0--5 contract suite reports
-`122 passed`. An accidentally started retry29 was stopped before an acceptance
-result and is not evidence. Do not use it to supersede retry28.
+Contact-close accepts only an action-accepted observed `20--40 mm` endpoint,
+including the explicit status-6/stalled contact case; it never itself proves a
+grasp. The final PASS instead requires a new RGB-D lift of at least 50 mm,
+fresh visual transport retention, a fresh sealed post-release observation, and
+final distance/support checks. OPEN and RELEASE still require normal action
+and observed endpoint evidence. The final two-seed evaluator passed distinct
+seed, run-directory, Gazebo-partition, artifact-hash, and pre-pick vision
+variation checks; its green-position delta was `0.321813231388 m`.
 
 ## Git checkpoints
 
-- Latest runtime-qualified feature commit: `62dc9c8d0d682239dd2e4567f311a3ce2551ca4a` (P4/A03)
+- Latest runtime-qualified feature commit: `7e682d45e6c666060bbb84b192fd2ab756987b73` (P5/A04)
 - Latest stable Phase-5 implementation commit: `b7d97b68832fc5f87379511300751211d5a25c16`
-- Current contact-close checkpoint: `636221ae787dd79d6a58ab46cdbee6d05c6138f7`
-- Experimental runtime evidence: retry28 failed at CLOSE; no P5 runtime-qualified commit exists
+- Current Phase-5 runtime code commit: `7e682d45e6c666060bbb84b192fd2ab756987b73`
+- Runtime evidence: two-seed PASS at `/var/tmp/physical-ai-p5.lift-trajectory.final.20260823`; retry28 remains only historical failed contact-close evidence
 - Stable base branch: `main` at `f994fd651e4817f053121227383a8c89bb23b0ed`
-- Active branch: `agent/phase5-7` (push the documented contact-close checkpoint
+- Active branch: `agent/phase5-7` (push the final documentation checkpoint
   before leaving this session)
 - Remote: `https://github.com/jiajun-shen/Physical-AI-Robot-Lab.git` (private)
 
@@ -207,14 +202,15 @@ perception, or MoveIt-with-gripper result.
     plus yaw variation for `blue_cube` and `yellow_cube`.
   - `GRASP_STATE=NOT_DETERMINED_NO_CONTACT_EVIDENCE`, force control is not
     configured, and attachment is not implemented in both runs.
-- A01-A03: PASS. A04-A14: NOT STARTED.
+- A01-A04: PASS. A05-A14: NOT STARTED.
 - Phase-4 final clean runtime: PASS at `62dc9c8` for selected seeds 42 and 43.
   - `P4_RGB_TRANSPORT`, `P4_DEPTH_TRANSPORT`, `P4_CAMERA_INFO`,
     `P4_TF_CHAIN`, `P4_DEPTH_PROJECTION`, `P4_ALL_FIVE_DETECTIONS`,
     `P4_VISION_GROUND_TRUTH_BOUNDARY`, `P4_OFFLINE_EVALUATION`, and
     `P4_TWO_SEED_VISION_ONLY_LOCALIZATION` are all PASS.
-  - `A03=PASS`, `A04=NOT_STARTED`, and
-    `GRASP_STATE=NOT_DETERMINED_NO_CONTACT_EVIDENCE`.
+  - `A03=PASS`. A04 was completed later by the separately documented
+    Phase-5 two-seed runtime; this historical Phase-4 record remains only the
+    vision baseline.
 - P2.1 clean static configuration: PASS at `281c36b`.
   - `rosdep check`: PASS.
   - 3 packages built; 45 test records passed; worktree stayed clean.
@@ -323,14 +319,8 @@ ros2_control 4.45.2, gz_ros2_control 1.2.19, ros2_controllers 4.40.1, MoveIt
 
 ## Next exact steps
 
-1. In the next session, first verify a clean worktree, then run the contact-close
-   implementation through seed 42 first (the harness stops before seed 43 on a
-   seed-42 failure):
-   `source /opt/ros/jazzy/setup.bash && scripts/run_and_verify_phase5_pick_place_headless.sh /var/tmp/physical-ai-p5.contact-close.next`
-2. Do not mark A04 PASS unless the clean two-seed harness, independent
-   evaluator, and cross-seed comparison all pass with RGB-D lift and transport
-   retention evidence. A controller-stalled close alone is insufficient.
-3. Do not begin Phase 6 or Phase 7. Preserve the Phase-8 M1 hold unchanged:
-   even after any later Phase-4--8
-   work, Phase 9 requires final integrated M1 evidence and separate explicit
-   user acceptance.
+1. Phase 5/A04 is complete. Preserve the committed two-seed evidence and do
+   not rerun it merely as a sanity check.
+2. Do not begin Phase 6 or Phase 7 in this checkpoint. Preserve the Phase-8
+   M1 hold unchanged: any later Phase-4--8 work still requires final
+   integrated M1 evidence and separate explicit user acceptance before Phase 9.

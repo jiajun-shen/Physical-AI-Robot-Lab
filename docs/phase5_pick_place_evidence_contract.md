@@ -31,4 +31,8 @@ Each accepted episode must preserve timestamped records for:
 
 ## Multi-seed exit gate
 
-At least two independently launched seeded worlds must pass the full sequence. A04 remains `NOT STARTED` until these real runs exist.
+At least two independently launched seeded worlds must pass the full sequence.
+This gate is satisfied for A04 by the 2026-08-23 runtime rooted at
+`/var/tmp/physical-ai-p5.lift-trajectory.final.20260823`; see
+`docs/phase5_pick_place_runtime_evidence.md`. It remains simulation-only
+evidence and does not make a real-robot safety or force-quality claim.

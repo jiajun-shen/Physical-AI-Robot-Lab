@@ -2,7 +2,9 @@
 
 ## Final status
 
-Status: `COMPLETE` for Phase 4. A03 is `PASS`; A04 remains `NOT STARTED`.
+Status: `COMPLETE` for Phase 4. A03 is `PASS`; A04 was completed later by the
+separate Phase-5 two-seed runtime recorded in
+`docs/phase5_pick_place_runtime_evidence.md`.
 This is simulation-only RGB-D perception evidence, not contact, grasp, lift,
 transport, placement, GUI, real-camera, or real-robot evidence.
 
@@ -96,5 +98,5 @@ by itself support A03; the final two-seed run above is the acceptance evidence.
 This result proves only the defined simulation-scene visual localization
 baseline. It does not prove arbitrary scene robustness, graspability,
 contact/force/attachment, lift/transport, pick/place, or physical-camera
-performance. Phase 5 is not started. Stop after documenting this checkpoint
-and await explicit user direction before any future Phase-5 work.
+performance. The later Phase-5 runtime is separate evidence and does not
+expand this Phase-4 perception-only claim.

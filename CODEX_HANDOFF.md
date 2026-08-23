@@ -1,47 +1,39 @@
 # Codex Project Handoff — Physical-AI-Robot-Lab
 
-## Current safe checkpoint — Phase 5 partial (2026-08-23)
+## Current safe checkpoint — Phase 5 complete (2026-08-23)
 
 This section supersedes the historical addenda below.
 
-- Branch: `agent/phase5-7`; Phase 5 is `PARTIAL / RUNTIME PENDING`; A04 is
-  `NOT PASS / RUNTIME PENDING`. Phase 6 and Phase 7 are `NOT STARTED`.
-- The last stable P5 implementation checkpoint was
-  `b7d97b68832fc5f87379511300751211d5a25c16`. The current contact-close
-  checkpoint is `636221ae787dd79d6a58ab46cdbee6d05c6138f7`.
-- Latest completed P5 runtime: seed 42 retry28 at
-  `/var/tmp/physical-ai-p5.diagonal-camera.retry28.20260823`. All pre-CLOSE
-  work passed; CLOSE ended `status=6`, `stalled=true`, `reached_goal=false`.
-  Repeated `/joint_states` reported an approximately `27.64 mm` gripper
-  endpoint. The old exact `37 mm` rule therefore failed the episode.
-- `636221a` explicitly models this as a bounded contact-close endpoint only:
-  the action must be accepted; the observation must stay in the calibrated
-  `20--40 mm` range; the terminal state must be either normal success or the
-  explicit status-6 stalled combination. It uses no force/effort evidence.
-  OPEN and RELEASE retain successful action plus in-tolerance endpoint gates.
-- This does **not** make a grasp claim. Grasp/retention remains contingent on
-  later fresh RGB-D lift plus three fresh TCP-relative transport samples, and
-  the independent post-place Phase-4 vision evaluator.
-- Validation completed without a Gazebo runtime: `25 passed` directly related
-  tests and `122 passed` Phase 0--5 lightweight source/contract/verifier tests.
-  A retry29 process was started inadvertently and immediately stopped without
-  an acceptance result; it is not runtime evidence and does not supersede
-  retry28.
-- Working tree status before the documentation checkpoint was clean. After
-  committing the documentation checkpoint, push `agent/phase5-7`, verify
-  `git status --short --branch`, then stop.
-
-### Next session: first runtime command
-
-After a light clean-worktree check, run:
-
-```bash
-source /opt/ros/jazzy/setup.bash && scripts/run_and_verify_phase5_pick_place_headless.sh /var/tmp/physical-ai-p5.contact-close.next
-```
-
-The harness launches seed 42 first and only reaches seed 43 after seed 42
-passes. Do not start Phase 6 or Phase 7, and do not label A04 PASS until the
-full dual-seed runtime/evaluator/comparison evidence passes.
+- Branch: `agent/phase5-7`; Phase 5 is `COMPLETE`; A04 is `PASS`. Phase 6
+  and Phase 7 are `NOT STARTED`.
+- Runtime-tested Phase-5 code commit:
+  `7e682d45e6c666060bbb84b192fd2ab756987b73`. The prior stable implementation
+  checkpoint remains `b7d97b68832fc5f87379511300751211d5a25c16`.
+- Final evidence root:
+  `/var/tmp/physical-ai-p5.lift-trajectory.final.20260823`; its harness result
+  reports `P5_PICK_PLACE=PASS`, `A04=PASS`, source-manifest equality, and a
+  clean worktree after runtime. The two-seed comparison is
+  `p5_two_seed_comparison.json` under that root.
+- Seed 42 PASS: visual lift `0.0781464666 m`, transport `0.5405326913 m`,
+  final green/red planar distance `0.0794259254 m`. Seed 43 PASS: visual lift
+  `0.0812261127 m`, transport `0.0605447531 m`, final distance
+  `0.1189200508 m`. Both use fresh sealed post-place Phase-4 RGB-D evidence.
+- Contact-close remains an actuator observation only: a 20--40 mm observed
+  endpoint, with normal success or explicit status-6/stalled semantics, is
+  never grasp success by itself. The PASS evidence instead requires a fresh
+  >=50 mm RGB-D lift, visual transport retention, release/retreat, and fresh
+  post-place vision. OPEN/RELEASE still require normal action plus endpoint
+  evidence.
+- The final seven-package harness recorded 67 tests with zero errors,
+  failures, or skips; the final direct P5 contract/runtime/static-vision/
+  evaluator suite recorded 19 passing tests. See
+  `docs/phase5_pick_place_runtime_evidence.md`.
+- Historical retry28 is retained only as diagnostic evidence: CLOSE reported
+  `status=6`, `stalled=true`, with `/joint_states` near `27.64 mm`. It is
+  superseded for acceptance by the final two-seed PASS, not reclassified as a
+  grasp claim.
+- Commit and push the documentation checkpoint, verify
+  `git status --short --branch`, then stop. Do not start Phase 6.
 
 > Historical Phase-3 snapshot date: 2026-08-14. This handoff is deliberately
 > operational rather than promotional. The historical snapshot is retained
@@ -71,12 +63,11 @@ checkpoint:
   capture live Gazebo poses for offline comparison.
 - A03 is `PASS`: green-ball errors are 0.0103339 m (seed 42) and 0.0150882 m
   (seed 43), and the later comparison proves a 0.3200000 m live green-ball
-  position difference. A04 remains `NOT STARTED`.
-- Phase 5 is **not started**. Stop after the Phase-4 documentation checkpoint
-  and await explicit user direction before any Phase-5 implementation. The
-  first future atomic task, if authorized, is a separate pick/place safety and
-  evidence contract; it must not turn this visual-localization result into a
-  contact/grasp claim.
+  position difference. At the time of this historical Phase-4 record A04 had
+  not started; it was subsequently completed by the Phase-5 evidence above.
+- The following statement is historical only: Phase 5 was later implemented
+  and completed with the safety/evidence boundary recorded at the top of this
+  file. It did not promote a finger endpoint into a contact or grasp claim.
 - The Phase-8/M1 mandatory hold remains unchanged. M1.06 is only
   `PRE-M1 EVIDENCE`, not final M1 acceptance.
 

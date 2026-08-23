@@ -9,7 +9,9 @@ hard-coded object coordinate for a vision observation.
 
 Phase 4 is simulation-only.  It is an RGB-D perception increment and makes no
 claim about contact, grasp, lift, transport, placement, force control, or
-real-robot readiness.  In particular, A04 remains `NOT STARTED`.
+real-robot readiness. At the time this Phase-4 contract was written, A04 was
+not started; it was completed later by separate Phase-5 evidence and does not
+alter this perception-only scope.
 
 ## Required data path
 
