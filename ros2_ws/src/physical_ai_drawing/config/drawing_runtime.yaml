@@ -76,12 +76,15 @@ board:
   curve_samples: 31
   minimum_tcp_trace_samples: 5
   orientation_candidates:
+    # The pen shaft's local +X remains directed at the board for each of
+    # these rolls.  The 180-degree roll has the widest observed joint-limit
+    # margin in the calibrated center-board route, so it is sampled first.
+    - id: x_plus_roll_180
+      xyzw: [1.0, 0.0, 0.0, 0.0]
     - id: x_plus_roll_90
       xyzw: [0.70710678, 0.0, 0.0, 0.70710678]
     - id: x_plus_roll_0
       xyzw: [0.0, 0.0, 0.0, 1.0]
-    - id: x_plus_roll_180
-      xyzw: [1.0, 0.0, 0.0, 0.0]
     - id: x_plus_roll_270
       xyzw: [-0.70710678, 0.0, 0.0, 0.70710678]
     - id: x_minus_roll_0
