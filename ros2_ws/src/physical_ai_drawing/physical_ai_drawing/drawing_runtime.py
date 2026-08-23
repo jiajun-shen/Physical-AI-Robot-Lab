@@ -722,22 +722,49 @@ class DrawingRuntime(Node):
         world_points = frame.map_points(local_points, standoff_m=standoff)
         scene_ids = self.apply_drawing_scene(board_observation)
         approach_offset = finite(self.board_config.get("approach_offset_m"), "approach offset", positive=True)
+        route_preflight_attempts = integer(
+            self.planner.get("orientation_route_preflight_attempts"),
+            "orientation route preflight attempt count",
+            minimum=1,
+        )
         attempts: list[dict[str, Any]] = []
         selected: dict[str, Any] | None = None
         for identifier, orientation in self.orientations():
-            try:
-                approach_position = self._shift_normal(world_points[0], frame, approach_offset)
-                approach = self.plan_pose(f"{identifier}_approach", self.pose_stamped(approach_position, orientation), scene_ids)
-                predicted_start = self.current_positions()
-                predicted_start.update(approach["endpoint"])
-                planned_segments = self.preflight_cartesian_segments(
-                    world_points,
-                    orientation,
-                    scene_ids,
-                    predicted_start,
+            route_failures: list[dict[str, Any]] = []
+            approach: dict[str, Any] | None = None
+            planned_segments: list[dict[str, Any]] | None = None
+            accepted_preflight_attempt: int | None = None
+            for preflight_attempt in range(1, route_preflight_attempts + 1):
+                try:
+                    approach_position = self._shift_normal(world_points[0], frame, approach_offset)
+                    candidate_approach = self.plan_pose(
+                        f"{identifier}_approach",
+                        self.pose_stamped(approach_position, orientation),
+                        scene_ids,
+                    )
+                    predicted_start = self.current_positions()
+                    predicted_start.update(candidate_approach["endpoint"])
+                    candidate_segments = self.preflight_cartesian_segments(
+                        world_points,
+                        orientation,
+                        scene_ids,
+                        predicted_start,
+                    )
+                except DrawingRuntimeError as exc:
+                    route_failures.append({"preflight_attempt": preflight_attempt, "result": "REJECTED", "reason": str(exc)})
+                    continue
+                approach = candidate_approach
+                planned_segments = candidate_segments
+                accepted_preflight_attempt = preflight_attempt
+                break
+            if approach is None or planned_segments is None or accepted_preflight_attempt is None:
+                attempts.append(
+                    {
+                        "orientation_candidate": identifier,
+                        "result": "REJECTED",
+                        "preflight_attempts": route_failures,
+                    }
                 )
-            except DrawingRuntimeError as exc:
-                attempts.append({"orientation_candidate": identifier, "result": "REJECTED", "reason": str(exc)})
                 continue
             # Only a pre-motion route rejection may advance to the next
             # calibrated orientation.  The selected route has already passed
@@ -764,6 +791,8 @@ class DrawingRuntime(Node):
                     "avoid_collisions": True,
                     "start_state": "planned_approach_endpoint",
                     "execution_route": "preflighted_cartesian_trajectories",
+                    "accepted_preflight_attempt": accepted_preflight_attempt,
+                    "rejected_preflight_attempts": route_failures,
                 },
                 "approach": {"target": approach["target"], "planning": approach["planning"], "execution": approach_execution, "observed_endpoint": approach_observed},
                 "cartesian": cartesian,

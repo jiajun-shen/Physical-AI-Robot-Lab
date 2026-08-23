@@ -52,6 +52,10 @@ planner:
   cartesian_velocity_scaling: 0.03
   cartesian_retime_safety_factor: 4.0
   cartesian_minimum_segment_duration_sec: 0.50
+  # MoveIt can return several collision-free approach IK branches for the
+  # same pen pose.  Sample a bounded number before motion and retain only a
+  # branch whose whole segmented Cartesian route also passes collision checks.
+  orientation_route_preflight_attempts: 8
 
 # The board center comes live from the RGB-D vision stream.  These values are
 # only its calibrated local axes/dimensions in the static lab, never authored
