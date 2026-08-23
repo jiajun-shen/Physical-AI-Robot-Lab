@@ -27,7 +27,10 @@ def generate_launch_description() -> LaunchDescription:
     drawing_xacro = str(gripper_share / "urdf" / "irb1200_5_90_gz_drawing_pen_control.urdf.xacro")
     safe_initial_positions = str(gripper_share / "config" / "phase5_safe_arm_initial_positions.yaml")
     drawing_controllers = str(gripper_share / "config" / "phase6_drawing_controllers.yaml")
-    drawing_position_proportional_gain = "2.0"
+    # Jazzy's Gazebo position-command loop documents 1.0 as the largest
+    # non-oscillatory gain.  Keep the real drawing run at that limit; path
+    # discretization, not an unstable control override, handles tight curves.
+    drawing_position_proportional_gain = "1.0"
     world_to_base_z = "0.75"
 
     rgbd_bringup = IncludeLaunchDescription(

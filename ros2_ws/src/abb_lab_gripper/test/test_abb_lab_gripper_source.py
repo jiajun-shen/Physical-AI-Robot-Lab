@@ -301,10 +301,10 @@ def test_phase6_drawing_profile_has_a_collision_bearing_tip_without_new_control_
 def test_phase6_profile_accepts_its_isolated_controller_and_position_loop_calibration() -> None:
     robot = _expanded_drawing_robot(
         f"controller_config_file:={PHASE6_CONTROLLERS_YAML}",
-        "position_proportional_gain:=2.0",
+        "position_proportional_gain:=1.0",
     )
     plugin = robot.find("./gazebo/plugin")
     assert plugin is not None
     parameters = [item.text.strip() for item in plugin.findall("parameters")]
     assert str(PHASE6_CONTROLLERS_YAML) in parameters
-    assert plugin.findtext("position_proportional_gain") == "2.0"
+    assert plugin.findtext("position_proportional_gain") == "1.0"

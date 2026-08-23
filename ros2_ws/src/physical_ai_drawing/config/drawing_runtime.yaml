@@ -73,7 +73,10 @@ board:
   approach_offset_m: 0.100
   horizontal_half_extent_m: 0.35
   vertical_half_extent_m: 0.225
-  curve_samples: 31
+  # More runtime samples reduce the joint-space change of each independently
+  # collision-checked Cartesian action, while preserving the same generated
+  # curve, board frame, and typed intent.
+  curve_samples: 61
   minimum_tcp_trace_samples: 5
   orientation_candidates:
     # The pen shaft's local +X remains directed at the board for each of
