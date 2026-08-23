@@ -95,14 +95,24 @@ stop_group() {
   kill -TERM -- "-${pid}" 2>/dev/null || true
   for _ in {1..10}; do kill -0 -- "-${pid}" 2>/dev/null || { wait "${pid}" 2>/dev/null || true; return 0; }; sleep 0.2; done
   kill -KILL -- "-${pid}" 2>/dev/null || true
+  for _ in {1..8}; do kill -0 -- "-${pid}" 2>/dev/null || { wait "${pid}" 2>/dev/null || true; return 0; }; sleep 0.2; done
   return 1
 }
-cleanup() {
-  local status="$?"; trap - EXIT INT TERM
+stop_active_case() {
+  local status=0 pid
   stop_group "${static_vision_pid}" || status=1
   stop_group "${vision_pid}" || status=1
   stop_group "${launch_pid}" || status=1
+  for pid in "${static_vision_pid}" "${vision_pid}" "${launch_pid}"; do
+    [[ -z "${pid}" ]] || ! kill -0 -- "-${pid}" 2>/dev/null || status=1
+  done
+  static_vision_pid=""; vision_pid=""; launch_pid=""
   timeout --kill-after=1s 5s ros2 daemon stop >/dev/null 2>&1 || true
+  return "${status}"
+}
+cleanup() {
+  local status="$?"; trap - EXIT INT TERM
+  stop_active_case || status=1
   exit "${status}"
 }
 trap cleanup EXIT
@@ -123,54 +133,62 @@ readonly P4_VERIFIER="${SCRIPT_DIR}/verify_p4_vision_runtime.py"
 readonly EVALUATOR="${SCRIPT_DIR}/evaluate_p6_drawing_evidence.py"
 [[ -f "${P4_VERIFIER}" && -f "${EVALUATOR}" ]] || die "required Phase-6 helper missing"
 
-export GZ_PARTITION="physical_ai_p6_${ROS_DOMAIN_ID}_$$"
-setsid ros2 launch abb_lab_moveit_config phase6_drawing_headless.launch.py execution_duration_scaling:=2.2 execution_goal_duration_margin:=2.0 >"${RUNTIME_ROOT}/launch.log" 2>&1 &
-launch_pid="$!"
-deadline=$((SECONDS + 100))
-while (( SECONDS < deadline )); do
-  kill -0 "${launch_pid}" 2>/dev/null || { tail -n 260 "${RUNTIME_ROOT}/launch.log" >&2 || true; die "P6 launch exited before readiness"; }
-  topics="$(topic_snapshot)"
-  if grep -Fxq /joint_states <<<"${topics}" && grep -Fxq /lab_camera/color/image_raw <<<"${topics}" && grep -Fxq /lab_camera/depth/image_raw <<<"${topics}" && ros2 service list --no-daemon 2>/dev/null | grep -Fxq /compute_cartesian_path && ros2 service list --no-daemon 2>/dev/null | grep -Fxq /plan_kinematic_path; then break; fi
-  sleep 0.5
-done
-kill -0 "${launch_pid}" 2>/dev/null || die "P6 launch did not remain alive"
-ros2 param get /move_group trajectory_execution.allowed_execution_duration_scaling >"${RUNTIME_ROOT}/moveit_execution_monitor.txt" 2>&1 || die "could not read Phase-6 MoveIt execution monitor"
-grep -Eq '2\.2' "${RUNTIME_ROOT}/moveit_execution_monitor.txt" || die "Phase-6 MoveIt execution monitor did not apply bounded scaling"
-
-setsid ros2 run physical_ai_perception vision_localizer_node --ros-args -p use_sim_time:=true -p perception_mode:=vision >"${RUNTIME_ROOT}/vision_node.log" 2>&1 &
-vision_pid="$!"
-deadline=$((SECONDS + 70))
-while (( SECONDS < deadline )); do
-  kill -0 "${vision_pid}" 2>/dev/null || { tail -n 220 "${RUNTIME_ROOT}/vision_node.log" >&2 || true; die "P6 vision node exited"; }
-  topics="$(topic_snapshot)"
-  if grep -Fxq /perception/world_object_poses <<<"${topics}"; then break; fi
-  sleep 0.5
-done
-printf '%s\n' "${topics}" >"${RUNTIME_ROOT}/topics.txt"
-grep -Fxq /perception/world_object_poses "${RUNTIME_ROOT}/topics.txt" || die "P6 vision topic did not become ready"
-
-# Reuse P5's independent RGB-D static-obstacle localizer.  The drawing
-# runtime must receive these two vision-derived collision boxes before it
-# permits any approach, entry, curve, or retreat motion.
-setsid ros2 launch abb_lab_moveit_config phase5_static_obstacle_vision.launch.py >"${RUNTIME_ROOT}/static_obstacle_vision.log" 2>&1 &
-static_vision_pid="$!"
-deadline=$((SECONDS + 70))
-while (( SECONDS < deadline )); do
-  kill -0 "${static_vision_pid}" 2>/dev/null || { tail -n 220 "${RUNTIME_ROOT}/static_obstacle_vision.log" >&2 || true; die "P6 static-obstacle vision exited"; }
-  topics="$(topic_snapshot)"
-  if grep -Fxq /phase5/perception/static_obstacle_poses <<<"${topics}"; then break; fi
-  sleep 0.5
-done
-grep -Fxq /phase5/perception/static_obstacle_poses <<<"${topics}" || die "P6 static-obstacle vision topic did not become ready"
-printf '%s\n' "${topics}" >"${RUNTIME_ROOT}/topics_with_static_obstacle_vision.txt"
-
-run_step "fresh Phase-4 board vision sealing" "${RUNTIME_ROOT}/vision_verifier.log" python3 "${P4_VERIFIER}" --output-root "${OUTPUT_ROOT}/vision_baseline" --timeout 55 --minimum-source-stamp-sec 3.0
-
 run_case() {
-  local case_id="$1" instruction="$2" case_root="${OUTPUT_ROOT}/cases/$1"
-  mkdir -p "${case_root}"
-  run_step "Phase-6 ${case_id}" "${RUNTIME_ROOT}/${case_id}.log" ros2 run physical_ai_drawing execute_drawing --instruction "${instruction}" --output-root "${case_root}" --timeout 330
+  local case_id="$1" instruction="$2" case_root="${OUTPUT_ROOT}/cases/$1" case_runtime="${RUNTIME_ROOT}/$1" case_partition deadline topics
+  mkdir -p "${case_root}" "${case_runtime}"
+  case_partition="physical_ai_p6_${ROS_DOMAIN_ID}_${case_id}_${BASHPID}"
+  export GZ_PARTITION="${case_partition}"
+
+  # A drawn final pose can occlude the two static fiducials.  Each acceptance
+  # case therefore owns a fresh headless graph and must observe the board and
+  # both obstacle markers before its first motion; no stale obstacle cache is
+  # carried from a previous drawing episode.
+  setsid ros2 launch abb_lab_moveit_config phase6_drawing_headless.launch.py execution_duration_scaling:=2.2 execution_goal_duration_margin:=2.0 >"${case_runtime}/launch.log" 2>&1 &
+  launch_pid="$!"
+  deadline=$((SECONDS + 100))
+  while (( SECONDS < deadline )); do
+    kill -0 "${launch_pid}" 2>/dev/null || { tail -n 260 "${case_runtime}/launch.log" >&2 || true; die "${case_id} P6 launch exited before readiness"; }
+    topics="$(topic_snapshot)"
+    if grep -Fxq /joint_states <<<"${topics}" && grep -Fxq /lab_camera/color/image_raw <<<"${topics}" && grep -Fxq /lab_camera/depth/image_raw <<<"${topics}" && ros2 service list --no-daemon 2>/dev/null | grep -Fxq /compute_cartesian_path && ros2 service list --no-daemon 2>/dev/null | grep -Fxq /plan_kinematic_path; then break; fi
+    sleep 0.5
+  done
+  kill -0 "${launch_pid}" 2>/dev/null || die "${case_id} P6 launch did not remain alive"
+  ros2 param get /move_group trajectory_execution.allowed_execution_duration_scaling >"${case_runtime}/moveit_execution_monitor.txt" 2>&1 || die "${case_id} could not read Phase-6 MoveIt execution monitor"
+  grep -Eq '2\.2' "${case_runtime}/moveit_execution_monitor.txt" || die "${case_id} Phase-6 MoveIt execution monitor did not apply bounded scaling"
+
+  setsid ros2 run physical_ai_perception vision_localizer_node --ros-args -p use_sim_time:=true -p perception_mode:=vision >"${case_runtime}/vision_node.log" 2>&1 &
+  vision_pid="$!"
+  deadline=$((SECONDS + 70))
+  while (( SECONDS < deadline )); do
+    kill -0 "${vision_pid}" 2>/dev/null || { tail -n 220 "${case_runtime}/vision_node.log" >&2 || true; die "${case_id} P6 vision node exited"; }
+    topics="$(topic_snapshot)"
+    if grep -Fxq /perception/world_object_poses <<<"${topics}"; then break; fi
+    sleep 0.5
+  done
+  printf '%s\n' "${topics}" >"${case_runtime}/topics.txt"
+  grep -Fxq /perception/world_object_poses "${case_runtime}/topics.txt" || die "${case_id} P6 vision topic did not become ready"
+
+  # Reuse P5's independent RGB-D static-obstacle localizer.  The drawing
+  # runtime must receive these two vision-derived collision boxes before it
+  # permits any approach, entry, curve, or retreat motion.
+  setsid ros2 launch abb_lab_moveit_config phase5_static_obstacle_vision.launch.py >"${case_runtime}/static_obstacle_vision.log" 2>&1 &
+  static_vision_pid="$!"
+  deadline=$((SECONDS + 70))
+  while (( SECONDS < deadline )); do
+    kill -0 "${static_vision_pid}" 2>/dev/null || { tail -n 220 "${case_runtime}/static_obstacle_vision.log" >&2 || true; die "${case_id} static-obstacle vision exited"; }
+    topics="$(topic_snapshot)"
+    if grep -Fxq /phase5/perception/static_obstacle_poses <<<"${topics}"; then break; fi
+    sleep 0.5
+  done
+  grep -Fxq /phase5/perception/static_obstacle_poses <<<"${topics}" || die "${case_id} static-obstacle vision topic did not become ready"
+  printf '%s\n' "${topics}" >"${case_runtime}/topics_with_static_obstacle_vision.txt"
+
+  run_step "${case_id} fresh Phase-4 board vision sealing" "${case_runtime}/vision_verifier.log" python3 "${P4_VERIFIER}" --output-root "${case_root}/vision_baseline" --timeout 55 --minimum-source-stamp-sec 3.0
+  run_step "Phase-6 ${case_id}" "${case_runtime}/${case_id}.log" ros2 run physical_ai_drawing execute_drawing --instruction "${instruction}" --output-root "${case_root}" --timeout 330
   [[ -f "${case_root}/drawing_execution_evidence.json" ]] || die "${case_id} did not produce drawing evidence"
+  stop_active_case || die "${case_id} process cleanup failed"
+  printf 'CLEANUP_STATUS=PASS\n' >"${case_runtime}/cleanup_status.txt"
+  unset GZ_PARTITION
 }
 run_case circle_curve "画一个小一点的圆"
 run_case left_square "在白板左边画一个小一点的正方形"
@@ -178,9 +196,7 @@ run_case left_circle "在白板左边画一个小一点的圆"
 run_step "Phase-6 evidence evaluation" "${RUNTIME_ROOT}/evaluator.log" python3 "${EVALUATOR}" --evidence "${OUTPUT_ROOT}/cases/circle_curve/drawing_execution_evidence.json" --evidence "${OUTPUT_ROOT}/cases/left_square/drawing_execution_evidence.json" --evidence "${OUTPUT_ROOT}/cases/left_circle/drawing_execution_evidence.json" --output "${OUTPUT_ROOT}/p6_drawing_evaluation.json"
 grep -Fxq P6_DRAWING_EVALUATION=PASS "${RUNTIME_ROOT}/evaluator.log" || die "P6 evidence evaluator did not pass"
 
-stop_group "${static_vision_pid}"; static_vision_pid=""
-stop_group "${vision_pid}"; vision_pid=""
-stop_group "${launch_pid}"; launch_pid=""
+stop_active_case || die "final Phase-6 process cleanup failed"
 capture_manifest >"${AFTER_MANIFEST}"
 cmp -s "${BEFORE_MANIFEST}" "${AFTER_MANIFEST}" || die "source manifest changed during runtime"
 [[ -z "$(git -C "${REPOSITORY_ROOT}" status --porcelain --untracked-files=all)" ]] || die "source worktree is dirty after runtime"

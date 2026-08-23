@@ -20,6 +20,13 @@ epoch; the runtime converts each marker to a conservative collision box and
 rejects every approach, entry, curve, or retreat plan unless both boxes are
 present in the live MoveIt scene.
 
+The sealed headless harness runs each independent acceptance input in its own
+fresh Gazebo, MoveIt, and vision episode.  It does not carry static-obstacle
+observations across cases: after shutdown, the next case must newly observe the
+board and both marker fiducials before its first motion.  This preserves the
+freshness contract even when a previous drawing's final pose would occlude a
+marker.
+
 Before the first curve chord, the runtime must execute a separately preflighted
 live-state Cartesian `entry_alignment` to exactly the first runtime-generated
 waypoint. It uses its own bounded slow profile and must pass both the usual
