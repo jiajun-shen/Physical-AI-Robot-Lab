@@ -83,6 +83,7 @@ def test_descending_side_grasp_config_and_legacy_contract_are_fail_closed() -> N
     assert "visual_checkpoint_tf_aligned_before_observed_close" in source
     assert "fresh_proximate_vision_tcp_sample" in source
     assert "post_attachment_vision_tcp_sample" in source
+    assert "lift_visual_minimum_source_stamp_ns" in source
     assert 'self.collect_retention(' in source
     assert 'self.motion.get("lift_retention_samples")' in source
     assert "last transport green/TCP relative offset" in source

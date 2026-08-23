@@ -322,6 +322,7 @@ def _write_execution(path: Path, pre_stamp: int) -> None:
             "attachment": attachment,
             "vision_retention_samples": lift,
             "lift_delta_m": 0.065,
+            "lift_visual_minimum_source_stamp_ns": 8_000_000_000,
             "minimum_lift_m": 0.05,
         },
         "TRANSPORT": {

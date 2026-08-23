@@ -927,6 +927,13 @@ def validate_attachment_retention_and_release(
     recorded_lift = require_number(retention.get("lift_delta_m"), "execution.retention.lift_delta_m")
     require_same_number(recorded_lift, lift_delta, "retention lift delta")
     lift_details = stage_details(stages, "LIFT_VERIFY")
+    lift_visual_minimum_stamp = require_timestamp(
+        lift_details.get("lift_visual_minimum_source_stamp_ns"),
+        "LIFT_VERIFY.details.lift_visual_minimum_source_stamp_ns",
+        positive=True,
+    )
+    if lift_baseline.pose.source_stamp_ns <= lift_visual_minimum_stamp:
+        raise EvaluationError("first lift image predates the collision-aware lift command")
     if lift_details.get("attachment") != attachment:
         raise EvaluationError("LIFT_VERIFY is not tied to the guarded attachment record")
     if lift_details.get("vision_retention_samples") != retention.get("lift_samples"):

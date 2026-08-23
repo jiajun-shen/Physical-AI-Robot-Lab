@@ -1798,10 +1798,12 @@ class PickPlaceRuntime(Node):
             if base_relative is None:
                 # The grasp guard is intentionally observed during the final
                 # approach, before the fingers occlude the ball. Establish the
-                # retention baseline from the first post-attachment lift image
-                # instead. Its calibrated attached-object distance is bounded
-                # separately from the approach checkpoint; all later samples
-                # use the unchanged relative-drift bound.
+                # retention baseline from the first fresh post-attachment
+                # image produced during or after the lift instead. The caller
+                # supplies the lift-command timestamp, so this cannot reuse a
+                # pre-lift cache entry. Its calibrated attached-object
+                # distance is bounded separately from the approach checkpoint;
+                # all later samples use the unchanged relative-drift bound.
                 sample = self.fresh_proximate_vision_tcp_sample(
                     "green_ball",
                     newest,
@@ -2094,9 +2096,14 @@ class PickPlaceRuntime(Node):
                 grasp_tcp[2]
                 + finite(self.motion.get("lift_target_m"), "lift target", positive=True),
             )
+            # A held ball can be visible while the collision-aware lift is
+            # underway yet be hidden at its terminal wrist pose. Start the
+            # fresh-image gate at this command boundary, then still require
+            # a measured >=50 mm RGB-D rise from the pre-close guard.
+            lift_visual_minimum_source_stamp_ns = self.sim_time_ns()
             lift_motion = self.move_pose("lift", self.pose_stamped(lift_tcp, quaternion))
             lift_samples = self.collect_retention(
-                finite_int(lift_motion["sim_time_ns"], "lift motion endpoint stamp", minimum=1),
+                lift_visual_minimum_source_stamp_ns,
                 None,
                 "lift",
                 sample_count=finite_int(
@@ -2121,6 +2128,7 @@ class PickPlaceRuntime(Node):
                 "attachment": attachment_record,
                 "vision_retention_samples": lift_samples,
                 "lift_delta_m": lift_delta,
+                "lift_visual_minimum_source_stamp_ns": lift_visual_minimum_source_stamp_ns,
                 "minimum_lift_m": finite(
                     self.motion.get("min_lift_m"), "minimum lift", positive=True
                 ),
