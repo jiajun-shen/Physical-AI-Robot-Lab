@@ -1,8 +1,11 @@
-"""Generate a normalized, metric Cartesian heart at runtime."""
+"""Legacy-compatible heart helper backed by the board-local geometry layer."""
 
 from dataclasses import dataclass
-from math import cos, pi, sin
 from typing import List
+
+from .drawing_intent import DrawingIntent, Shape
+from .geometry import extent as local_extent
+from .geometry import generate_local_geometry
 
 
 @dataclass(frozen=True)
@@ -13,26 +16,22 @@ class Point3:
 
 
 def generate_heart(scale_m: float = 0.12, samples: int = 240, board_x: float = 0.0) -> List[Point3]:
-    """Return heart points in a board plane x=board_x.
+    """Return a generated heart in a caller-named plane for historical tests.
 
-    `scale_m` is the full maximum of the normalized y/z span, not a joint-space multiplier.
+    New runtime code must use ``DrawingIntent`` and ``BoardFrame`` rather than
+    treating ``board_x`` as a world coordinate.
     """
-    if not (0.02 <= scale_m <= 0.30):
-        raise ValueError("scale_m must be within [0.02, 0.30] m")
+
+    if not (0.04 <= scale_m <= 0.24):
+        raise ValueError("scale_m must be within [0.04, 0.24] m")
     if samples < 32:
         raise ValueError("samples must be >= 32")
-    raw = []
-    for i in range(samples):
-        t = 2.0 * pi * i / (samples - 1)
-        u = 16.0 * sin(t) ** 3
-        v = 13.0 * cos(t) - 5.0 * cos(2*t) - 2.0 * cos(3*t) - cos(4*t)
-        raw.append((u, v))
-    u_mid = (max(p[0] for p in raw) + min(p[0] for p in raw)) / 2.0
-    v_mid = (max(p[1] for p in raw) + min(p[1] for p in raw)) / 2.0
-    span = max(max(p[0] for p in raw)-min(p[0] for p in raw), max(p[1] for p in raw)-min(p[1] for p in raw))
-    gain = scale_m / span
-    return [Point3(board_x, (u-u_mid)*gain, (v-v_mid)*gain) for u, v in raw]
+    local = generate_local_geometry(DrawingIntent(shape=Shape.HEART, size_m=scale_m), samples=samples)
+    return [Point3(board_x, point.horizontal_m, point.vertical_m) for point in local]
 
 
 def extent(points: List[Point3]) -> tuple[float, float]:
-    return (max(p.y for p in points)-min(p.y for p in points), max(p.z for p in points)-min(p.z for p in points))
+    return (
+        max(point.y for point in points) - min(point.y for point in points),
+        max(point.z for point in points) - min(point.z for point in points),
+    )

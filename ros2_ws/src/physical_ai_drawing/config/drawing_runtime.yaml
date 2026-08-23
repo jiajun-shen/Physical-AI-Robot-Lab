@@ -1,0 +1,79 @@
+schema_version: 1
+scope: SIMULATION_ONLY
+
+robot:
+  group_name: manipulator
+  planning_frame: world
+  tcp_link: gripper_tcp
+  arm_joint_names: [joint_1, joint_2, joint_3, joint_4, joint_5, joint_6]
+  gripper_joint: two_finger_right_joint
+  velocity_limits_rad_per_sec:
+    joint_1: 5.027
+    joint_2: 4.189
+    joint_3: 5.236
+    joint_4: 6.981
+    joint_5: 7.069
+    joint_6: 10.472
+
+planner:
+  pipeline_id: ompl
+  planner_id: RRTConnectkConfigDefault
+  planning_attempts: 3
+  allowed_planning_time_sec: 5.0
+  velocity_scaling: 0.12
+  position_tolerance_m: 0.008
+  orientation_tolerance_rad: 0.08
+  retime_safety_factor: 2.0
+  minimum_segment_duration_sec: 0.10
+  service_wait_timeout_sec: 25.0
+  service_call_timeout_sec: 18.0
+  action_result_timeout_sec: 75.0
+  endpoint_observation_timeout_sec: 10.0
+  endpoint_samples: 3
+  observed_joint_tolerance_rad: 0.040
+  vision_timeout_sec: 18.0
+  cartesian_max_step_m: 0.008
+  cartesian_jump_threshold: 0.0
+  cartesian_prismatic_jump_threshold: 0.0
+  cartesian_revolute_jump_threshold: 0.0
+  cartesian_acceleration_scaling: 0.10
+
+# The board center comes live from the RGB-D vision stream.  These values are
+# only its calibrated local axes/dimensions in the static lab, never authored
+# curve positions in world coordinates.
+board:
+  size_xyz_m: [0.03, 0.70, 0.45]
+  robot_facing_normal_world: [-1.0, 0.0, 0.0]
+  horizontal_axis_world: [0.0, 1.0, 0.0]
+  vertical_axis_world: [0.0, 0.0, 1.0]
+  front_surface_offset_m: 0.015
+  # There is no physical pen/contact model in this phase. The virtual tip
+  # stays 35 mm in front of the solid collision board, so collision checking
+  # remains true while the projected trace lies in its named board frame.
+  virtual_tip_standoff_m: 0.035
+  approach_offset_m: 0.100
+  horizontal_half_extent_m: 0.35
+  vertical_half_extent_m: 0.225
+  curve_samples: 31
+  minimum_tcp_trace_samples: 5
+  orientation_candidates:
+    - id: x_plus_roll_0
+      xyzw: [0.0, 0.0, 0.0, 1.0]
+    - id: x_plus_roll_90
+      xyzw: [0.70710678, 0.0, 0.0, 0.70710678]
+    - id: x_plus_roll_180
+      xyzw: [1.0, 0.0, 0.0, 0.0]
+    - id: x_plus_roll_270
+      xyzw: [-0.70710678, 0.0, 0.0, 0.70710678]
+    - id: x_minus_roll_0
+      xyzw: [0.0, 1.0, 0.0, 0.0]
+    - id: p5_side_calibrated
+      xyzw: [0.65328148, 0.65328148, -0.27059805, 0.27059805]
+
+scene:
+  table:
+    id: p6_work_table
+    center_xyz_m: [0.65, 0.0, 0.375]
+    size_xyz_m: [1.0, 0.9, 0.75]
+  ball_radius_m: 0.035
+  cube_size_m: 0.060
