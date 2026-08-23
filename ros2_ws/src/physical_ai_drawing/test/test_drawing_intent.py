@@ -17,7 +17,7 @@ def test_drawing_domain_parser_handles_required_shapes_and_parameters():
     assert parse_drawing_instruction("画一个圆").shape is Shape.CIRCLE
     small_heart = parse_drawing_instruction("画一个小一点的爱心")
     assert small_heart.shape is Shape.HEART
-    assert small_heart.size_m == pytest.approx(0.10)
+    assert small_heart.size_m == pytest.approx(0.08)
     left_square = parse_drawing_instruction("在白板左边画一个正方形")
     assert left_square.shape is Shape.SQUARE
     assert left_square.position is BoardPosition.LEFT

@@ -87,7 +87,7 @@ def _size_from_text(text: str) -> float:
             raise DrawingIntentError("DRAWING_SIZE_OUT_OF_RANGE")
         return value
     if any(token in text for token in ("small", "smaller", "little", "小一点", "小些", "小的", "小")):
-        return 0.10
+        return 0.08
     if any(token in text for token in ("large", "bigger", "big", "大一点", "大的", "大")):
         return 0.18
     # The default is the calibrated, currently executable board trace size.
