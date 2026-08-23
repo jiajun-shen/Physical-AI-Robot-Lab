@@ -43,3 +43,46 @@ def test_cartesian_retime_appends_a_same_endpoint_terminal_hold():
         "duration_sec": 1.0,
         "repeats_collision_checked_endpoint": True,
     }
+
+
+def test_live_cartesian_execution_uses_only_forward_generated_targets():
+    seen_waypoints = []
+    runtime = SimpleNamespace(
+        cartesian_path=lambda label, waypoints, orientation, scene_ids: (
+            seen_waypoints.append(list(waypoints))
+            or {
+                "trajectory": object(),
+                "endpoint": {name: 0.0 for name in JOINTS},
+                "cartesian": {
+                    "fraction": 1.0,
+                    "avoid_collisions": True,
+                    "trajectory_waypoint_count": 2,
+                },
+            }
+        ),
+        execute=lambda trajectory, label: {"action_status": 4},
+        observe_endpoint=lambda endpoint, label: endpoint,
+        planner={"cartesian_segment_waypoints": 2},
+    )
+    planned = [
+        {
+            "label": "draw_segment_00",
+            "waypoints": [(1.0, 2.0, 3.0), (1.0, 2.1, 3.0)],
+            "cartesian": {"fraction": 1.0, "avoid_collisions": True},
+        }
+    ]
+
+    result = DrawingRuntime.execute_preflighted_cartesian_segments(
+        runtime,
+        planned,
+        (0.0, 0.0, 0.0, 1.0),
+        ["p6_live_vision_drawing_board"],
+        requested_waypoint_count=2,
+    )
+
+    assert seen_waypoints == [[(1.0, 2.1, 3.0)]]
+    assert result["segments"][0]["live_execution_targets"] == {
+        "strategy": "live_state_to_forward_generated_waypoints",
+        "preflight_waypoint_count": 2,
+        "live_forward_target_count": 1,
+    }

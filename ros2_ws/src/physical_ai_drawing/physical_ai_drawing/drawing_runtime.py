@@ -695,17 +695,23 @@ class DrawingRuntime(Node):
         route has been validated.  The Gazebo position loop may still settle a
         few milliradians away from an earlier segment's nominal endpoint.  A
         copied joint trajectory would then be rejected by MoveIt's strict
-        start-state guard.  Re-requesting the same Cartesian segment from the
-        live state preserves collision checking and board-local waypoints while
-        avoiding an unsafe or fabricated joint-space correction.
+        start-state guard.  From that observed state, re-request only the
+        segment's *forward* generated targets: returning first to the nominal
+        previous endpoint would add an artificial backtrack before tracing the
+        next curve chord.  The resulting live-start route is independently
+        Cartesian collision checked; no joint-space correction is authored.
         """
 
         records: list[dict[str, Any]] = []
         for preflight_segment in planned:
             label = str(preflight_segment["label"])
+            preflight_waypoints = list(preflight_segment["waypoints"])
+            live_forward_targets = preflight_waypoints[1:]
+            if not live_forward_targets:
+                raise DrawingRuntimeError(f"{label} has no forward Cartesian target")
             live_segment = self.cartesian_path(
                 label,
-                list(preflight_segment["waypoints"]),
+                live_forward_targets,
                 orientation,
                 scene_ids,
             )
@@ -715,6 +721,11 @@ class DrawingRuntime(Node):
                 {
                     **live_segment["cartesian"],
                     "pre_motion_cartesian": preflight_segment["cartesian"],
+                    "live_execution_targets": {
+                        "strategy": "live_state_to_forward_generated_waypoints",
+                        "preflight_waypoint_count": len(preflight_waypoints),
+                        "live_forward_target_count": len(live_forward_targets),
+                    },
                     "execution": execution,
                     "observed_endpoint": observed,
                 }

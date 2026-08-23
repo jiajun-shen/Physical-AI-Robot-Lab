@@ -44,6 +44,11 @@ def _evidence(shape: str, size: float, position: str = "center") -> dict:
                         "avoid_collisions": True,
                         "fraction": 1.0,
                         "pre_motion_cartesian": {"avoid_collisions": True, "fraction": 1.0},
+                        "live_execution_targets": {
+                            "strategy": "live_state_to_forward_generated_waypoints",
+                            "preflight_waypoint_count": 2,
+                            "live_forward_target_count": 1,
+                        },
                         "retiming": {
                             "terminal_hold": {
                                 "duration_sec": 1.0,
@@ -139,3 +144,22 @@ def test_evaluator_rejects_a_terminal_hold_that_changes_the_endpoint(tmp_path):
         assert "terminal hold" in str(exc)
     else:
         raise AssertionError("evaluator accepted a terminal hold that changed the endpoint")
+
+
+def test_evaluator_rejects_a_live_segment_that_backtracks_to_a_nominal_endpoint(tmp_path):
+    invalid = _evidence("heart", 0.14)
+    invalid["execution"]["cartesian"]["segments"][0]["live_execution_targets"][
+        "strategy"
+    ] = "nominal_previous_then_forward"
+    paths = []
+    for index, shape in enumerate(("heart", "square", "circle")):
+        path = tmp_path / f"{index}.json"
+        body = invalid if index == 0 else _evidence(shape, 0.10 + index * 0.02)
+        path.write_text(json.dumps(body), encoding="utf-8")
+        paths.append(path)
+    try:
+        MODULE.evaluate(paths)
+    except MODULE.EvaluationError as exc:
+        assert "forward generated targets" in str(exc)
+    else:
+        raise AssertionError("evaluator accepted a live segment that backtracked")
