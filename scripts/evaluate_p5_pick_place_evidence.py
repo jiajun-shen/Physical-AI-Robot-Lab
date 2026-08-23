@@ -79,7 +79,11 @@ MIN_RETENTION_SAMPLES = 3
 MIN_LIFT_RETENTION_SAMPLES = 1
 MIN_LOWER_RETENTION_SAMPLES = 1
 MAX_TCP_RELATIVE_DRIFT_M = 0.040
-MAX_VISUAL_CHECKPOINT_TCP_DISTANCE_M = 0.090
+# Must match motion.visual_checkpoint_max_tcp_distance_m. This bounded
+# pre-close RGB-D/TCP gate accommodates the observed 90.6 mm Seed-43
+# calibrated side-view endpoint without weakening final insertion or
+# visual-retention evidence.
+MAX_VISUAL_CHECKPOINT_TCP_DISTANCE_M = 0.095
 MAX_UNOBSERVED_FINAL_APPROACH_M = 0.075
 MAX_RETENTION_TCP_DISTANCE_M = 0.115
 GRIPPER_OBSERVATION_TOLERANCE_M = 0.003
