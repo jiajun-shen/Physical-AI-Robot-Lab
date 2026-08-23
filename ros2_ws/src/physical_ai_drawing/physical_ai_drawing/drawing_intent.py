@@ -44,7 +44,7 @@ class DrawingIntent:
     """
 
     shape: Shape
-    size_m: float = 0.14
+    size_m: float = 0.10
     position: BoardPosition = BoardPosition.CENTER
     orientation_rad: float = 0.0
     source_text: str = ""
@@ -90,7 +90,9 @@ def _size_from_text(text: str) -> float:
         return 0.10
     if any(token in text for token in ("large", "bigger", "big", "大一点", "大的", "大")):
         return 0.18
-    return 0.14
+    # The default is the calibrated, currently executable board trace size.
+    # Larger requests remain typed and are safety-gated by live MoveIt.
+    return 0.10
 
 
 def _position_from_text(text: str) -> BoardPosition:

@@ -152,7 +152,7 @@ run_step "fresh Phase-4 board vision sealing" "${RUNTIME_ROOT}/vision_verifier.l
 run_case() {
   local case_id="$1" instruction="$2" case_root="${OUTPUT_ROOT}/cases/$1"
   mkdir -p "${case_root}"
-  run_step "Phase-6 ${case_id}" "${RUNTIME_ROOT}/${case_id}.log" ros2 run physical_ai_drawing execute_drawing --instruction "${instruction}" --output-root "${case_root}" --timeout 190
+  run_step "Phase-6 ${case_id}" "${RUNTIME_ROOT}/${case_id}.log" ros2 run physical_ai_drawing execute_drawing --instruction "${instruction}" --output-root "${case_root}" --timeout 330
   [[ -f "${case_root}/drawing_execution_evidence.json" ]] || die "${case_id} did not produce drawing evidence"
 }
 run_case heart_curve "画一个爱心"

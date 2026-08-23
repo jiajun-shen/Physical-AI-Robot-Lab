@@ -357,7 +357,7 @@ class DrawingRuntime(Node):
             nanosec = 0
         point.time_from_start = Duration(sec=sec, nanosec=nanosec)
 
-    def retime(self, trajectory: Any, label: str) -> tuple[Any, dict[str, Any]]:
+    def retime(self, trajectory: Any, label: str, *, cartesian: bool = False) -> tuple[Any, dict[str, Any]]:
         result = copy.deepcopy(trajectory)
         joint_trajectory = result.joint_trajectory
         if tuple(joint_trajectory.joint_names) != self.arm_joints:
@@ -378,9 +378,10 @@ class DrawingRuntime(Node):
             previous = positions
         if len(cleaned) < 2:
             raise DrawingRuntimeError(f"{label} contains no measurable motion")
-        velocity_scale = finite(self.planner.get("velocity_scaling"), "velocity scaling", positive=True)
-        safety = finite(self.planner.get("retime_safety_factor"), "retime safety factor", positive=True)
-        minimum = finite(self.planner.get("minimum_segment_duration_sec"), "minimum duration", positive=True)
+        prefix = "cartesian_" if cartesian else ""
+        velocity_scale = finite(self.planner.get(f"{prefix}velocity_scaling", self.planner.get("velocity_scaling")), "velocity scaling", positive=True)
+        safety = finite(self.planner.get(f"{prefix}retime_safety_factor", self.planner.get("retime_safety_factor")), "retime safety factor", positive=True)
+        minimum = finite(self.planner.get(f"{prefix}minimum_segment_duration_sec", self.planner.get("minimum_segment_duration_sec")), "minimum duration", positive=True)
         elapsed, durations = 0.0, []
         self._set_time(cleaned[0], 0.0)
         for index in range(1, len(cleaned)):
@@ -396,6 +397,7 @@ class DrawingRuntime(Node):
             "velocity_scaling": velocity_scale,
             "safety_factor": safety,
             "minimum_segment_duration_sec": minimum,
+            "profile": "cartesian" if cartesian else "pose",
             "segment_durations_sec": durations,
             "duration_sec": elapsed,
             "acceleration_limits_used": False,
@@ -591,7 +593,7 @@ class DrawingRuntime(Node):
         fraction = float(response.fraction)
         if response.error_code.val != SUCCESS or fraction < 0.999999:
             raise DrawingRuntimeError(f"collision-aware Cartesian path failed for {label}: fraction={fraction}, {details}")
-        trajectory, retiming = self.retime(response.solution, label)
+        trajectory, retiming = self.retime(response.solution, label, cartesian=True)
         points = trajectory.joint_trajectory.points
         endpoint = {name: float(points[-1].positions[index]) for index, name in enumerate(self.arm_joints)}
         return {
