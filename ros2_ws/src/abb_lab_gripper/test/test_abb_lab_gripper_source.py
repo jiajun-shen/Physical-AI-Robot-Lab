@@ -227,6 +227,10 @@ def test_controller_profile_uses_supported_jazzy_controller_types_and_action_nam
     assert arm["joints"] == list(ARM_JOINTS)
     assert arm["command_interfaces"] == ["position"]
     assert arm["state_interfaces"] == ["position", "velocity"]
+    constraints = arm["constraints"]
+    assert constraints["goal_time"] == 3.0
+    for name in ARM_JOINTS:
+        assert constraints[name]["goal"] == 0.03
 
     gripper = controllers["two_finger_gripper_controller"]["ros__parameters"]
     assert gripper["joint"] == RIGHT_FINGER_JOINT
