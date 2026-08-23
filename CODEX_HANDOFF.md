@@ -1,5 +1,48 @@
 # Codex Project Handoff — Physical-AI-Robot-Lab
 
+## Current safe checkpoint — Phase 5 partial (2026-08-23)
+
+This section supersedes the historical addenda below.
+
+- Branch: `agent/phase5-7`; Phase 5 is `PARTIAL / RUNTIME PENDING`; A04 is
+  `NOT PASS / RUNTIME PENDING`. Phase 6 and Phase 7 are `NOT STARTED`.
+- The last stable P5 implementation checkpoint was
+  `b7d97b68832fc5f87379511300751211d5a25c16`. The current contact-close
+  checkpoint is `636221ae787dd79d6a58ab46cdbee6d05c6138f7`.
+- Latest completed P5 runtime: seed 42 retry28 at
+  `/var/tmp/physical-ai-p5.diagonal-camera.retry28.20260823`. All pre-CLOSE
+  work passed; CLOSE ended `status=6`, `stalled=true`, `reached_goal=false`.
+  Repeated `/joint_states` reported an approximately `27.64 mm` gripper
+  endpoint. The old exact `37 mm` rule therefore failed the episode.
+- `636221a` explicitly models this as a bounded contact-close endpoint only:
+  the action must be accepted; the observation must stay in the calibrated
+  `20--40 mm` range; the terminal state must be either normal success or the
+  explicit status-6 stalled combination. It uses no force/effort evidence.
+  OPEN and RELEASE retain successful action plus in-tolerance endpoint gates.
+- This does **not** make a grasp claim. Grasp/retention remains contingent on
+  later fresh RGB-D lift plus three fresh TCP-relative transport samples, and
+  the independent post-place Phase-4 vision evaluator.
+- Validation completed without a Gazebo runtime: `25 passed` directly related
+  tests and `122 passed` Phase 0--5 lightweight source/contract/verifier tests.
+  A retry29 process was started inadvertently and immediately stopped without
+  an acceptance result; it is not runtime evidence and does not supersede
+  retry28.
+- Working tree status before the documentation checkpoint was clean. After
+  committing the documentation checkpoint, push `agent/phase5-7`, verify
+  `git status --short --branch`, then stop.
+
+### Next session: first runtime command
+
+After a light clean-worktree check, run:
+
+```bash
+source /opt/ros/jazzy/setup.bash && scripts/run_and_verify_phase5_pick_place_headless.sh /var/tmp/physical-ai-p5.contact-close.next
+```
+
+The harness launches seed 42 first and only reaches seed 43 after seed 42
+passes. Do not start Phase 6 or Phase 7, and do not label A04 PASS until the
+full dual-seed runtime/evaluator/comparison evidence passes.
+
 > Historical Phase-3 snapshot date: 2026-08-14. This handoff is deliberately
 > operational rather than promotional. The historical snapshot is retained
 > below; the current, superseding Phase-4 completion addendum comes first.
