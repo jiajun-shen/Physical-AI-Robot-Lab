@@ -161,6 +161,7 @@ run_p4_node_pid=""
 run_static_node_pid=""
 run_guard_node_pid=""
 run_transport_node_pid=""
+run_lift_node_pid=""
 run_directory=""
 stop_process_group() {
   local group_pid="$1"
@@ -186,16 +187,18 @@ stop_process_group() {
 }
 cleanup_active_run() {
   local status=0
+  stop_process_group "${run_lift_node_pid}" || status=1
   stop_process_group "${run_transport_node_pid}" || status=1
   stop_process_group "${run_guard_node_pid}" || status=1
   stop_process_group "${run_static_node_pid}" || status=1
   stop_process_group "${run_p4_node_pid}" || status=1
   stop_process_group "${run_launch_pid}" || status=1
-  for group_pid in "${run_transport_node_pid}" "${run_guard_node_pid}" "${run_static_node_pid}" "${run_p4_node_pid}" "${run_launch_pid}"; do
+  for group_pid in "${run_lift_node_pid}" "${run_transport_node_pid}" "${run_guard_node_pid}" "${run_static_node_pid}" "${run_p4_node_pid}" "${run_launch_pid}"; do
     if [[ -n "${group_pid}" ]] && kill -0 -- "-${group_pid}" 2>/dev/null; then
       status=1
     fi
   done
+  run_lift_node_pid=""
   run_transport_node_pid=""
   run_guard_node_pid=""
   run_static_node_pid=""
@@ -310,6 +313,7 @@ run_seed() {
   local static_node_log="${runtime_root}/phase5_static_obstacle_vision.log"
   local guard_node_log="${runtime_root}/phase5_guard_object_vision.log"
   local transport_node_log="${runtime_root}/phase5_transport_object_vision.log"
+  local lift_node_log="${runtime_root}/phase5_lift_object_vision.log"
   local topic_log="${runtime_root}/topics.txt"
   local controller_log="${runtime_root}/active_controllers.txt"
   local pre_verifier_log="${runtime_root}/pre_pick_vision_verifier.txt"
@@ -409,6 +413,9 @@ run_seed() {
   setsid ros2 launch abb_lab_moveit_config phase5_transport_object_vision.launch.py \
     >"${transport_node_log}" 2>&1 &
   run_transport_node_pid="$!"
+  setsid ros2 launch abb_lab_moveit_config phase5_lift_object_vision.launch.py \
+    >"${lift_node_log}" 2>&1 &
+  run_lift_node_pid="$!"
   deadline=$((SECONDS + 65))
   while (( SECONDS < deadline )); do
     if ! kill -0 "${run_p4_node_pid}" 2>/dev/null; then
@@ -427,13 +434,18 @@ run_seed() {
       tail -n 220 "${transport_node_log}" >&2 || true
       die "seed ${seed} P5 transport-object vision node exited"
     fi
+    if ! kill -0 "${run_lift_node_pid}" 2>/dev/null; then
+      tail -n 220 "${lift_node_log}" >&2 || true
+      die "seed ${seed} P5 lift-object vision node exited"
+    fi
     topics="$(topic_snapshot)"
     if grep -Fxq '/perception/detections' <<<"${topics}" &&
         grep -Fxq '/perception/camera_object_poses' <<<"${topics}" &&
         grep -Fxq '/perception/world_object_poses' <<<"${topics}" &&
         grep -Fxq '/phase5/perception/static_obstacle_poses' <<<"${topics}" &&
         grep -Fxq '/phase5/perception/guard_world_object_poses' <<<"${topics}" &&
-        grep -Fxq '/phase5/perception/transport_world_object_poses' <<<"${topics}"; then
+        grep -Fxq '/phase5/perception/transport_world_object_poses' <<<"${topics}" &&
+        grep -Fxq '/phase5/perception/lift_world_object_poses' <<<"${topics}"; then
       break
     fi
     sleep 0.5
@@ -446,7 +458,8 @@ run_seed() {
   for expected_topic in /perception/detections /perception/camera_object_poses \
       /perception/world_object_poses /phase5/perception/static_obstacle_poses \
       /phase5/perception/guard_world_object_poses \
-      /phase5/perception/transport_world_object_poses; do
+      /phase5/perception/transport_world_object_poses \
+      /phase5/perception/lift_world_object_poses; do
     grep -Fxq "${expected_topic}" "${topic_log}" ||
       die "seed ${seed} did not expose required topic ${expected_topic}"
   done

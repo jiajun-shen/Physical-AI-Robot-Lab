@@ -407,6 +407,7 @@ class PickPlaceRuntime(Node):
         self.latest_vision: dict[str, VisionPose] = {}
         self.latest_guard_vision: dict[str, VisionPose] = {}
         self.latest_transport_vision: dict[str, VisionPose] = {}
+        self.latest_lift_vision: dict[str, VisionPose] = {}
         self.vision_sequence = 0
         self.latest_static_obstacles: dict[str, VisionPose] = {}
         self.static_obstacle_sequence = 0
@@ -435,6 +436,12 @@ class PickPlaceRuntime(Node):
             ObjectPoseArray,
             "/phase5/perception/transport_world_object_poses",
             self._on_transport_vision,
+            qos_profile_sensor_data,
+        )
+        self.create_subscription(
+            ObjectPoseArray,
+            "/phase5/perception/lift_world_object_poses",
+            self._on_lift_vision,
             qos_profile_sensor_data,
         )
         self.create_subscription(
@@ -522,6 +529,9 @@ class PickPlaceRuntime(Node):
 
     def _on_transport_vision(self, message: ObjectPoseArray) -> None:
         self._record_vision(message, self.latest_transport_vision, "phase5_transport_rgbd")
+
+    def _on_lift_vision(self, message: ObjectPoseArray) -> None:
+        self._record_vision(message, self.latest_lift_vision, "phase5_lift_rgbd")
 
     def _on_static_obstacle_vision(self, message: ObjectPoseArray) -> None:
         """Accept one coherent RGB-D epoch for both P5 obstacle fiducials."""
@@ -930,16 +940,20 @@ class PickPlaceRuntime(Node):
         *,
         guard_only: bool = False,
         transport_only: bool = False,
+        lift_only: bool = False,
     ) -> VisionPose:
         result: VisionPose | None = None
-        if guard_only and transport_only:
-            raise PickPlaceError("vision stream selection cannot request both guard and transport cameras")
+        if sum((guard_only, transport_only, lift_only)) > 1:
+            raise PickPlaceError("vision stream selection can request at most one P5 camera")
         if guard_only:
             observations = self.latest_guard_vision
             stream_label = "guard RGB-D"
         elif transport_only:
             observations = self.latest_transport_vision
             stream_label = "transport RGB-D"
+        elif lift_only:
+            observations = self.latest_lift_vision
+            stream_label = "lift RGB-D"
         else:
             observations = self.latest_vision
             stream_label = "primary RGB-D"
@@ -998,6 +1012,7 @@ class PickPlaceRuntime(Node):
         *,
         guard_only: bool = False,
         transport_only: bool = False,
+        lift_only: bool = False,
     ) -> dict[str, Any]:
         visual = self.wait_fresh_vision(
             class_id,
@@ -1005,6 +1020,7 @@ class PickPlaceRuntime(Node):
             label,
             guard_only=guard_only,
             transport_only=transport_only,
+            lift_only=lift_only,
         )
         # Pair the RGB-D object pose with the TCP transform from the exact
         # same simulation timestamp. A current transform would be invalid for
@@ -1038,8 +1054,9 @@ class PickPlaceRuntime(Node):
         """
 
         choices = (
-            # The P5-only nadir observer is explicitly preflighted and keeps
-            # the ball visible above the finger rails during lift/transport.
+            # The opposite-diagonal observer sees the low-X side-grasp volume
+            # when both +Y cameras are hidden by the wrist and finger rails.
+            ("phase5_lift_rgbd", {"lift_only": True}),
             ("phase5_transport_rgbd", {"transport_only": True}),
             ("phase5_guard_rgbd", {"guard_only": True}),
             ("primary_rgbd", {}),
@@ -1847,32 +1864,36 @@ class PickPlaceRuntime(Node):
                         primary_error = f"primary TCP-relative drift {primary_drift:.4f} m"
                 if primary_error is not None:
                     try:
-                        transport_sample = self.vision_tcp_sample(
+                        fallback_sample = self.fresh_proximate_vision_tcp_sample(
                             "green_ball",
                             newest,
-                            f"{label} transport fallback sample {index + 1}",
-                            transport_only=True,
+                            f"{label} proximate fallback sample {index + 1}",
+                            finite(
+                                self.motion.get("retention_sample_max_tcp_distance_m"),
+                                "retention sample TCP distance",
+                                positive=True,
+                            ),
                         )
                     except PickPlaceError as exc:
                         raise PickPlaceError(
                             f"object lost during {label}: {guard_error}; {primary_error}; "
-                            f"transport RGB-D unavailable: {exc}"
+                            f"no proximate RGB-D fallback: {exc}"
                         ) from exc
-                    transport_relative = transport_sample["green_minus_tcp_m"]
-                    transport_drift = math.sqrt(
+                    fallback_relative = fallback_sample["green_minus_tcp_m"]
+                    fallback_drift = math.sqrt(
                         sum(
-                            (float(transport_relative[i]) - float(base_relative[i])) ** 2
+                            (float(fallback_relative[i]) - float(base_relative[i])) ** 2
                             for i in range(3)
                         )
                     )
-                    if transport_drift > maximum_drift:
+                    if fallback_drift > maximum_drift:
                         raise PickPlaceError(
                             f"object lost during {label}: {guard_error}; {primary_error}; "
-                            f"transport TCP-relative drift {transport_drift:.4f} m"
+                            f"proximate fallback TCP-relative drift {fallback_drift:.4f} m"
                         )
-                    sample = transport_sample
-                    drift = transport_drift
-                    sample["stream_selection"] = "phase5_transport_rgbd_fallback_after_guard_primary_rejection"
+                    sample = fallback_sample
+                    drift = fallback_drift
+                    sample["stream_selection"] = "proximate_rgbd_fallback_after_guard_primary_rejection"
             sample["tcp_relative_drift_m"] = drift
             samples.append(sample)
             newest = int(sample["vision"]["source_stamp_ns"])

@@ -72,8 +72,10 @@ def test_descending_side_grasp_config_and_legacy_contract_are_fail_closed() -> N
     assert "destination.update(observed)" in source
     assert '"/phase5/perception/guard_world_object_poses"' in source
     assert '"/phase5/perception/transport_world_object_poses"' in source
+    assert '"/phase5/perception/lift_world_object_poses"' in source
     assert "guard_only=True" in source
-    assert "transport_only=True" in source
+    assert '"transport_only": True' in source
+    assert '"lift_only": True' in source
     assert "visual_checkpoint_backoff_m" in source
     assert '"visual checkpoint guard"' in source
     assert '"visual_checkpoint"' in source
@@ -88,7 +90,7 @@ def test_descending_side_grasp_config_and_legacy_contract_are_fail_closed() -> N
     assert '"post_release_clearance"' in source
     assert "vertical_clearance_motion" in source
     assert '"primary_rgbd_fallback_after_guard_rejection"' in source
-    assert '"phase5_transport_rgbd_fallback_after_guard_primary_rejection"' in source
+    assert '"proximate_rgbd_fallback_after_guard_primary_rejection"' in source
     assert "guard TCP-relative drift" in source
     assert "start_positions" in source
     assert config["attachment"]["dynamic_plugin_name"] == "gz::sim::systems::DetachableJoint"

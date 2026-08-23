@@ -24,6 +24,7 @@ P5_LAUNCH_PATH = PACKAGE_ROOT / "launch" / "irb1200_gripper_moveit_rgbd_headless
 OBSTACLE_VISION_LAUNCH_PATH = PACKAGE_ROOT / "launch" / "phase5_static_obstacle_vision.launch.py"
 GUARD_VISION_LAUNCH_PATH = PACKAGE_ROOT / "launch" / "phase5_guard_object_vision.launch.py"
 TRANSPORT_VISION_LAUNCH_PATH = PACKAGE_ROOT / "launch" / "phase5_transport_object_vision.launch.py"
+LIFT_VISION_LAUNCH_PATH = PACKAGE_ROOT / "launch" / "phase5_lift_object_vision.launch.py"
 
 MARKERS = {
     "obstacle_left": "p5_orange_top_fiducial",
@@ -93,6 +94,10 @@ def test_p5_world_keeps_p4_collision_geometry_and_adds_markers_plus_p5_cameras()
     assert pose_values(transport_camera) == (0.20, 1.45, 2.40, 0.0, 0.863, -1.156)
     assert transport_camera.findtext("link/sensor/topic") == "/phase5_transport_camera"
     assert transport_camera.find("link/collision") is None
+    lift_camera = model_by_name(p5_world, "phase5_lift_rgbd_camera")
+    assert pose_values(lift_camera) == (1.20, -1.35, 2.40, 0.0, 0.840, 1.958)
+    assert lift_camera.findtext("link/sensor/topic") == "/phase5_lift_camera"
+    assert lift_camera.find("link/collision") is None
 
 
 def test_p5_obstacle_config_is_two_marker_rgbd_contract_with_conservative_geometry() -> None:
@@ -155,10 +160,12 @@ def test_p5_launch_uses_the_p5_template_and_p5_localizers_remap_only_typed_outpu
     obstacle_launch_source = OBSTACLE_VISION_LAUNCH_PATH.read_text(encoding="utf-8")
     guard_launch_source = GUARD_VISION_LAUNCH_PATH.read_text(encoding="utf-8")
     transport_launch_source = TRANSPORT_VISION_LAUNCH_PATH.read_text(encoding="utf-8")
+    lift_launch_source = LIFT_VISION_LAUNCH_PATH.read_text(encoding="utf-8")
     ast.parse(p5_launch_source, filename=str(P5_LAUNCH_PATH))
     ast.parse(obstacle_launch_source, filename=str(OBSTACLE_VISION_LAUNCH_PATH))
     ast.parse(guard_launch_source, filename=str(GUARD_VISION_LAUNCH_PATH))
     ast.parse(transport_launch_source, filename=str(TRANSPORT_VISION_LAUNCH_PATH))
+    ast.parse(lift_launch_source, filename=str(LIFT_VISION_LAUNCH_PATH))
     assert "manipulation_lab_phase5_rgbd.sdf" in p5_launch_source
     for token in (
         'package="physical_ai_perception"',
@@ -197,6 +204,18 @@ def test_p5_launch_uses_the_p5_template_and_p5_localizers_remap_only_typed_outpu
     for forbidden in ("ros_gz", "model_pose", "ground_truth", "manifest", "seed"):
         assert forbidden not in transport_launch_source.lower()
     for token in (
+        'package="physical_ai_perception"',
+        'executable="vision_localizer_node"',
+        '"perception_mode": "vision"',
+        "/phase5_lift_camera/color/image_raw",
+        "/phase5_lift_camera/depth/image_raw",
+        "/phase5_lift_camera/color/camera_info",
+        "/phase5/perception/lift_world_object_poses",
+    ):
+        assert token in lift_launch_source
+    for forbidden in ("ros_gz", "model_pose", "ground_truth", "manifest", "seed"):
+        assert forbidden not in lift_launch_source.lower()
+    for token in (
         "/phase5_guard_camera/image@sensor_msgs/msg/Image[gz.msgs.Image",
         "/phase5_guard_camera/depth_image@sensor_msgs/msg/Image[gz.msgs.Image",
         "/phase5_guard_camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
@@ -205,5 +224,9 @@ def test_p5_launch_uses_the_p5_template_and_p5_localizers_remap_only_typed_outpu
         "/phase5_transport_camera/depth_image@sensor_msgs/msg/Image[gz.msgs.Image",
         "/phase5_transport_camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
         "phase5_transport_camera_optical_frame",
+        "/phase5_lift_camera/image@sensor_msgs/msg/Image[gz.msgs.Image",
+        "/phase5_lift_camera/depth_image@sensor_msgs/msg/Image[gz.msgs.Image",
+        "/phase5_lift_camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
+        "phase5_lift_camera_optical_frame",
     ):
         assert token in p5_launch_source

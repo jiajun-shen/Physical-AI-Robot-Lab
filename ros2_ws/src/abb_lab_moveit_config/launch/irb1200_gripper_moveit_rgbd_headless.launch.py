@@ -204,6 +204,45 @@ def generate_launch_description() -> LaunchDescription:
             "--child-frame-id", "phase5_transport_camera_optical_frame",
         ],
     )
+    lift_camera_bridge = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        output="screen",
+        arguments=[
+            "/phase5_lift_camera/image@sensor_msgs/msg/Image[gz.msgs.Image",
+            "/phase5_lift_camera/depth_image@sensor_msgs/msg/Image[gz.msgs.Image",
+            "/phase5_lift_camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
+            "--ros-args",
+            "-p",
+            "override_frame_id:=phase5_lift_camera_optical_frame",
+        ],
+        remappings=[
+            ("/phase5_lift_camera/image", "/phase5_lift_camera/color/image_raw"),
+            ("/phase5_lift_camera/depth_image", "/phase5_lift_camera/depth/image_raw"),
+            ("/phase5_lift_camera/camera_info", "/phase5_lift_camera/color/camera_info"),
+        ],
+    )
+    world_to_lift_camera = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        output="screen",
+        arguments=[
+            "--x", "1.20", "--y", "-1.35", "--z", "2.40",
+            "--roll", "0", "--pitch", "0.840", "--yaw", "1.958",
+            "--frame-id", "world", "--child-frame-id", "phase5_lift_camera_link",
+        ],
+    )
+    lift_camera_to_optical = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        output="screen",
+        arguments=[
+            "--x", "0", "--y", "0", "--z", "0",
+            "--roll", "-1.57079632679", "--pitch", "0", "--yaw", "-1.57079632679",
+            "--frame-id", "phase5_lift_camera_link",
+            "--child-frame-id", "phase5_lift_camera_optical_frame",
+        ],
+    )
     return LaunchDescription(
         [
             DeclareLaunchArgument(
@@ -235,6 +274,9 @@ def generate_launch_description() -> LaunchDescription:
             transport_camera_bridge,
             world_to_transport_camera,
             transport_camera_to_optical,
+            lift_camera_bridge,
+            world_to_lift_camera,
+            lift_camera_to_optical,
             attachment_bridge,
             move_group,
         ]
