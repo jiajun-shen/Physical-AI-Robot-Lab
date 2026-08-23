@@ -409,7 +409,7 @@ class DrawingRuntime(Node):
         translation = transform.transform.translation
         values = (float(translation.x), float(translation.y), float(translation.z))
         if all(math.isfinite(value) for value in values):
-            self.trace.append({"phase": phase, "wall_time_utc": utc_now(), "sim_time_ns": stamp_ns(transform), "position_m": list(values)})
+            self.trace.append({"phase": phase, "wall_time_utc": utc_now(), "sim_time_ns": stamp_ns(transform.header), "position_m": list(values)})
 
     def execute(self, trajectory: Any, label: str) -> dict[str, Any]:
         goal = ExecuteTrajectory.Goal()
