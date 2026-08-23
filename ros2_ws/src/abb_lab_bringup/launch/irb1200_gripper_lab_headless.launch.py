@@ -41,13 +41,8 @@ def generate_launch_description() -> LaunchDescription:
     arm_initial_positions_file = LaunchConfiguration("arm_initial_positions_file")
     world_to_base_z = LaunchConfiguration("world_to_base_z")
     description_path = LaunchConfiguration("robot_description_xacro")
-    controller_config = PathJoinSubstitution(
-        [
-            FindPackageShare("abb_lab_gripper"),
-            "config",
-            "irb1200_gripper_controllers.yaml",
-        ]
-    )
+    controller_config = LaunchConfiguration("controller_config_file")
+    position_proportional_gain = LaunchConfiguration("position_proportional_gain")
     robot_description = ParameterValue(
         Command(
             [
@@ -56,6 +51,8 @@ def generate_launch_description() -> LaunchDescription:
                 description_path,
                 " controller_config_file:=",
                 controller_config,
+                " position_proportional_gain:=",
+                position_proportional_gain,
                 " arm_initial_positions_file:=",
                 arm_initial_positions_file,
                 " world_to_base_z:=",
@@ -236,6 +233,22 @@ def generate_launch_description() -> LaunchDescription:
                     ]
                 ),
                 description="Exact gripper or Phase-6 drawing-tool Xacro used for RSP and Gazebo spawn.",
+            ),
+            DeclareLaunchArgument(
+                "controller_config_file",
+                default_value=PathJoinSubstitution(
+                    [
+                        FindPackageShare("abb_lab_gripper"),
+                        "config",
+                        "irb1200_gripper_controllers.yaml",
+                    ]
+                ),
+                description="One controller parameter file shared by Gazebo and its controller spawners.",
+            ),
+            DeclareLaunchArgument(
+                "position_proportional_gain",
+                default_value="1.0",
+                description="GazeboSimSystem position-loop gain for this isolated robot profile.",
             ),
             gazebo,
             clock_bridge,

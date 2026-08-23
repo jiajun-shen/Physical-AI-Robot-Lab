@@ -26,6 +26,8 @@ def generate_launch_description() -> LaunchDescription:
     gripper_share = Path(get_package_share_directory("abb_lab_gripper"))
     drawing_xacro = str(gripper_share / "urdf" / "irb1200_5_90_gz_drawing_pen_control.urdf.xacro")
     safe_initial_positions = str(gripper_share / "config" / "phase5_safe_arm_initial_positions.yaml")
+    drawing_controllers = str(gripper_share / "config" / "phase6_drawing_controllers.yaml")
+    drawing_position_proportional_gain = "2.0"
     world_to_base_z = "0.75"
 
     rgbd_bringup = IncludeLaunchDescription(
@@ -41,6 +43,8 @@ def generate_launch_description() -> LaunchDescription:
             "arm_initial_positions_file": safe_initial_positions,
             "world_to_base_z": world_to_base_z,
             "robot_description_xacro": drawing_xacro,
+            "controller_config_file": drawing_controllers,
+            "position_proportional_gain": drawing_position_proportional_gain,
         }.items(),
     )
     moveit_config = (
@@ -50,6 +54,8 @@ def generate_launch_description() -> LaunchDescription:
             mappings={
                 "arm_initial_positions_file": safe_initial_positions,
                 "world_to_base_z": world_to_base_z,
+                "controller_config_file": drawing_controllers,
+                "position_proportional_gain": drawing_position_proportional_gain,
             },
         )
         .robot_description_semantic(file_path="config/irb1200_5_90_gz_drawing_pen_control.srdf")

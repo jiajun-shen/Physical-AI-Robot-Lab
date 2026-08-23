@@ -31,6 +31,8 @@ def generate_launch_description() -> LaunchDescription:
     arm_initial_positions_file = LaunchConfiguration("arm_initial_positions_file")
     world_to_base_z = LaunchConfiguration("world_to_base_z")
     robot_description_xacro = LaunchConfiguration("robot_description_xacro")
+    controller_config_file = LaunchConfiguration("controller_config_file")
+    position_proportional_gain = LaunchConfiguration("position_proportional_gain")
     base_bringup = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution(
@@ -48,6 +50,8 @@ def generate_launch_description() -> LaunchDescription:
             "arm_initial_positions_file": arm_initial_positions_file,
             "world_to_base_z": world_to_base_z,
             "robot_description_xacro": robot_description_xacro,
+            "controller_config_file": controller_config_file,
+            "position_proportional_gain": position_proportional_gain,
         }.items(),
     )
     camera_bridge = Node(
@@ -163,6 +167,22 @@ def generate_launch_description() -> LaunchDescription:
                     ]
                 ),
                 description="Forward an exact gripper/drawing-tool Xacro to the single spawned robot.",
+            ),
+            DeclareLaunchArgument(
+                "controller_config_file",
+                default_value=PathJoinSubstitution(
+                    [
+                        FindPackageShare("abb_lab_gripper"),
+                        "config",
+                        "irb1200_gripper_controllers.yaml",
+                    ]
+                ),
+                description="Forward one controller config to the sole Gazebo control chain.",
+            ),
+            DeclareLaunchArgument(
+                "position_proportional_gain",
+                default_value="1.0",
+                description="Forward the isolated Gazebo position-loop gain.",
             ),
             base_bringup,
             camera_bridge,

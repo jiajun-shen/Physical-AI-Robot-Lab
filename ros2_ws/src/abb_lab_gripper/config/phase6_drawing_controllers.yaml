@@ -1,0 +1,58 @@
+# Phase-6-only controller profile for the collision-bearing drawing pen.
+# It owns the same single six-axis trajectory controller and gripper action
+# controller as the reviewed P5 profile; only the bounded endpoint settle
+# window differs because contactless drawing has many small curve reversals.
+controller_manager:
+  ros__parameters:
+    update_rate: 100
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    joint_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    two_finger_gripper_controller:
+      type: parallel_gripper_action_controller/GripperActionController
+
+joint_trajectory_controller:
+  ros__parameters:
+    joints:
+      - joint_1
+      - joint_2
+      - joint_3
+      - joint_4
+      - joint_5
+      - joint_6
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    allow_partial_joints_goal: false
+    open_loop_control: false
+    constraints:
+      # Preserve reviewed endpoint precision.  This finite Phase-6 grace
+      # window is paired with the calibrated P6 position-loop gain below.
+      goal_time: 3.0
+      stopped_velocity_tolerance: 0.05
+      joint_1: {trajectory: 0.1, goal: 0.03}
+      joint_2: {trajectory: 0.1, goal: 0.03}
+      joint_3: {trajectory: 0.1, goal: 0.03}
+      joint_4: {trajectory: 0.1, goal: 0.03}
+      joint_5: {trajectory: 0.1, goal: 0.03}
+      joint_6: {trajectory: 0.1, goal: 0.03}
+
+two_finger_gripper_controller:
+  ros__parameters:
+    joint: two_finger_right_joint
+    state_interfaces:
+      - position
+      - velocity
+    action_monitor_rate: 20.0
+    goal_tolerance: 0.002
+    allow_stalling: false
+    stall_velocity_threshold: 0.0005
+    stall_timeout: 1.0
+    max_effort: 0.0
+    max_velocity: 0.040

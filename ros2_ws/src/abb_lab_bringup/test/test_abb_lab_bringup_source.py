@@ -65,6 +65,7 @@ class ABBLabBringupSourceContracts(unittest.TestCase):
             "irb1200_5_90_gz_gripper_control.urdf.xacro",
             "irb1200_gripper_controllers.yaml",
             "controller_config_file:=",
+            "position_proportional_gain:=",
             "gz_sim.launch.py",
             "gz-physics-bullet-featherstone-plugin",
             '"-s -r -v 1 --physics-engine "',
@@ -198,6 +199,8 @@ class ABBLabBringupSourceContracts(unittest.TestCase):
             'package="tf2_ros"',
             "lab_camera_link",
             "lab_camera_optical_frame",
+            "controller_config_file",
+            "position_proportional_gain",
         )
         for token in required_tokens:
             with self.subTest(token=token):

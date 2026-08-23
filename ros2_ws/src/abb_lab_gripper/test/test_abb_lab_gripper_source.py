@@ -15,6 +15,7 @@ CONFIG_DIR = PACKAGE_ROOT / "config"
 PROFILE_XACRO = URDF_DIR / "irb1200_5_90_gz_gripper_control.urdf.xacro"
 DRAWING_PROFILE_XACRO = URDF_DIR / "irb1200_5_90_gz_drawing_pen_control.urdf.xacro"
 CONTROLLERS_YAML = CONFIG_DIR / "irb1200_gripper_controllers.yaml"
+PHASE6_CONTROLLERS_YAML = CONFIG_DIR / "phase6_drawing_controllers.yaml"
 LIMITS_YAML = CONFIG_DIR / "two_finger_gripper_limits.yaml"
 SAFETY_YAML = (
     PACKAGE_ROOT.parent
@@ -38,9 +39,9 @@ def _expanded_robot() -> ET.Element:
     return ET.fromstring(completed.stdout)
 
 
-def _expanded_drawing_robot() -> ET.Element:
+def _expanded_drawing_robot(*arguments: str) -> ET.Element:
     completed = subprocess.run(
-        ["xacro", str(DRAWING_PROFILE_XACRO)],
+        ["xacro", str(DRAWING_PROFILE_XACRO), *arguments],
         check=True,
         text=True,
         capture_output=True,
@@ -58,6 +59,7 @@ def _load_yaml(path: Path) -> dict:
 def test_profile_is_a_new_self_contained_package() -> None:
     assert PROFILE_XACRO.is_file()
     assert CONTROLLERS_YAML.is_file()
+    assert PHASE6_CONTROLLERS_YAML.is_file()
     assert LIMITS_YAML.is_file()
     assert DRAWING_PROFILE_XACRO.is_file()
     assert not (PACKAGE_ROOT / "launch").exists()
@@ -228,7 +230,7 @@ def test_controller_profile_uses_supported_jazzy_controller_types_and_action_nam
     assert arm["command_interfaces"] == ["position"]
     assert arm["state_interfaces"] == ["position", "velocity"]
     constraints = arm["constraints"]
-    assert constraints["goal_time"] == 3.0
+    assert constraints["goal_time"] == 2.0
     for name in ARM_JOINTS:
         assert constraints[name]["goal"] == 0.03
 
@@ -238,6 +240,24 @@ def test_controller_profile_uses_supported_jazzy_controller_types_and_action_nam
     assert gripper["allow_stalling"] is False
     config_text = CONTROLLERS_YAML.read_text(encoding="utf-8")
     assert "/two_finger_gripper_controller/gripper_cmd" in config_text
+
+
+def test_phase6_controller_profile_keeps_one_interface_contract_with_bounded_settling() -> None:
+    phase6 = _load_yaml(PHASE6_CONTROLLERS_YAML)
+    manager = phase6["controller_manager"]["ros__parameters"]
+    assert manager["joint_trajectory_controller"]["type"] == (
+        "joint_trajectory_controller/JointTrajectoryController"
+    )
+    arm = phase6["joint_trajectory_controller"]["ros__parameters"]
+    assert arm["joints"] == list(ARM_JOINTS)
+    assert arm["command_interfaces"] == ["position"]
+    assert arm["state_interfaces"] == ["position", "velocity"]
+    assert arm["allow_partial_joints_goal"] is False
+    assert arm["open_loop_control"] is False
+    constraints = arm["constraints"]
+    assert constraints["goal_time"] == 3.0
+    for name in ARM_JOINTS:
+        assert constraints[name]["goal"] == 0.03
 
 
 def test_gripper_initial_and_safe_positions_are_bounded_by_the_only_actuated_joint_limit() -> None:
@@ -273,3 +293,18 @@ def test_phase6_drawing_profile_has_a_collision_bearing_tip_without_new_control_
     assert joints["gripper_tcp_to_drawing_pen_shaft"].find("parent").attrib["link"] == "gripper_tcp"
     assert joints["drawing_pen_shaft_to_drawing_tip"].find("child").attrib["link"] == "drawing_tip"
     assert len(robot.findall("ros2_control")) == 1
+    plugin = robot.find("./gazebo/plugin")
+    assert plugin is not None
+    assert plugin.findtext("position_proportional_gain") == "1.0"
+
+
+def test_phase6_profile_accepts_its_isolated_controller_and_position_loop_calibration() -> None:
+    robot = _expanded_drawing_robot(
+        f"controller_config_file:={PHASE6_CONTROLLERS_YAML}",
+        "position_proportional_gain:=2.0",
+    )
+    plugin = robot.find("./gazebo/plugin")
+    assert plugin is not None
+    parameters = [item.text.strip() for item in plugin.findall("parameters")]
+    assert str(PHASE6_CONTROLLERS_YAML) in parameters
+    assert plugin.findtext("position_proportional_gain") == "2.0"

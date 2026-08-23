@@ -2,6 +2,7 @@
 <robot name="abb_irb1200_5_90_gz_gripper_control" xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:arg name="prefix" default=""/>
   <xacro:arg name="controller_config_file" default="$(find abb_lab_gripper)/config/irb1200_gripper_controllers.yaml"/>
+  <xacro:arg name="position_proportional_gain" default="1.0"/>
   <xacro:arg name="world_to_base_z" default="0"/>
   <!-- Keep the P3/P4 zero pose as the default.  Phase 5 passes a separate,
        collision-free initial-state file through its isolated launch path. -->
@@ -15,6 +16,7 @@
 
   <xacro:property name="prefix" value="$(arg prefix)"/>
   <xacro:property name="controller_config_file" value="$(arg controller_config_file)"/>
+  <xacro:property name="position_proportional_gain" value="$(arg position_proportional_gain)"/>
   <xacro:property name="world_to_base_z" value="$(arg world_to_base_z)"/>
   <xacro:property name="arm_joint_limits" value="${xacro.load_yaml('$(find abb_lab_description)/config/irb1200_5_90_control_limits.yaml')['joint_limits']}"/>
   <xacro:property name="gripper_joint_limits" value="${xacro.load_yaml('$(find abb_lab_gripper)/config/two_finger_gripper_limits.yaml')['joint_limits']}"/>
@@ -49,10 +51,10 @@
       <parameters>$(arg controller_config_file)</parameters>
       <hold_joints>true</hold_joints>
       <!-- GazeboSimSystem maps a position error to joint velocity through this
-           documented proportional gain.  1.0 keeps the 40 mm finger stroke
-           below its 0.08 m/s hardware limit while reaching free-space action
-           goals before the controller's stall timeout. -->
-      <position_proportional_gain>1.0</position_proportional_gain>
+           documented proportional gain.  The default preserves the reviewed
+           P5 profile; Phase 6 supplies its separately tested simulation-only
+           gain through the exact spawned robot description. -->
+      <position_proportional_gain>${position_proportional_gain}</position_proportional_gain>
     </plugin>
   </gazebo>
 
