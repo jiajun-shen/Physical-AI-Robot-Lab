@@ -175,6 +175,20 @@ class DrawingRuntime(Node):
             name: finite(mapping(self.robot.get("velocity_limits_rad_per_sec"), "velocity limits").get(name), f"velocity limit {name}", positive=True)
             for name in self.arm_joints
         }
+        configured_position_limits = mapping(
+            self.robot.get("joint_position_limits_rad"),
+            "joint position limits",
+        )
+        self.position_limits: dict[str, tuple[float, float]] = {}
+        for name in self.arm_joints:
+            lower, upper = vector(
+                configured_position_limits.get(name),
+                f"position limits {name}",
+                2,
+            )
+            if lower >= upper:
+                raise DrawingRuntimeError(f"position limits for {name} are invalid")
+            self.position_limits[name] = (lower, upper)
         self.plan_client: Client = self.create_client(GetMotionPlan, "/plan_kinematic_path")
         self.cartesian_client: Client = self.create_client(GetCartesianPath, "/compute_cartesian_path")
         self.scene_client: Client = self.create_client(ApplyPlanningScene, "/apply_planning_scene")
@@ -633,6 +647,68 @@ class DrawingRuntime(Node):
             "cartesian": {**details, "fraction": fraction, "avoid_collisions": True, "requested_waypoint_count": len(waypoints), "trajectory_waypoint_count": len(points), "planning_scene_ids": scene_ids, "retiming": retiming},
         }
 
+    def route_joint_limit_margin(
+        self,
+        approach: dict[str, Any],
+        segments: list[dict[str, Any]],
+        *,
+        approach_label: str = "approach",
+    ) -> dict[str, Any]:
+        """Fail closed on a pre-motion route with insufficient ABB limit margin."""
+
+        required = finite(
+            self.planner.get("preflight_minimum_joint_limit_margin_rad"),
+            "pre-motion joint-limit margin",
+            positive=True,
+        )
+        trajectories = [(approach_label, approach["trajectory"])]
+        trajectories.extend(
+            (str(segment["label"]), segment["trajectory"]) for segment in segments
+        )
+        by_joint = {name: math.inf for name in self.arm_joints}
+        route_minimum, closest_joint, closest_trajectory, closest_point = (
+            math.inf,
+            "",
+            "",
+            -1,
+        )
+        for label, trajectory in trajectories:
+            joint_trajectory = trajectory.joint_trajectory
+            if tuple(joint_trajectory.joint_names) != self.arm_joints:
+                raise DrawingRuntimeError(f"{label} did not use the exact six-axis controller order")
+            if not joint_trajectory.points:
+                raise DrawingRuntimeError(f"{label} has no joint trajectory points")
+            for point_index, point in enumerate(joint_trajectory.points):
+                if len(point.positions) != len(self.arm_joints):
+                    raise DrawingRuntimeError(f"{label} point {point_index} has an invalid joint count")
+                for joint_index, name in enumerate(self.arm_joints):
+                    lower, upper = self.position_limits[name]
+                    position = finite(point.positions[joint_index], f"{label} point {point_index} {name}")
+                    margin = min(position - lower, upper - position)
+                    if margin < 0.0:
+                        raise DrawingRuntimeError(f"{label} point {point_index} violates the ABB hard limit for {name}")
+                    by_joint[name] = min(by_joint[name], margin)
+                    if margin < route_minimum:
+                        route_minimum, closest_joint = margin, name
+                        closest_trajectory, closest_point = label, point_index
+        if not math.isfinite(route_minimum):
+            raise DrawingRuntimeError("pre-motion route has no finite joint-limit margin")
+        result = {
+            "minimum_required_margin_rad": required,
+            "route_minimum_margin_rad": route_minimum,
+            "closest_joint": closest_joint,
+            "closest_trajectory": closest_trajectory,
+            "closest_trajectory_point_index": closest_point,
+            "by_joint_minimum_margin_rad": by_joint,
+        }
+        if route_minimum < required:
+            raise DrawingRuntimeError(
+                "pre-motion route joint-limit margin is too small: "
+                f"{closest_joint}={route_minimum:.6f} rad < {required:.6f} rad "
+                f"in {closest_trajectory} point {closest_point}"
+            )
+        return result
+
     def preflight_cartesian_segments(
         self,
         waypoints: list[tuple[float, float, float]],
@@ -715,6 +791,11 @@ class DrawingRuntime(Node):
                 orientation,
                 scene_ids,
             )
+            live_joint_limit_margin = self.route_joint_limit_margin(
+                {"trajectory": live_segment["trajectory"]},
+                [],
+                approach_label=label,
+            )
             execution = self.execute(live_segment["trajectory"], label)
             observed = self.observe_endpoint(live_segment["endpoint"], label)
             endpoint_tolerance = finite(
@@ -731,6 +812,7 @@ class DrawingRuntime(Node):
                 {
                     **live_segment["cartesian"],
                     "pre_motion_cartesian": preflight_segment["cartesian"],
+                    "live_joint_limit_margin": live_joint_limit_margin,
                     "live_execution_targets": {
                         "strategy": "live_state_to_forward_generated_waypoints",
                         "preflight_waypoint_count": len(preflight_waypoints),
@@ -802,6 +884,7 @@ class DrawingRuntime(Node):
             route_failures: list[dict[str, Any]] = []
             approach: dict[str, Any] | None = None
             planned_segments: list[dict[str, Any]] | None = None
+            route_joint_limit_margin: dict[str, Any] | None = None
             accepted_preflight_attempt: int | None = None
             for preflight_attempt in range(1, route_preflight_attempts + 1):
                 try:
@@ -819,14 +902,19 @@ class DrawingRuntime(Node):
                         scene_ids,
                         predicted_start,
                     )
+                    candidate_joint_limit_margin = self.route_joint_limit_margin(
+                        candidate_approach,
+                        candidate_segments,
+                    )
                 except DrawingRuntimeError as exc:
                     route_failures.append({"preflight_attempt": preflight_attempt, "result": "REJECTED", "reason": str(exc)})
                     continue
                 approach = candidate_approach
                 planned_segments = candidate_segments
+                route_joint_limit_margin = candidate_joint_limit_margin
                 accepted_preflight_attempt = preflight_attempt
                 break
-            if approach is None or planned_segments is None or accepted_preflight_attempt is None:
+            if approach is None or planned_segments is None or route_joint_limit_margin is None or accepted_preflight_attempt is None:
                 attempts.append(
                     {
                         "orientation_candidate": identifier,
@@ -862,6 +950,7 @@ class DrawingRuntime(Node):
                     "avoid_collisions": True,
                     "start_state": "planned_approach_endpoint",
                     "execution_route": "preflighted_live_start_cartesian_trajectories",
+                    "joint_limit_margin": route_joint_limit_margin,
                     "accepted_preflight_attempt": accepted_preflight_attempt,
                     "rejected_preflight_attempts": route_failures,
                 },

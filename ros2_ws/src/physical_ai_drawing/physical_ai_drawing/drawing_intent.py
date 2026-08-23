@@ -67,7 +67,9 @@ _SHAPES: tuple[tuple[Shape, tuple[str, ...]], ...] = (
 
 
 def _canonical(text: str) -> str:
-    return re.sub(r"[\s,.;:!?，。；：！？'\"]+", " ", text.lower()).strip()
+    # Keep decimal points intact so metric size requests remain typed values
+    # rather than silently falling back to the default drawing scale.
+    return re.sub(r"[\s,;:!?，。；：！？'\"]+", " ", text.lower()).strip()
 
 
 def _shape_from_text(text: str) -> Shape:

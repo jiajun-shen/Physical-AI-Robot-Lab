@@ -34,6 +34,16 @@ def _evidence(shape: str, size: float, position: str = "center") -> dict:
                 "avoid_collisions": True,
                 "start_state": "planned_approach_endpoint",
                 "execution_route": "preflighted_live_start_cartesian_trajectories",
+                "joint_limit_margin": {
+                    "minimum_required_margin_rad": 0.20,
+                    "route_minimum_margin_rad": 0.50,
+                    "closest_joint": "joint_5",
+                    "closest_trajectory": "draw_segment_00",
+                    "closest_trajectory_point_index": 0,
+                    "by_joint_minimum_margin_rad": {
+                        f"joint_{index}": 0.50 for index in range(1, 7)
+                    },
+                },
             },
             "cartesian": {
                 "avoid_collisions": True,
@@ -44,6 +54,10 @@ def _evidence(shape: str, size: float, position: str = "center") -> dict:
                         "avoid_collisions": True,
                         "fraction": 1.0,
                         "pre_motion_cartesian": {"avoid_collisions": True, "fraction": 1.0},
+                        "live_joint_limit_margin": {
+                            "minimum_required_margin_rad": 0.20,
+                            "route_minimum_margin_rad": 0.50,
+                        },
                         "live_execution_targets": {
                             "strategy": "live_state_to_forward_generated_waypoints",
                             "preflight_waypoint_count": 2,
@@ -183,3 +197,22 @@ def test_evaluator_rejects_an_endpoint_that_exceeds_the_tighter_live_gate(tmp_pa
         assert "exceeds" in str(exc)
     else:
         raise AssertionError("evaluator accepted an endpoint outside the live gate")
+
+
+def test_evaluator_rejects_a_pre_motion_route_without_joint_limit_margin(tmp_path):
+    invalid = _evidence("heart", 0.14)
+    invalid["execution"]["pre_motion_cartesian_gate"]["joint_limit_margin"][
+        "route_minimum_margin_rad"
+    ] = 0.19
+    paths = []
+    for index, shape in enumerate(("heart", "square", "circle")):
+        path = tmp_path / f"{index}.json"
+        body = invalid if index == 0 else _evidence(shape, 0.10 + index * 0.02)
+        path.write_text(json.dumps(body), encoding="utf-8")
+        paths.append(path)
+    try:
+        MODULE.evaluate(paths)
+    except MODULE.EvaluationError as exc:
+        assert "joint-limit margin" in str(exc)
+    else:
+        raise AssertionError("evaluator accepted a route without the hard-limit safety margin")

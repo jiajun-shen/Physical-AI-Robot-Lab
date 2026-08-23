@@ -14,6 +14,16 @@ robot:
     joint_4: 6.981
     joint_5: 7.069
     joint_6: 10.472
+  # These ABB/URDF hard limits are used only to reject an inadequate
+  # pre-motion route margin.  They do not replace or loosen any Gazebo or
+  # MoveIt limit.
+  joint_position_limits_rad:
+    joint_1: [-2.967, 2.967]
+    joint_2: [-1.745, 2.269]
+    joint_3: [-3.491, 1.222]
+    joint_4: [-4.712, 4.712]
+    joint_5: [-2.269, 2.269]
+    joint_6: [-6.283, 6.283]
 
 planner:
   pipeline_id: ompl
@@ -59,6 +69,10 @@ planner:
   # bounded interval.  This lets the Gazebo position loop settle before the
   # strict JTC goal-time window begins without relaxing its 0.03-rad goal.
   cartesian_terminal_hold_sec: 1.00
+  # Reject an otherwise collision-free IK branch before motion when any
+  # planned arm point lies too close to an ABB hard limit.  This prevents
+  # branch-dependent high-load traces without changing the hard limits.
+  preflight_minimum_joint_limit_margin_rad: 0.20
   # MoveIt can return several collision-free approach IK branches for the
   # same pen pose.  Sample a bounded number before motion and retain only a
   # branch whose whole segmented Cartesian route also passes collision checks.
