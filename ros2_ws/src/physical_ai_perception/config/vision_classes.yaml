@@ -50,5 +50,8 @@ classes:
     max_pixels: 35000
     min_aspect_ratio: 1.10
     max_aspect_ratio: 20.0
-    center_offset_m: 0.015
+    # A planar detector observes the robot-facing surface.  Its consumer
+    # derives the solid-board centre along the calibrated board normal; a
+    # camera-ray offset would be neither a surface nor a geometric centre.
+    center_offset_m: 0.0
     geometry_kind: planar_rectangle

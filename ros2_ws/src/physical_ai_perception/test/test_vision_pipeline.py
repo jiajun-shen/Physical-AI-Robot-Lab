@@ -3,6 +3,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 import pytest
+import yaml
 
 from physical_ai_perception.vision_pipeline import (
     ClassSpec,
@@ -51,6 +52,17 @@ def test_real_class_configuration_has_only_required_labels_and_no_scene_coordina
     source = CONFIG_PATH.read_text(encoding="utf-8").lower()
     for forbidden in ("seed", "world", "position", "coordinate", "manifest"):
         assert forbidden not in source
+
+
+def test_planar_rectangle_configuration_rejects_a_camera_ray_offset(tmp_path: Path) -> None:
+    payload = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
+    board = next(item for item in payload["classes"] if item["class_id"] == "drawing_board")
+    board["center_offset_m"] = 0.015
+    invalid = tmp_path / "invalid_planar_offset.yaml"
+    invalid.write_text(yaml.safe_dump(payload), encoding="utf-8")
+
+    with pytest.raises(VisionInputError, match="visible surface without a ray offset"):
+        load_class_specs(invalid)
 
 
 def test_detect_components_selects_one_visual_component_per_color() -> None:

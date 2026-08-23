@@ -7,4 +7,29 @@ The canonical heart is generated from
 `y(t)=13 cos(t)-5 cos(2t)-2 cos(3t)-cos(4t)`,
 then normalized, scaled in metres, and embedded in the drawing-board plane.
 
-Exit evidence must preserve the requested scale, generated Cartesian samples, board frame, collision-aware approach/retreat, executed Cartesian/end-effector trace, and an offline geometric comparison. Two different requested scales must produce measurably different path extents. A05 stays `NOT STARTED` until a real Gazebo execution exists.
+The RGB-D board observation is specifically the visible robot-facing front
+surface, not the board-volume centre. The runtime derives the solid board
+centre along its calibrated normal before adding the collision box, while the
+generated tip trace stays at its explicit contactless standoff from that
+surface. A planar board class is forbidden from applying a camera-ray centre
+offset.
+
+The physical Phase-5 obstacle boxes are also required collision geometry. A
+separate P5 RGB-D localizer must supply both top fiducials from one fresh visual
+epoch; the runtime converts each marker to a conservative collision box and
+rejects every approach, entry, curve, or retreat plan unless both boxes are
+present in the live MoveIt scene.
+
+Before the first curve chord, the runtime must execute a separately preflighted
+live-state Cartesian `entry_alignment` to exactly the first runtime-generated
+waypoint. It uses its own bounded slow profile and must pass both the usual
+joint endpoint observation and a three-sample TF TCP position/orientation gate.
+The first curve segment can never absorb an unrecorded approach or controller
+residual.
+
+Exit evidence must preserve the requested scale, generated Cartesian samples,
+front-surface/derived-centre board frame, visual static-obstacle provenance and
+scene IDs, collision-aware approach/entry/curve/retreat, execution gates, and
+the live end-effector trace. Two different requested scales or positions must
+produce parameter variation. A05 stays `NOT STARTED` until three real Gazebo
+cases (curve, polygon, and parameter variation) pass the independent evaluator.

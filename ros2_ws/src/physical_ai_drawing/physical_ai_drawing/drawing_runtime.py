@@ -73,16 +73,29 @@ class VisionPose:
     stamp_ns: int
     confidence: float
     detection_id: str
+    frame_id: str = "world"
 
     def as_dict(self) -> dict[str, Any]:
         return {
             "class_id": self.class_id,
             "position_m": [self.x, self.y, self.z],
+            "frame_id": self.frame_id,
             "source_stamp_ns": self.stamp_ns,
             "confidence": self.confidence,
             "detection_id": self.detection_id,
             "source_mode": "VISION",
         }
+
+
+@dataclass(frozen=True)
+class StaticObstacleContract:
+    """Vision-only collision geometry shared with the reviewed P5 lab."""
+
+    output_topic: str
+    marker_class_ids: tuple[str, str]
+    marker_top_to_box_center_z_offset_m: float
+    collision_box_size_xyz_m: tuple[float, float, float]
+    confidence_floor: float
 
 
 def utc_now() -> str:
@@ -144,6 +157,58 @@ def atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
             pass
 
 
+def load_static_obstacle_contract() -> StaticObstacleContract:
+    """Read the P5 RGB-D marker-to-collision contract without a scene layout."""
+
+    config_path = (
+        Path(get_package_share_directory("abb_lab_moveit_config"))
+        / "config"
+        / "phase5_static_obstacle_vision.yaml"
+    )
+    if not config_path.is_file():
+        raise DrawingRuntimeError("Phase-5 static-obstacle vision contract is missing")
+    try:
+        document = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        raise DrawingRuntimeError("cannot parse Phase-5 static-obstacle vision contract") from exc
+    geometry = mapping(
+        mapping(document, "Phase-5 static-obstacle vision contract").get(
+            "phase5_static_obstacle_geometry"
+        ),
+        "Phase-5 static-obstacle geometry",
+    )
+    marker_class_ids = geometry.get("expected_marker_class_ids")
+    if (
+        not isinstance(marker_class_ids, list)
+        or len(marker_class_ids) != 2
+        or any(not isinstance(item, str) or not item for item in marker_class_ids)
+        or len(set(marker_class_ids)) != 2
+    ):
+        raise DrawingRuntimeError("Phase-5 static-obstacle contract must contain two marker classes")
+    output_topic = str(geometry.get("output_topic", ""))
+    if output_topic != "/phase5/perception/static_obstacle_poses":
+        raise DrawingRuntimeError("Phase-5 static-obstacle contract has an unexpected topic")
+    return StaticObstacleContract(
+        output_topic=output_topic,
+        marker_class_ids=(str(marker_class_ids[0]), str(marker_class_ids[1])),
+        marker_top_to_box_center_z_offset_m=finite(
+            geometry.get("marker_top_to_box_center_z_offset_m"),
+            "static-obstacle top-to-centre offset",
+            positive=True,
+        ),
+        collision_box_size_xyz_m=vector(
+            geometry.get("collision_box_size_xyz_m"),
+            "static-obstacle collision box size",
+            3,
+        ),
+        confidence_floor=finite(
+            geometry.get("confidence_floor"),
+            "static-obstacle confidence floor",
+            positive=True,
+        ),
+    )
+
+
 class DrawingRuntime(Node):
     """One bounded, evidence-producing contactless simulated drawing episode."""
 
@@ -163,6 +228,7 @@ class DrawingRuntime(Node):
         self.planner = mapping(config.get("planner"), "planner config")
         self.board_config = mapping(config.get("board"), "board config")
         self.scene_config = mapping(config.get("scene"), "scene config")
+        self.static_obstacle_contract = load_static_obstacle_contract()
         self.arm_joints = tuple(self.robot.get("arm_joint_names", ()))
         if self.arm_joints != tuple(f"joint_{index}" for index in range(1, 7)):
             raise DrawingRuntimeError("drawing runtime requires the bounded six-axis ABB arm")
@@ -200,9 +266,17 @@ class DrawingRuntime(Node):
         self.joint_sequence = 0
         self.latest_vision: dict[str, VisionPose] = {}
         self.vision_sequence = 0
+        self.latest_static_obstacles: dict[str, VisionPose] = {}
+        self.static_obstacle_sequence = 0
         self.trace: list[dict[str, Any]] = []
         self.create_subscription(JointState, "/joint_states", self._on_joint_state, qos_profile_sensor_data)
         self.create_subscription(ObjectPoseArray, "/perception/world_object_poses", self._on_vision, qos_profile_sensor_data)
+        self.create_subscription(
+            ObjectPoseArray,
+            self.static_obstacle_contract.output_topic,
+            self._on_static_obstacles,
+            qos_profile_sensor_data,
+        )
 
     def remaining(self) -> float:
         return self.deadline - time.monotonic()
@@ -253,10 +327,47 @@ class DrawingRuntime(Node):
                 stamp_ns=source_stamp,
                 confidence=float(item.confidence),
                 detection_id=str(item.detection_id),
+                frame_id=str(item.header.frame_id),
             )
         if observed:
             self.latest_vision.update(observed)
             self.vision_sequence += 1
+
+    def _on_static_obstacles(self, message: ObjectPoseArray) -> None:
+        """Accept one coherent RGB-D epoch for both collision fiducials."""
+
+        expected = set(self.static_obstacle_contract.marker_class_ids)
+        observed: dict[str, VisionPose] = {}
+        for item in message.poses:
+            class_id = str(item.class_id)
+            if class_id not in expected:
+                continue
+            values = (item.pose.pose.position.x, item.pose.pose.position.y, item.pose.pose.position.z)
+            source_stamp = stamp_ns(item.source_header)
+            if (
+                class_id in observed
+                or item.source_mode != item.SOURCE_VISION
+                or item.header.frame_id != self.planning_frame
+                or source_stamp <= 0
+                or not item.detection_id
+                or float(item.confidence) < self.static_obstacle_contract.confidence_floor
+                or not all(math.isfinite(float(value)) for value in values)
+            ):
+                return
+            observed[class_id] = VisionPose(
+                class_id=class_id,
+                x=float(values[0]),
+                y=float(values[1]),
+                z=float(values[2]),
+                stamp_ns=source_stamp,
+                confidence=float(item.confidence),
+                detection_id=str(item.detection_id),
+                frame_id=str(item.header.frame_id),
+            )
+        if set(observed) != expected or len({item.stamp_ns for item in observed.values()}) != 1:
+            return
+        self.latest_static_obstacles = observed
+        self.static_obstacle_sequence += 1
 
     def wait_for_endpoints(self) -> None:
         timeout = finite(self.planner.get("service_wait_timeout_sec"), "service wait", positive=True)
@@ -371,7 +482,14 @@ class DrawingRuntime(Node):
             nanosec = 0
         point.time_from_start = Duration(sec=sec, nanosec=nanosec)
 
-    def retime(self, trajectory: Any, label: str, *, cartesian: bool = False) -> tuple[Any, dict[str, Any]]:
+    def retime(
+        self,
+        trajectory: Any,
+        label: str,
+        *,
+        cartesian: bool = False,
+        profile: str | None = None,
+    ) -> tuple[Any, dict[str, Any]]:
         result = copy.deepcopy(trajectory)
         joint_trajectory = result.joint_trajectory
         if tuple(joint_trajectory.joint_names) != self.arm_joints:
@@ -392,10 +510,27 @@ class DrawingRuntime(Node):
             previous = positions
         if len(cleaned) < 2:
             raise DrawingRuntimeError(f"{label} contains no measurable motion")
-        prefix = "cartesian_" if cartesian else ""
-        velocity_scale = finite(self.planner.get(f"{prefix}velocity_scaling", self.planner.get("velocity_scaling")), "velocity scaling", positive=True)
-        safety = finite(self.planner.get(f"{prefix}retime_safety_factor", self.planner.get("retime_safety_factor")), "retime safety factor", positive=True)
-        minimum = finite(self.planner.get(f"{prefix}minimum_segment_duration_sec", self.planner.get("minimum_segment_duration_sec")), "minimum duration", positive=True)
+        selected_profile = profile or ("cartesian" if cartesian else "pose")
+        if selected_profile not in {"pose", "cartesian", "entry"}:
+            raise DrawingRuntimeError(f"{label} requested an unknown retiming profile")
+        if selected_profile == "entry" and not cartesian:
+            raise DrawingRuntimeError(f"{label} entry profile requires a Cartesian trajectory")
+        prefix = "" if selected_profile == "pose" else f"{selected_profile}_"
+        velocity_scale = finite(
+            self.planner.get(f"{prefix}velocity_scaling", self.planner.get("velocity_scaling")),
+            "velocity scaling",
+            positive=True,
+        )
+        safety = finite(
+            self.planner.get(f"{prefix}retime_safety_factor", self.planner.get("retime_safety_factor")),
+            "retime safety factor",
+            positive=True,
+        )
+        minimum = finite(
+            self.planner.get(f"{prefix}minimum_segment_duration_sec", self.planner.get("minimum_segment_duration_sec")),
+            "minimum duration",
+            positive=True,
+        )
         elapsed, durations = 0.0, []
         self._set_time(cleaned[0], 0.0)
         for index in range(1, len(cleaned)):
@@ -411,7 +546,7 @@ class DrawingRuntime(Node):
             # interval before the controller begins its strict goal-time
             # evaluation.  This adds no geometric or joint-space motion.
             terminal_hold_sec = finite(
-                self.planner.get("cartesian_terminal_hold_sec"),
+                self.planner.get(f"{prefix}terminal_hold_sec"),
                 "Cartesian terminal hold",
                 positive=True,
             )
@@ -426,7 +561,7 @@ class DrawingRuntime(Node):
             "velocity_scaling": velocity_scale,
             "safety_factor": safety,
             "minimum_segment_duration_sec": minimum,
-            "profile": "cartesian" if cartesian else "pose",
+            "profile": selected_profile,
             "segment_durations_sec": durations,
             "duration_sec": elapsed,
             "terminal_hold": {
@@ -436,15 +571,95 @@ class DrawingRuntime(Node):
             "acceleration_limits_used": False,
         }
 
-    def _record_tcp(self, phase: str) -> None:
+    def current_tcp_pose(self) -> dict[str, Any] | None:
         try:
             transform = self.tf_buffer.lookup_transform(self.planning_frame, self.tcp_link, Time(), timeout=RosDuration(seconds=0.12))
         except TransformException:
-            return
+            return None
         translation = transform.transform.translation
-        values = (float(translation.x), float(translation.y), float(translation.z))
-        if all(math.isfinite(value) for value in values):
-            self.trace.append({"phase": phase, "wall_time_utc": utc_now(), "sim_time_ns": stamp_ns(transform.header), "position_m": list(values)})
+        rotation = transform.transform.rotation
+        position = (float(translation.x), float(translation.y), float(translation.z))
+        orientation = (float(rotation.x), float(rotation.y), float(rotation.z), float(rotation.w))
+        if not all(math.isfinite(value) for value in (*position, *orientation)):
+            return None
+        norm = math.sqrt(sum(value * value for value in orientation))
+        if norm <= 0.0:
+            return None
+        return {
+            "sim_time_ns": stamp_ns(transform.header),
+            "position_m": list(position),
+            "orientation_xyzw": [value / norm for value in orientation],
+        }
+
+    def _record_tcp(self, phase: str) -> None:
+        pose = self.current_tcp_pose()
+        if pose is not None:
+            self.trace.append({"phase": phase, "wall_time_utc": utc_now(), **pose})
+
+    def observe_tcp_endpoint(
+        self,
+        expected_position: tuple[float, float, float],
+        expected_orientation: tuple[float, float, float, float],
+        label: str,
+    ) -> dict[str, Any]:
+        position_tolerance = finite(
+            self.planner.get("entry_tcp_position_tolerance_m"),
+            "entry TCP position tolerance",
+            positive=True,
+        )
+        orientation_tolerance = finite(
+            self.planner.get("entry_tcp_orientation_tolerance_rad"),
+            "entry TCP orientation tolerance",
+            positive=True,
+        )
+        samples_needed = integer(self.planner.get("entry_tcp_samples"), "entry TCP samples", minimum=1)
+        expected_norm = math.sqrt(sum(value * value for value in expected_orientation))
+        if expected_norm <= 0.0:
+            raise DrawingRuntimeError("entry TCP expected orientation is invalid")
+        expected_quaternion = tuple(value / expected_norm for value in expected_orientation)
+        matching, last_stamp, observed = 0, -1, None
+        end = self._bounded_deadline(
+            finite(self.planner.get("entry_tcp_observation_timeout_sec"), "entry TCP observation", positive=True),
+            f"TCP endpoint {label}",
+        )
+        while time.monotonic() < end:
+            rclpy.spin_once(self, timeout_sec=min(0.10, max(0.0, end - time.monotonic())))
+            candidate = self.current_tcp_pose()
+            if candidate is None or candidate["sim_time_ns"] <= last_stamp:
+                continue
+            last_stamp = int(candidate["sim_time_ns"])
+            position_error = math.sqrt(
+                sum(
+                    (float(candidate["position_m"][index]) - expected_position[index]) ** 2
+                    for index in range(3)
+                )
+            )
+            dot = abs(
+                sum(
+                    float(candidate["orientation_xyzw"][index]) * expected_quaternion[index]
+                    for index in range(4)
+                )
+            )
+            orientation_error = 2.0 * math.acos(min(1.0, max(-1.0, dot)))
+            observed = {
+                **candidate,
+                "position_error_m": position_error,
+                "orientation_error_rad": orientation_error,
+            }
+            if position_error <= position_tolerance and orientation_error <= orientation_tolerance:
+                matching += 1
+                if matching >= samples_needed:
+                    return {
+                        "expected_position_m": list(expected_position),
+                        "expected_orientation_xyzw": list(expected_quaternion),
+                        "observed": observed,
+                        "position_tolerance_m": position_tolerance,
+                        "orientation_tolerance_rad": orientation_tolerance,
+                        "consecutive_samples": samples_needed,
+                    }
+            else:
+                matching = 0
+        raise DrawingRuntimeError(f"TCP endpoint not observed for {label}: {observed}")
 
     def execute(self, trajectory: Any, label: str) -> dict[str, Any]:
         goal = ExecuteTrajectory.Goal()
@@ -502,6 +717,26 @@ class DrawingRuntime(Node):
         result = self.call_service(self.scene_query_client, request, "read planning scene")
         return [str(item.id) for item in result.scene.world.collision_objects]
 
+    def require_static_obstacles_in_scene(self, advertised_ids: list[str], label: str) -> list[str]:
+        table = mapping(self.scene_config.get("table"), "table scene geometry")
+        required = {
+            str(table.get("id")),
+            "p6_live_vision_drawing_board",
+        }
+        required.update(
+            f"p6_vision_static_{class_id}"
+            for class_id in self.static_obstacle_contract.marker_class_ids
+        )
+        if not required.issubset(set(advertised_ids)):
+            raise DrawingRuntimeError(f"{label} was not given the complete collision scene")
+        active = self.planning_scene_ids()
+        if not required.issubset(set(active)):
+            raise DrawingRuntimeError(
+                f"MoveIt scene lost required collision geometry before {label}: "
+                f"missing {sorted(required.difference(active))}"
+            )
+        return active
+
     def make_box(self, object_id: str, center: tuple[float, float, float], dimensions: tuple[float, float, float]) -> CollisionObject:
         item = CollisionObject()
         item.id, item.header.frame_id, item.operation = object_id, self.planning_frame, CollisionObject.ADD
@@ -551,24 +786,106 @@ class DrawingRuntime(Node):
         assert result is not None
         return result
 
+    def wait_static_obstacles(self, after_ns: int) -> dict[str, VisionPose]:
+        minimum_stamp = integer(after_ns, "static-obstacle freshness stamp", minimum=1)
+        result: dict[str, VisionPose] | None = None
+
+        def available() -> bool:
+            nonlocal result
+            expected = set(self.static_obstacle_contract.marker_class_ids)
+            if set(self.latest_static_obstacles) != expected:
+                return False
+            if any(item.stamp_ns <= minimum_stamp for item in self.latest_static_obstacles.values()):
+                return False
+            result = dict(self.latest_static_obstacles)
+            return True
+
+        self._spin_until(
+            available,
+            "fresh RGB-D static-obstacle observations",
+            finite(self.planner.get("vision_timeout_sec"), "vision wait", positive=True),
+        )
+        assert result is not None
+        return result
+
     def board_frame(self, observed: VisionPose) -> BoardFrame:
+        reference = str(self.board_config.get("observation_reference", ""))
+        if reference != "robot_facing_front_surface":
+            raise DrawingRuntimeError("drawing-board observation must be its robot-facing front surface")
+        normal = vector(self.board_config.get("robot_facing_normal_world"), "board normal", 3)
+        front_surface_offset = finite(
+            self.board_config.get("front_surface_offset_m"),
+            "board front offset",
+            positive=True,
+        )
+        board_size = vector(self.board_config.get("size_xyz_m"), "board size", 3)
+        if not math.isclose(front_surface_offset, board_size[0] / 2.0, rel_tol=0.0, abs_tol=1e-6):
+            raise DrawingRuntimeError("drawing-board front offset must equal half its collision thickness")
+        surface = (observed.x, observed.y, observed.z)
+        center = tuple(
+            surface[index] - front_surface_offset * normal[index]
+            for index in range(3)
+        )
         return BoardFrame(
-            center_world_m=(observed.x, observed.y, observed.z),
-            normal_world=vector(self.board_config.get("robot_facing_normal_world"), "board normal", 3),
+            center_world_m=center,
+            normal_world=normal,
             horizontal_world=vector(self.board_config.get("horizontal_axis_world"), "board horizontal axis", 3),
             vertical_world=vector(self.board_config.get("vertical_axis_world"), "board vertical axis", 3),
-            front_surface_offset_m=finite(self.board_config.get("front_surface_offset_m"), "board front offset", positive=True),
+            front_surface_offset_m=front_surface_offset,
         )
 
-    def apply_drawing_scene(self, board: VisionPose) -> list[str]:
+    def static_obstacle_collision_objects(
+        self,
+        observed: dict[str, VisionPose],
+    ) -> tuple[list[CollisionObject], list[dict[str, Any]]]:
+        collision_objects: list[CollisionObject] = []
+        records: list[dict[str, Any]] = []
+        for class_id in self.static_obstacle_contract.marker_class_ids:
+            marker = observed.get(class_id)
+            if marker is None:
+                raise DrawingRuntimeError(f"static-obstacle marker is missing: {class_id}")
+            center = (
+                marker.x,
+                marker.y,
+                marker.z - self.static_obstacle_contract.marker_top_to_box_center_z_offset_m,
+            )
+            object_id = f"p6_vision_static_{class_id}"
+            collision_objects.append(
+                self.make_box(
+                    object_id,
+                    center,
+                    self.static_obstacle_contract.collision_box_size_xyz_m,
+                )
+            )
+            records.append(
+                {
+                    "object_id": object_id,
+                    "marker": marker.as_dict(),
+                    "marker_top_to_box_center_z_offset_m": self.static_obstacle_contract.marker_top_to_box_center_z_offset_m,
+                    "collision_box_center_m": list(center),
+                    "collision_box_size_xyz_m": list(
+                        self.static_obstacle_contract.collision_box_size_xyz_m
+                    ),
+                    "source": "fresh_phase5_rgbd_static_obstacle_localizer",
+                }
+            )
+        return collision_objects, records
+
+    def apply_drawing_scene(
+        self,
+        frame: BoardFrame,
+        static_obstacles: dict[str, VisionPose],
+    ) -> tuple[list[str], list[dict[str, Any]]]:
         table = mapping(self.scene_config.get("table"), "table scene geometry")
         table_center = vector(table.get("center_xyz_m"), "table center", 3)
         table_size = vector(table.get("size_xyz_m"), "table size", 3)
         board_size = vector(self.board_config.get("size_xyz_m"), "board size", 3)
+        static_objects, static_records = self.static_obstacle_collision_objects(static_obstacles)
         objects = [
             self.make_box(str(table.get("id")), table_center, table_size),
-            self.make_box("p6_live_vision_drawing_board", (board.x, board.y, board.z), board_size),
+            self.make_box("p6_live_vision_drawing_board", frame.center_world_m, board_size),
         ]
+        objects.extend(static_objects)
         ball_radius = finite(self.scene_config.get("ball_radius_m"), "ball radius", positive=True)
         cube_size = finite(self.scene_config.get("cube_size_m"), "cube size", positive=True)
         for class_id, observed in sorted(self.latest_vision.items()):
@@ -580,12 +897,17 @@ class DrawingRuntime(Node):
             elif class_id.endswith("cube"):
                 objects.append(self.make_box(f"p6_live_vision_{class_id}", center, (cube_size, cube_size, cube_size)))
         active = self.apply_scene(objects)
-        required = {str(table.get("id")), "p6_live_vision_drawing_board"}
+        required = {
+            str(table.get("id")),
+            "p6_live_vision_drawing_board",
+            *(record["object_id"] for record in static_records),
+        }
         if not required.issubset(active):
             raise DrawingRuntimeError(f"MoveIt scene is missing required collision geometry: {sorted(required.difference(active))}")
-        return active
+        return active, static_records
 
     def plan_pose(self, label: str, target: PoseStamped, scene_ids: list[str]) -> dict[str, Any]:
+        active_scene_ids = self.require_static_obstacles_in_scene(scene_ids, label)
         response = self.call_service(self.plan_client, self._motion_plan_service(self.build_pose_request(target)), f"plan {label}")
         plan = response.motion_plan_response
         details = self.error_details(plan.error_code)
@@ -597,7 +919,7 @@ class DrawingRuntime(Node):
         return {
             "trajectory": trajectory,
             "target": {"frame_id": target.header.frame_id, "position_m": [target.pose.position.x, target.pose.position.y, target.pose.position.z], "orientation_xyzw": [target.pose.orientation.x, target.pose.orientation.y, target.pose.orientation.z, target.pose.orientation.w]},
-            "planning": {**details, "collision_aware": True, "planning_scene_ids": scene_ids, "waypoint_count": len(points), "retiming": retiming},
+            "planning": {**details, "collision_aware": True, "planning_scene_ids": active_scene_ids, "waypoint_count": len(points), "retiming": retiming},
             "endpoint": endpoint,
         }
 
@@ -615,7 +937,12 @@ class DrawingRuntime(Node):
         scene_ids: list[str],
         *,
         start_positions: dict[str, float] | None = None,
+        retime_profile: str = "cartesian",
     ) -> dict[str, Any]:
+        if retime_profile not in {"cartesian", "entry"}:
+            raise DrawingRuntimeError(f"{label} requested an invalid Cartesian retiming profile")
+        profile_prefix = f"{retime_profile}_"
+        active_scene_ids = self.require_static_obstacles_in_scene(scene_ids, label)
         request = GetCartesianPath.Request()
         request.header.frame_id = self.planning_frame
         request.start_state = self.robot_state(start_positions)
@@ -628,7 +955,7 @@ class DrawingRuntime(Node):
         request.revolute_jump_threshold = finite(self.planner.get("cartesian_revolute_jump_threshold"), "Cartesian revolute jump threshold")
         request.avoid_collisions = True
         request.max_velocity_scaling_factor = finite(
-            self.planner.get("cartesian_velocity_scaling", self.planner.get("velocity_scaling")),
+            self.planner.get(f"{profile_prefix}velocity_scaling", self.planner.get("velocity_scaling")),
             "Cartesian velocity scaling",
             positive=True,
         )
@@ -638,13 +965,28 @@ class DrawingRuntime(Node):
         fraction = float(response.fraction)
         if response.error_code.val != SUCCESS or fraction < 0.999999:
             raise DrawingRuntimeError(f"collision-aware Cartesian path failed for {label}: fraction={fraction}, {details}")
-        trajectory, retiming = self.retime(response.solution, label, cartesian=True)
+        trajectory, retiming = self.retime(
+            response.solution,
+            label,
+            cartesian=True,
+            profile=retime_profile,
+        )
+        if retime_profile == "entry":
+            maximum = finite(
+                self.planner.get("entry_max_duration_sec"),
+                "entry maximum duration",
+                positive=True,
+            )
+            if retiming["duration_sec"] > maximum:
+                raise DrawingRuntimeError(
+                    f"{label} exceeds the bounded entry duration: {retiming['duration_sec']:.3f}s > {maximum:.3f}s"
+                )
         points = trajectory.joint_trajectory.points
         endpoint = {name: float(points[-1].positions[index]) for index, name in enumerate(self.arm_joints)}
         return {
             "trajectory": trajectory,
             "endpoint": endpoint,
-            "cartesian": {**details, "fraction": fraction, "avoid_collisions": True, "requested_waypoint_count": len(waypoints), "trajectory_waypoint_count": len(points), "planning_scene_ids": scene_ids, "retiming": retiming},
+            "cartesian": {**details, "fraction": fraction, "avoid_collisions": True, "requested_waypoint_count": len(waypoints), "trajectory_waypoint_count": len(points), "planning_scene_ids": active_scene_ids, "retiming": retiming},
         }
 
     def route_joint_limit_margin(
@@ -757,6 +1099,64 @@ class DrawingRuntime(Node):
             raise DrawingRuntimeError("no Cartesian drawing segments were generated")
         return planned
 
+    def execute_entry_alignment(
+        self,
+        preflight_entry: dict[str, Any],
+        first_waypoint: tuple[float, float, float],
+        orientation: tuple[float, float, float, float],
+        scene_ids: list[str],
+    ) -> dict[str, Any]:
+        """Reach the first generated point before any curve chord is allowed.
+
+        This remains a live-state MoveIt Cartesian request.  It never feeds a
+        joint trajectory back into planning, and its target is exactly the
+        first drawing-local point mapped through the live board frame.
+        """
+
+        label = "entry_alignment"
+        live_entry = self.cartesian_path(
+            label,
+            [first_waypoint],
+            orientation,
+            scene_ids,
+            retime_profile="entry",
+        )
+        live_joint_limit_margin = self.route_joint_limit_margin(
+            {"trajectory": live_entry["trajectory"]},
+            [],
+            approach_label=label,
+        )
+        execution = self.execute(live_entry["trajectory"], label)
+        observed = self.observe_endpoint(live_entry["endpoint"], label)
+        tcp_gate = self.observe_tcp_endpoint(first_waypoint, orientation, label)
+        endpoint_tolerance = finite(
+            self.planner.get("observed_joint_tolerance_rad"),
+            "joint endpoint tolerance",
+            positive=True,
+        )
+        endpoint_samples = integer(
+            self.planner.get("endpoint_samples"),
+            "endpoint sample count",
+            minimum=1,
+        )
+        return {
+            **live_entry["cartesian"],
+            "pre_motion_cartesian": preflight_entry["cartesian"],
+            "live_joint_limit_margin": live_joint_limit_margin,
+            "target_provenance": {
+                "strategy": "live_state_to_runtime_generated_first_waypoint",
+                "target_count": 1,
+            },
+            "execution": execution,
+            "expected_endpoint": live_entry["endpoint"],
+            "observed_endpoint": observed,
+            "endpoint_gate": {
+                "tolerance_rad": endpoint_tolerance,
+                "consecutive_samples": endpoint_samples,
+            },
+            "tcp_gate": tcp_gate,
+        }
+
     def execute_preflighted_cartesian_segments(
         self,
         planned: list[dict[str, Any]],
@@ -864,6 +1264,7 @@ class DrawingRuntime(Node):
     def run(self) -> dict[str, Any]:
         self.wait_for_endpoints()
         board_observation = self.wait_board()
+        static_obstacles = self.wait_static_obstacles(board_observation.stamp_ns)
         frame = self.board_frame(board_observation)
         horizontal_half = finite(self.board_config.get("horizontal_half_extent_m"), "board horizontal half extent", positive=True)
         vertical_half = finite(self.board_config.get("vertical_half_extent_m"), "board vertical half extent", positive=True)
@@ -871,7 +1272,7 @@ class DrawingRuntime(Node):
         local_points = generate_local_geometry(self.intent, samples=samples, horizontal_half_m=horizontal_half, vertical_half_m=vertical_half)
         standoff = finite(self.board_config.get("virtual_tip_standoff_m"), "virtual tip standoff", positive=True)
         world_points = frame.map_points(local_points, standoff_m=standoff)
-        scene_ids = self.apply_drawing_scene(board_observation)
+        scene_ids, static_obstacle_records = self.apply_drawing_scene(frame, static_obstacles)
         approach_offset = finite(self.board_config.get("approach_offset_m"), "approach offset", positive=True)
         route_preflight_attempts = integer(
             self.planner.get("orientation_route_preflight_attempts"),
@@ -883,17 +1284,17 @@ class DrawingRuntime(Node):
         for identifier, orientation in self.orientations():
             route_failures: list[dict[str, Any]] = []
             approach: dict[str, Any] | None = None
+            preflight_entry: dict[str, Any] | None = None
             planned_segments: list[dict[str, Any]] | None = None
             route_joint_limit_margin: dict[str, Any] | None = None
             accepted_preflight_attempt: int | None = None
             for preflight_attempt in range(1, route_preflight_attempts + 1):
                 try:
-                    # Use collision-aware free-space planning to reach the
-                    # first contactless drawing standoff.  The generated
-                    # Cartesian trace begins there, so the first draw segment
-                    # contains only a curve chord—not an unverified 10 cm
-                    # normal descent mixed into the drawing motion.
-                    approach_position = world_points[0]
+                    # Reach a clear standoff in free space, then preflight a
+                    # separate collision-checked Cartesian entry to p0.  The
+                    # first generated curve segment therefore never hides a
+                    # normal descent or controller-residual correction.
+                    approach_position = self._shift_normal(world_points[0], frame, approach_offset)
                     candidate_approach = self.plan_pose(
                         f"{identifier}_approach",
                         self.pose_stamped(approach_position, orientation),
@@ -901,6 +1302,19 @@ class DrawingRuntime(Node):
                     )
                     predicted_start = self.current_positions()
                     predicted_start.update(candidate_approach["endpoint"])
+                    candidate_entry = {
+                        "label": "entry_alignment",
+                        "waypoints": [world_points[0]],
+                        **self.cartesian_path(
+                            "entry_alignment",
+                            [world_points[0]],
+                            orientation,
+                            scene_ids,
+                            start_positions=predicted_start,
+                            retime_profile="entry",
+                        ),
+                    }
+                    predicted_start.update(candidate_entry["endpoint"])
                     candidate_segments = self.preflight_cartesian_segments(
                         world_points,
                         orientation,
@@ -909,17 +1323,18 @@ class DrawingRuntime(Node):
                     )
                     candidate_joint_limit_margin = self.route_joint_limit_margin(
                         candidate_approach,
-                        candidate_segments,
+                        [candidate_entry, *candidate_segments],
                     )
                 except DrawingRuntimeError as exc:
                     route_failures.append({"preflight_attempt": preflight_attempt, "result": "REJECTED", "reason": str(exc)})
                     continue
                 approach = candidate_approach
+                preflight_entry = candidate_entry
                 planned_segments = candidate_segments
                 route_joint_limit_margin = candidate_joint_limit_margin
                 accepted_preflight_attempt = preflight_attempt
                 break
-            if approach is None or planned_segments is None or route_joint_limit_margin is None or accepted_preflight_attempt is None:
+            if approach is None or preflight_entry is None or planned_segments is None or route_joint_limit_margin is None or accepted_preflight_attempt is None:
                 attempts.append(
                     {
                         "orientation_candidate": identifier,
@@ -935,6 +1350,12 @@ class DrawingRuntime(Node):
             # do not try another pose from an uncertain robot state.
             approach_execution = self.execute(approach["trajectory"], f"{identifier}_approach")
             approach_observed = self.observe_endpoint(approach["endpoint"], f"{identifier}_approach")
+            entry_alignment = self.execute_entry_alignment(
+                preflight_entry,
+                world_points[0],
+                orientation,
+                scene_ids,
+            )
             cartesian = self.execute_preflighted_cartesian_segments(
                 planned_segments,
                 orientation,
@@ -953,13 +1374,14 @@ class DrawingRuntime(Node):
                     "segment_count": len(planned_segments),
                     "collision_aware": True,
                     "avoid_collisions": True,
-                    "start_state": "planned_approach_endpoint",
-                    "execution_route": "preflighted_live_start_cartesian_trajectories",
+                    "start_state": "planned_approach_then_entry_endpoint",
+                    "execution_route": "preflighted_live_entry_then_cartesian_trajectories",
                     "joint_limit_margin": route_joint_limit_margin,
                     "accepted_preflight_attempt": accepted_preflight_attempt,
                     "rejected_preflight_attempts": route_failures,
                 },
                 "approach": {"target": approach["target"], "planning": approach["planning"], "execution": approach_execution, "observed_endpoint": approach_observed},
+                "entry_alignment": entry_alignment,
                 "cartesian": cartesian,
                 "retreat": {"target": retreat["target"], "planning": retreat["planning"], "execution": retreat_execution, "observed_endpoint": retreat_observed},
             }
@@ -985,7 +1407,15 @@ class DrawingRuntime(Node):
             "board_frame": {
                 "name": "drawing_board",
                 "observation": board_observation.as_dict(),
-                "center_source": "fresh_rgbd_vision",
+                "observation_reference": "robot_facing_front_surface",
+                "center_source": "fresh_rgbd_front_surface",
+                "front_surface_world_m": [
+                    board_observation.x,
+                    board_observation.y,
+                    board_observation.z,
+                ],
+                "derived_center_world_m": list(frame.center_world_m),
+                "collision_center_world_m": list(frame.center_world_m),
                 "normal_world": list(frame.normal_world),
                 "horizontal_world": list(frame.horizontal_world),
                 "vertical_world": list(frame.vertical_world),
@@ -996,6 +1426,11 @@ class DrawingRuntime(Node):
                 "tool_model": "phase6_collision_bearing_drawing_pen",
             },
             "planning_scene_ids": scene_ids,
+            "static_collision_obstacles": {
+                "source_topic": self.static_obstacle_contract.output_topic,
+                "required_marker_class_ids": list(self.static_obstacle_contract.marker_class_ids),
+                "records": static_obstacle_records,
+            },
             "orientation_attempts": attempts,
             "execution": selected,
             "tcp_trace": self.trace,

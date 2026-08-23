@@ -31,7 +31,9 @@ planner:
   planning_attempts: 3
   allowed_planning_time_sec: 5.0
   velocity_scaling: 0.12
-  position_tolerance_m: 0.008
+  # Drawing starts from a visible board surface and must not allow the
+  # free-space approach to consume a whole Cartesian trace step at its goal.
+  position_tolerance_m: 0.002
   orientation_tolerance_rad: 0.08
   retime_safety_factor: 2.0
   minimum_segment_duration_sec: 0.20
@@ -69,6 +71,18 @@ planner:
   # bounded interval.  This lets the Gazebo position loop settle before the
   # strict JTC goal-time window begins without relaxing its 0.03-rad goal.
   cartesian_terminal_hold_sec: 1.00
+  # Board entry is a distinct collision-checked motion, never part of the
+  # first generated curve chord.  It is deliberately slower than the trace
+  # profile and is bounded below the MoveIt action timeout.
+  entry_velocity_scaling: 0.015
+  entry_retime_safety_factor: 4.0
+  entry_minimum_segment_duration_sec: 2.00
+  entry_terminal_hold_sec: 1.00
+  entry_max_duration_sec: 60.0
+  entry_tcp_position_tolerance_m: 0.008
+  entry_tcp_orientation_tolerance_rad: 0.08
+  entry_tcp_samples: 3
+  entry_tcp_observation_timeout_sec: 10.0
   # Reject an otherwise collision-free IK branch before motion when any
   # planned arm point lies too close to an ABB hard limit.  This prevents
   # branch-dependent high-load traces without changing the hard limits.
@@ -82,6 +96,10 @@ planner:
 # only its calibrated local axes/dimensions in the static lab, never authored
 # curve positions in world coordinates.
 board:
+  # P4's planar RGB-D contract publishes the visible robot-facing surface
+  # centre, not a volume centre.  The runtime derives the collision-box
+  # centre from this surface and the calibrated normal/thickness below.
+  observation_reference: robot_facing_front_surface
   size_xyz_m: [0.03, 0.70, 0.45]
   robot_facing_normal_world: [-1.0, 0.0, 0.0]
   horizontal_axis_world: [0.0, 1.0, 0.0]

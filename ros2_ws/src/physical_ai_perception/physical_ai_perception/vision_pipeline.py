@@ -143,6 +143,10 @@ def load_class_specs(path: str | Path) -> tuple[ClassSpec, ...]:
             raise VisionInputError(
                 f"{class_id}.geometry_kind must be surface_ray or planar_rectangle"
             )
+        if geometry_kind == "planar_rectangle" and center_offset != 0.0:
+            raise VisionInputError(
+                f"{class_id}.planar_rectangle must publish its visible surface without a ray offset"
+            )
         specs.append(
             ClassSpec(
                 class_id=class_id,

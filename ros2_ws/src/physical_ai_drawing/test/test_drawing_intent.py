@@ -1,5 +1,6 @@
 import math
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import yaml
@@ -13,6 +14,7 @@ from physical_ai_drawing.drawing_intent import (
     parse_drawing_instruction,
 )
 from physical_ai_drawing.geometry import extent, generate_local_geometry
+from physical_ai_drawing.drawing_runtime import DrawingRuntime, VisionPose
 
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
@@ -72,6 +74,37 @@ def test_board_frame_maps_local_geometry_through_live_center_and_calibrated_axes
     world = frame.map_points(local, standoff_m=0.03)
     assert all(point[0] == pytest.approx(1.055) for point in world)
     assert world[0][1] < world[-1][1]
+
+
+def test_runtime_derives_the_board_collision_centre_from_its_observed_front_surface():
+    runtime = SimpleNamespace(
+        board_config={
+            "observation_reference": "robot_facing_front_surface",
+            "robot_facing_normal_world": [-1.0, 0.0, 0.0],
+            "horizontal_axis_world": [0.0, 1.0, 0.0],
+            "vertical_axis_world": [0.0, 0.0, 1.0],
+            "front_surface_offset_m": 0.015,
+            "size_xyz_m": [0.03, 0.70, 0.45],
+        }
+    )
+    observed = VisionPose(
+        class_id="drawing_board",
+        x=1.085,
+        y=0.0,
+        z=0.975,
+        stamp_ns=123,
+        confidence=0.9,
+        detection_id="board-123",
+    )
+
+    frame = DrawingRuntime.board_frame(runtime, observed)
+
+    assert frame.center_world_m == pytest.approx((1.10, 0.0, 0.975))
+    points = frame.map_points(
+        generate_local_geometry(DrawingIntent(shape=Shape.LINE, size_m=0.08), samples=17),
+        standoff_m=0.008,
+    )
+    assert all(point[0] == pytest.approx(1.077) for point in points)
 
 
 def test_ambiguous_or_unsafe_drawing_requests_are_rejected():
