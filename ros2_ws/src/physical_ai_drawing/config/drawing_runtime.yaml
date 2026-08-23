@@ -45,9 +45,13 @@ planner:
   # Cartesian traces are deliberately slower than the free-space approach:
   # there are no verified acceleration limits, and every chunk must be
   # visibly tracked by the Gazebo joint controller.
-  cartesian_velocity_scaling: 0.04
-  cartesian_retime_safety_factor: 3.0
-  cartesian_minimum_segment_duration_sec: 0.30
+  # The simulated arm's position loop needs a visibly settled command at the
+  # heart lobe reversals.  These are runtime scheduling limits, not invented
+  # acceleration limits: every segment is still checked against the reviewed
+  # velocity limits and independently observed after execution.
+  cartesian_velocity_scaling: 0.03
+  cartesian_retime_safety_factor: 4.0
+  cartesian_minimum_segment_duration_sec: 0.50
 
 # The board center comes live from the RGB-D vision stream.  These values are
 # only its calibrated local axes/dimensions in the static lab, never authored
