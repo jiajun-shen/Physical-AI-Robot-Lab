@@ -27,6 +27,14 @@ def _evidence(shape: str, size: float, position: str = "center") -> dict:
         "board_frame": {"name": "drawing_board", "center_source": "fresh_rgbd_vision", "observation": {"source_mode": "VISION"}, "board_collision_preserved": True, "tool_link": "drawing_tip", "tool_model": "phase6_collision_bearing_drawing_pen"},
         "planning_scene_ids": ["p6_live_vision_drawing_board"],
         "execution": {
+            "pre_motion_cartesian_gate": {
+                "result": "PASS",
+                "segment_count": 15,
+                "collision_aware": True,
+                "avoid_collisions": True,
+                "start_state": "planned_approach_endpoint",
+                "execution_route": "preflighted_cartesian_trajectories",
+            },
             "cartesian": {"avoid_collisions": True, "fraction": 1.0, "execution": {"action_status": 4}},
             "approach": {"planning": {"collision_aware": True}, "execution": {"action_status": 4}},
             "retreat": {"planning": {"collision_aware": True}, "execution": {"action_status": 4}},
@@ -60,3 +68,20 @@ def test_evaluator_rejects_cartesian_path_without_collision_checking(tmp_path):
         assert "collision" in str(exc)
     else:
         raise AssertionError("evaluator accepted an unguarded Cartesian path")
+
+
+def test_evaluator_rejects_execution_that_skips_the_pre_motion_route_gate(tmp_path):
+    invalid = _evidence("heart", 0.14)
+    invalid["execution"].pop("pre_motion_cartesian_gate")
+    paths = []
+    for index, shape in enumerate(("heart", "square", "circle")):
+        path = tmp_path / f"{index}.json"
+        body = invalid if index == 0 else _evidence(shape, 0.10 + index * 0.02)
+        path.write_text(json.dumps(body), encoding="utf-8")
+        paths.append(path)
+    try:
+        MODULE.evaluate(paths)
+    except MODULE.EvaluationError as exc:
+        assert "before motion" in str(exc)
+    else:
+        raise AssertionError("evaluator accepted a route that was not preflighted")
