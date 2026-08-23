@@ -30,9 +30,10 @@ planner:
   action_result_timeout_sec: 75.0
   endpoint_observation_timeout_sec: 10.0
   endpoint_samples: 3
-  # A live segment is not allowed to advance unless its observed endpoint is
-  # at least as strict as the P6 trajectory controller's reviewed goal.
-  observed_joint_tolerance_rad: 0.030
+  # The controller may report success once it reaches its reviewed 0.03-rad
+  # goal.  Before a new live Cartesian request, require tighter measured
+  # convergence so residual joint error cannot become a large TCP correction.
+  observed_joint_tolerance_rad: 0.010
   vision_timeout_sec: 18.0
   cartesian_max_step_m: 0.008
   cartesian_jump_threshold: 0.0

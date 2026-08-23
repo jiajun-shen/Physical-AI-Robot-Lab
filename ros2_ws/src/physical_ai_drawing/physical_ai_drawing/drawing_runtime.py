@@ -717,6 +717,16 @@ class DrawingRuntime(Node):
             )
             execution = self.execute(live_segment["trajectory"], label)
             observed = self.observe_endpoint(live_segment["endpoint"], label)
+            endpoint_tolerance = finite(
+                self.planner.get("observed_joint_tolerance_rad"),
+                "joint endpoint tolerance",
+                positive=True,
+            )
+            endpoint_samples = integer(
+                self.planner.get("endpoint_samples"),
+                "endpoint sample count",
+                minimum=1,
+            )
             records.append(
                 {
                     **live_segment["cartesian"],
@@ -727,7 +737,12 @@ class DrawingRuntime(Node):
                         "live_forward_target_count": len(live_forward_targets),
                     },
                     "execution": execution,
+                    "expected_endpoint": live_segment["endpoint"],
                     "observed_endpoint": observed,
+                    "endpoint_gate": {
+                        "tolerance_rad": endpoint_tolerance,
+                        "consecutive_samples": endpoint_samples,
+                    },
                 }
             )
         fractions = [finite(record["fraction"], "Cartesian segment fraction") for record in records]

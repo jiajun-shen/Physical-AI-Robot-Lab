@@ -62,7 +62,11 @@ def test_live_cartesian_execution_uses_only_forward_generated_targets():
         ),
         execute=lambda trajectory, label: {"action_status": 4},
         observe_endpoint=lambda endpoint, label: endpoint,
-        planner={"cartesian_segment_waypoints": 2},
+        planner={
+            "cartesian_segment_waypoints": 2,
+            "observed_joint_tolerance_rad": 0.01,
+            "endpoint_samples": 3,
+        },
     )
     planned = [
         {
@@ -85,4 +89,8 @@ def test_live_cartesian_execution_uses_only_forward_generated_targets():
         "strategy": "live_state_to_forward_generated_waypoints",
         "preflight_waypoint_count": 2,
         "live_forward_target_count": 1,
+    }
+    assert result["segments"][0]["endpoint_gate"] == {
+        "tolerance_rad": 0.01,
+        "consecutive_samples": 3,
     }

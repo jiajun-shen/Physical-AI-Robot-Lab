@@ -102,6 +102,23 @@ def validate_one(path: Path) -> dict[str, Any]:
             live_count = finite(targets.get("live_forward_target_count"), f"{path}: Cartesian segment {index} live target count")
             require(preflight_count >= 2.0 and live_count >= 1.0 and live_count == preflight_count - 1.0, f"{path}: Cartesian segment {index} has invalid live-start target provenance")
             require(segment.get("execution", {}).get("action_status") == 4, f"{path}: Cartesian segment {index} did not execute")
+            endpoint_gate = segment.get("endpoint_gate")
+            require(isinstance(endpoint_gate, dict), f"{path}: Cartesian segment {index} lacks measured endpoint gate")
+            endpoint_tolerance = finite(endpoint_gate.get("tolerance_rad"), f"{path}: Cartesian segment {index} endpoint tolerance")
+            require(0.0 < endpoint_tolerance <= 0.01, f"{path}: Cartesian segment {index} endpoint gate is too loose")
+            require(finite(endpoint_gate.get("consecutive_samples"), f"{path}: Cartesian segment {index} endpoint sample count") >= 3.0, f"{path}: Cartesian segment {index} endpoint gate is undersampled")
+            expected_endpoint = segment.get("expected_endpoint")
+            observed_endpoint = segment.get("observed_endpoint")
+            require(isinstance(expected_endpoint, dict) and isinstance(observed_endpoint, dict), f"{path}: Cartesian segment {index} endpoint evidence is malformed")
+            require(set(expected_endpoint) == set(observed_endpoint) and len(expected_endpoint) == 6, f"{path}: Cartesian segment {index} endpoint joint set is invalid")
+            endpoint_error = max(
+                abs(
+                    finite(observed_endpoint[name], f"{path}: Cartesian segment {index} observed {name}")
+                    - finite(expected_endpoint[name], f"{path}: Cartesian segment {index} expected {name}")
+                )
+                for name in expected_endpoint
+            )
+            require(endpoint_error <= endpoint_tolerance + 1e-9, f"{path}: Cartesian segment {index} observed endpoint exceeds its gate")
             retiming = segment.get("retiming")
             require(isinstance(retiming, dict), f"{path}: Cartesian segment {index} lacks retiming evidence")
             hold = retiming.get("terminal_hold")

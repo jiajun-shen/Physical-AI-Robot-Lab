@@ -49,6 +49,9 @@ def _evidence(shape: str, size: float, position: str = "center") -> dict:
                             "preflight_waypoint_count": 2,
                             "live_forward_target_count": 1,
                         },
+                        "expected_endpoint": {f"joint_{index}": 0.0 for index in range(1, 7)},
+                        "observed_endpoint": {f"joint_{index}": 0.005 for index in range(1, 7)},
+                        "endpoint_gate": {"tolerance_rad": 0.01, "consecutive_samples": 3},
                         "retiming": {
                             "terminal_hold": {
                                 "duration_sec": 1.0,
@@ -163,3 +166,20 @@ def test_evaluator_rejects_a_live_segment_that_backtracks_to_a_nominal_endpoint(
         assert "forward generated targets" in str(exc)
     else:
         raise AssertionError("evaluator accepted a live segment that backtracked")
+
+
+def test_evaluator_rejects_an_endpoint_that_exceeds_the_tighter_live_gate(tmp_path):
+    invalid = _evidence("heart", 0.14)
+    invalid["execution"]["cartesian"]["segments"][0]["observed_endpoint"]["joint_3"] = 0.011
+    paths = []
+    for index, shape in enumerate(("heart", "square", "circle")):
+        path = tmp_path / f"{index}.json"
+        body = invalid if index == 0 else _evidence(shape, 0.10 + index * 0.02)
+        path.write_text(json.dumps(body), encoding="utf-8")
+        paths.append(path)
+    try:
+        MODULE.evaluate(paths)
+    except MODULE.EvaluationError as exc:
+        assert "exceeds" in str(exc)
+    else:
+        raise AssertionError("evaluator accepted an endpoint outside the live gate")
