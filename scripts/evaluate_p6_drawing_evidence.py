@@ -78,6 +78,13 @@ def validate_one(path: Path) -> dict[str, Any]:
     require(isinstance(cartesian, dict) and cartesian.get("avoid_collisions") is True, f"{path}: Cartesian collision checking missing")
     require(finite(cartesian.get("fraction"), f"{path}: Cartesian fraction") >= 0.999999, f"{path}: incomplete Cartesian path")
     require(cartesian.get("execution", {}).get("action_status") == 4, f"{path}: Cartesian execution did not succeed")
+    segments = cartesian.get("segments")
+    if segments is not None:
+        require(isinstance(segments, list) and len(segments) >= 1, f"{path}: Cartesian segment record is malformed")
+        for index, segment in enumerate(segments):
+            require(segment.get("avoid_collisions") is True, f"{path}: Cartesian segment {index} lacks collision checking")
+            require(finite(segment.get("fraction"), f"{path}: Cartesian segment {index} fraction") >= 0.999999, f"{path}: Cartesian segment {index} is incomplete")
+            require(segment.get("execution", {}).get("action_status") == 4, f"{path}: Cartesian segment {index} did not execute")
     for stage in ("approach", "retreat"):
         require(execution.get(stage, {}).get("planning", {}).get("collision_aware") is True, f"{path}: {stage} lacks collision-aware planning")
         require(execution.get(stage, {}).get("execution", {}).get("action_status") == 4, f"{path}: {stage} execution did not succeed")
