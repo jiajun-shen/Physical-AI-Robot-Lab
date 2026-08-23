@@ -117,6 +117,10 @@ motion:
   retention_sample_max_tcp_distance_m: 0.115
   lift_target_m: 0.085
   release_clearance_m: 0.020
+  # Hold the attached object after the collision-aware lower endpoint before
+  # opening/detaching. This drains the final commanded arm motion from the
+  # physics body rather than releasing a moving ball into the tabletop.
+  pre_release_attached_settle_sec: 1.0
   # P5's startup posture has this measured collision-free TCP position. The
   # post-release MoveIt plan returns to it so the primary Phase-4 RGB-D view
   # has an unobstructed observation of every object.

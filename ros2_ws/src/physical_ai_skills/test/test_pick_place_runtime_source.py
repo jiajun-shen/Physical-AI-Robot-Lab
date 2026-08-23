@@ -83,6 +83,8 @@ def test_descending_side_grasp_config_and_legacy_contract_are_fail_closed() -> N
     assert "post_attachment_vision_tcp_sample" in source
     assert 'self.collect_retention(' in source
     assert 'self.motion.get("lift_retention_samples")' in source
+    assert "last transport green/TCP relative offset" in source
+    assert "pre_release_attached_settle_sec" in source
     assert '"primary_rgbd_fallback_after_guard_rejection"' in source
     assert '"phase5_transport_rgbd_fallback_after_guard_primary_rejection"' in source
     assert "guard TCP-relative drift" in source
@@ -104,3 +106,4 @@ def test_gripper_endpoint_requires_joint_state_observation_not_action_state_shap
     assert "if state_names:" in source
     config = yaml.safe_load(RUNTIME_CONFIG_PATH.read_text(encoding="utf-8"))
     assert config["gripper"]["minimum_contact_position_m"] == 0.020
+    assert config["motion"]["pre_release_attached_settle_sec"] == 1.0

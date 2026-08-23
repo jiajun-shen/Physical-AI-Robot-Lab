@@ -2161,12 +2161,36 @@ class PickPlaceRuntime(Node):
         transported = self.run_stage("TRANSPORT", transport_and_verify)
         transport_samples = transported["vision_retention_samples"]
         transport_distance = float(transported["transport_planar_distance_m"])
+        # The verified attached-object visual/TCP offset is more accurate than
+        # the nominal gripper geometry at the final placement pose. Derive the
+        # LOWER TCP target from that fresh RGB-D observation so the physical
+        # green-ball centre, not merely the TCP, reaches the vision-only
+        # placement target. The offset is already bounded by retention drift.
+        retained_relative = list_of_numbers(
+            mapping(transport_samples[-1], "last transport retention sample").get(
+                "green_minus_tcp_m"
+            ),
+            "last transport green/TCP relative offset",
+            3,
+        )
+        release_clearance = finite(
+            self.motion.get("release_clearance_m"), "release clearance", positive=True
+        )
+        desired_release_ball = (
+            place_green.x,
+            place_green.y,
+            place_green.z + release_clearance,
+        )
+        lower_tcp = tuple(
+            desired_release_ball[index] - retained_relative[index] for index in range(3)
+        )
+        ahead = finite(self.robot.get("tcp_ahead_of_pinch_center_m"), "TCP offset", positive=True)
         lower_center = VisionPose(
             class_id=place_green.class_id,
             detection_id=place_green.detection_id,
-            x=place_green.x,
-            y=place_green.y,
-            z=place_green.z + finite(self.motion.get("release_clearance_m"), "release clearance", positive=True),
+            x=lower_tcp[0] - direction[0] * ahead,
+            y=lower_tcp[1] - direction[1] * ahead,
+            z=lower_tcp[2] - direction[2] * ahead,
             stamp_ns=place_green.stamp_ns,
             confidence=place_green.confidence,
         )
@@ -2191,6 +2215,20 @@ class PickPlaceRuntime(Node):
         lower_samples = lowered["vision_retention_samples"]
 
         def release_and_verify() -> dict[str, Any]:
+            if self._attachment_state != "attached":
+                raise PickPlaceError("release started without a confirmed attached lifecycle state")
+            attached_settle_sec = finite(
+                self.motion.get("pre_release_attached_settle_sec"),
+                "pre-release attached settle",
+                positive=True,
+            )
+            settle_end = self._bounded_deadline(
+                attached_settle_sec, "pre-release attached settling"
+            )
+            while time.monotonic() < settle_end:
+                rclpy.spin_once(
+                    self, timeout_sec=min(0.10, max(0.0, settle_end - time.monotonic()))
+                )
             release_open = self.command_gripper(
                 "release_open",
                 finite(self.gripper.get("open_position_m"), "open position", positive=True),
@@ -2207,6 +2245,7 @@ class PickPlaceRuntime(Node):
                 "detached_state": detached_state,
                 "planning_scene_object_ids": scene_after_release,
                 "post_place_minimum_source_stamp_ns": minimum_post_stamp,
+                "pre_release_attached_settle_sec": attached_settle_sec,
                 "support_proof": "PENDING_FRESH_POST_RELEASE_RGBD_EVALUATION",
             }
 
