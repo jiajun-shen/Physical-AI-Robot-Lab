@@ -391,6 +391,21 @@ class DrawingRuntime(Node):
             elapsed += duration
             self._set_time(current, elapsed)
             durations.append(duration)
+        terminal_hold_sec = 0.0
+        if cartesian:
+            # Keep the collision-checked final joint target flat for a bounded
+            # interval before the controller begins its strict goal-time
+            # evaluation.  This adds no geometric or joint-space motion.
+            terminal_hold_sec = finite(
+                self.planner.get("cartesian_terminal_hold_sec"),
+                "Cartesian terminal hold",
+                positive=True,
+            )
+            terminal_hold = copy.deepcopy(cleaned[-1])
+            terminal_hold.velocities, terminal_hold.accelerations, terminal_hold.effort = [], [], []
+            elapsed += terminal_hold_sec
+            self._set_time(terminal_hold, elapsed)
+            cleaned.append(terminal_hold)
         joint_trajectory.points = cleaned
         return result, {
             "method": "velocity_only_conservative_retime",
@@ -400,6 +415,10 @@ class DrawingRuntime(Node):
             "profile": "cartesian" if cartesian else "pose",
             "segment_durations_sec": durations,
             "duration_sec": elapsed,
+            "terminal_hold": {
+                "duration_sec": terminal_hold_sec,
+                "repeats_collision_checked_endpoint": cartesian,
+            },
             "acceleration_limits_used": False,
         }
 

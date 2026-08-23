@@ -44,6 +44,12 @@ def _evidence(shape: str, size: float, position: str = "center") -> dict:
                         "avoid_collisions": True,
                         "fraction": 1.0,
                         "pre_motion_cartesian": {"avoid_collisions": True, "fraction": 1.0},
+                        "retiming": {
+                            "terminal_hold": {
+                                "duration_sec": 1.0,
+                                "repeats_collision_checked_endpoint": True,
+                            }
+                        },
                         "execution": {"action_status": 4},
                     }
                 ],
@@ -114,3 +120,22 @@ def test_evaluator_rejects_a_live_segment_without_its_pre_motion_check(tmp_path)
         assert "pre-motion" in str(exc)
     else:
         raise AssertionError("evaluator accepted a live segment without a pre-motion check")
+
+
+def test_evaluator_rejects_a_terminal_hold_that_changes_the_endpoint(tmp_path):
+    invalid = _evidence("heart", 0.14)
+    invalid["execution"]["cartesian"]["segments"][0]["retiming"]["terminal_hold"][
+        "repeats_collision_checked_endpoint"
+    ] = False
+    paths = []
+    for index, shape in enumerate(("heart", "square", "circle")):
+        path = tmp_path / f"{index}.json"
+        body = invalid if index == 0 else _evidence(shape, 0.10 + index * 0.02)
+        path.write_text(json.dumps(body), encoding="utf-8")
+        paths.append(path)
+    try:
+        MODULE.evaluate(paths)
+    except MODULE.EvaluationError as exc:
+        assert "terminal hold" in str(exc)
+    else:
+        raise AssertionError("evaluator accepted a terminal hold that changed the endpoint")

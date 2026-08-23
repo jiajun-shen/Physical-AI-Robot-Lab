@@ -96,6 +96,13 @@ def validate_one(path: Path) -> dict[str, Any]:
             require(live_preflight.get("avoid_collisions") is True, f"{path}: Cartesian segment {index} pre-motion check lacks collision checking")
             require(finite(live_preflight.get("fraction"), f"{path}: Cartesian segment {index} pre-motion fraction") >= 0.999999, f"{path}: Cartesian segment {index} pre-motion route is incomplete")
             require(segment.get("execution", {}).get("action_status") == 4, f"{path}: Cartesian segment {index} did not execute")
+            retiming = segment.get("retiming")
+            require(isinstance(retiming, dict), f"{path}: Cartesian segment {index} lacks retiming evidence")
+            hold = retiming.get("terminal_hold")
+            require(isinstance(hold, dict), f"{path}: Cartesian segment {index} lacks terminal-hold evidence")
+            hold_duration = finite(hold.get("duration_sec"), f"{path}: Cartesian segment {index} terminal-hold duration")
+            require(0.0 < hold_duration <= 2.0, f"{path}: Cartesian segment {index} terminal hold is outside the bounded runtime policy")
+            require(hold.get("repeats_collision_checked_endpoint") is True, f"{path}: Cartesian segment {index} terminal hold changed the collision-checked endpoint")
     for stage in ("approach", "retreat"):
         require(execution.get(stage, {}).get("planning", {}).get("collision_aware") is True, f"{path}: {stage} lacks collision-aware planning")
         require(execution.get(stage, {}).get("execution", {}).get("action_status") == 4, f"{path}: {stage} execution did not succeed")

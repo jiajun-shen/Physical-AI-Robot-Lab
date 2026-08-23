@@ -30,7 +30,9 @@ planner:
   action_result_timeout_sec: 75.0
   endpoint_observation_timeout_sec: 10.0
   endpoint_samples: 3
-  observed_joint_tolerance_rad: 0.040
+  # A live segment is not allowed to advance unless its observed endpoint is
+  # at least as strict as the P6 trajectory controller's reviewed goal.
+  observed_joint_tolerance_rad: 0.030
   vision_timeout_sec: 18.0
   cartesian_max_step_m: 0.008
   cartesian_jump_threshold: 0.0
@@ -52,6 +54,10 @@ planner:
   cartesian_velocity_scaling: 0.03
   cartesian_retime_safety_factor: 4.0
   cartesian_minimum_segment_duration_sec: 1.00
+  # Repeat the already collision-checked endpoint with no new position for a
+  # bounded interval.  This lets the Gazebo position loop settle before the
+  # strict JTC goal-time window begins without relaxing its 0.03-rad goal.
+  cartesian_terminal_hold_sec: 1.00
   # MoveIt can return several collision-free approach IK branches for the
   # same pen pose.  Sample a bounded number before motion and retain only a
   # branch whose whole segmented Cartesian route also passes collision checks.
