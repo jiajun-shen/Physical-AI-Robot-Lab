@@ -33,9 +33,21 @@ def _evidence(shape: str, size: float, position: str = "center") -> dict:
                 "collision_aware": True,
                 "avoid_collisions": True,
                 "start_state": "planned_approach_endpoint",
-                "execution_route": "preflighted_cartesian_trajectories",
+                "execution_route": "preflighted_live_start_cartesian_trajectories",
             },
-            "cartesian": {"avoid_collisions": True, "fraction": 1.0, "execution": {"action_status": 4}},
+            "cartesian": {
+                "avoid_collisions": True,
+                "fraction": 1.0,
+                "execution": {"action_status": 4},
+                "segments": [
+                    {
+                        "avoid_collisions": True,
+                        "fraction": 1.0,
+                        "pre_motion_cartesian": {"avoid_collisions": True, "fraction": 1.0},
+                        "execution": {"action_status": 4},
+                    }
+                ],
+            },
             "approach": {"planning": {"collision_aware": True}, "execution": {"action_status": 4}},
             "retreat": {"planning": {"collision_aware": True}, "execution": {"action_status": 4}},
         },
@@ -85,3 +97,20 @@ def test_evaluator_rejects_execution_that_skips_the_pre_motion_route_gate(tmp_pa
         assert "before motion" in str(exc)
     else:
         raise AssertionError("evaluator accepted a route that was not preflighted")
+
+
+def test_evaluator_rejects_a_live_segment_without_its_pre_motion_check(tmp_path):
+    invalid = _evidence("heart", 0.14)
+    invalid["execution"]["cartesian"]["segments"][0].pop("pre_motion_cartesian")
+    paths = []
+    for index, shape in enumerate(("heart", "square", "circle")):
+        path = tmp_path / f"{index}.json"
+        body = invalid if index == 0 else _evidence(shape, 0.10 + index * 0.02)
+        path.write_text(json.dumps(body), encoding="utf-8")
+        paths.append(path)
+    try:
+        MODULE.evaluate(paths)
+    except MODULE.EvaluationError as exc:
+        assert "pre-motion" in str(exc)
+    else:
+        raise AssertionError("evaluator accepted a live segment without a pre-motion check")

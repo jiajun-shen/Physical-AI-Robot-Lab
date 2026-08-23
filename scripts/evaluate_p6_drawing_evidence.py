@@ -80,7 +80,7 @@ def validate_one(path: Path) -> dict[str, Any]:
     require(isinstance(preflight, dict) and preflight.get("result") == "PASS", f"{path}: route was not accepted before motion")
     require(preflight.get("collision_aware") is True and preflight.get("avoid_collisions") is True, f"{path}: pre-motion route lacks collision checking")
     require(preflight.get("start_state") == "planned_approach_endpoint", f"{path}: pre-motion route used an invalid start state")
-    require(preflight.get("execution_route") == "preflighted_cartesian_trajectories", f"{path}: execution did not use the accepted Cartesian route")
+    require(preflight.get("execution_route") == "preflighted_live_start_cartesian_trajectories", f"{path}: execution did not use the accepted Cartesian route")
     cartesian = execution.get("cartesian")
     require(isinstance(cartesian, dict) and cartesian.get("avoid_collisions") is True, f"{path}: Cartesian collision checking missing")
     require(finite(cartesian.get("fraction"), f"{path}: Cartesian fraction") >= 0.999999, f"{path}: incomplete Cartesian path")
@@ -91,6 +91,10 @@ def validate_one(path: Path) -> dict[str, Any]:
         for index, segment in enumerate(segments):
             require(segment.get("avoid_collisions") is True, f"{path}: Cartesian segment {index} lacks collision checking")
             require(finite(segment.get("fraction"), f"{path}: Cartesian segment {index} fraction") >= 0.999999, f"{path}: Cartesian segment {index} is incomplete")
+            live_preflight = segment.get("pre_motion_cartesian")
+            require(isinstance(live_preflight, dict), f"{path}: Cartesian segment {index} lacks its pre-motion check")
+            require(live_preflight.get("avoid_collisions") is True, f"{path}: Cartesian segment {index} pre-motion check lacks collision checking")
+            require(finite(live_preflight.get("fraction"), f"{path}: Cartesian segment {index} pre-motion fraction") >= 0.999999, f"{path}: Cartesian segment {index} pre-motion route is incomplete")
             require(segment.get("execution", {}).get("action_status") == 4, f"{path}: Cartesian segment {index} did not execute")
     for stage in ("approach", "retreat"):
         require(execution.get(stage, {}).get("planning", {}).get("collision_aware") is True, f"{path}: {stage} lacks collision-aware planning")

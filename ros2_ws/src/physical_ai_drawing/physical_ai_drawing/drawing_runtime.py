@@ -653,7 +653,7 @@ class DrawingRuntime(Node):
                 scene_ids,
                 start_positions=predicted_state,
             )
-            planned.append({"label": label, **segment})
+            planned.append({"label": label, "waypoints": current, **segment})
             predicted_state.update(segment["endpoint"])
             if end == len(waypoints):
                 break
@@ -662,20 +662,44 @@ class DrawingRuntime(Node):
             raise DrawingRuntimeError("no Cartesian drawing segments were generated")
         return planned
 
-    def execute_preplanned_cartesian_segments(
+    def execute_preflighted_cartesian_segments(
         self,
         planned: list[dict[str, Any]],
+        orientation: tuple[float, float, float, float],
+        scene_ids: list[str],
         *,
         requested_waypoint_count: int,
     ) -> dict[str, Any]:
-        """Execute the collision-checked route that passed the pre-motion gate."""
+        """Replan each accepted Cartesian segment from the observed live state.
+
+        The pre-motion gate chooses an approach IK branch only after its whole
+        route has been validated.  The Gazebo position loop may still settle a
+        few milliradians away from an earlier segment's nominal endpoint.  A
+        copied joint trajectory would then be rejected by MoveIt's strict
+        start-state guard.  Re-requesting the same Cartesian segment from the
+        live state preserves collision checking and board-local waypoints while
+        avoiding an unsafe or fabricated joint-space correction.
+        """
 
         records: list[dict[str, Any]] = []
-        for segment in planned:
-            label = str(segment["label"])
-            execution = self.execute(segment["trajectory"], label)
-            observed = self.observe_endpoint(segment["endpoint"], label)
-            records.append({**segment["cartesian"], "execution": execution, "observed_endpoint": observed})
+        for preflight_segment in planned:
+            label = str(preflight_segment["label"])
+            live_segment = self.cartesian_path(
+                label,
+                list(preflight_segment["waypoints"]),
+                orientation,
+                scene_ids,
+            )
+            execution = self.execute(live_segment["trajectory"], label)
+            observed = self.observe_endpoint(live_segment["endpoint"], label)
+            records.append(
+                {
+                    **live_segment["cartesian"],
+                    "pre_motion_cartesian": preflight_segment["cartesian"],
+                    "execution": execution,
+                    "observed_endpoint": observed,
+                }
+            )
         fractions = [finite(record["fraction"], "Cartesian segment fraction") for record in records]
         return {
             "fraction": min(fractions),
@@ -773,8 +797,10 @@ class DrawingRuntime(Node):
             # do not try another pose from an uncertain robot state.
             approach_execution = self.execute(approach["trajectory"], f"{identifier}_approach")
             approach_observed = self.observe_endpoint(approach["endpoint"], f"{identifier}_approach")
-            cartesian = self.execute_preplanned_cartesian_segments(
+            cartesian = self.execute_preflighted_cartesian_segments(
                 planned_segments,
+                orientation,
+                scene_ids,
                 requested_waypoint_count=len(world_points),
             )
             retreat_position = self._shift_normal(world_points[-1], frame, approach_offset)
@@ -790,7 +816,7 @@ class DrawingRuntime(Node):
                     "collision_aware": True,
                     "avoid_collisions": True,
                     "start_state": "planned_approach_endpoint",
-                    "execution_route": "preflighted_cartesian_trajectories",
+                    "execution_route": "preflighted_live_start_cartesian_trajectories",
                     "accepted_preflight_attempt": accepted_preflight_attempt,
                     "rejected_preflight_attempts": route_failures,
                 },
