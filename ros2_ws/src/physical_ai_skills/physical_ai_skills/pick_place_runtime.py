@@ -2287,11 +2287,26 @@ class PickPlaceRuntime(Node):
                     3,
                 )
             )
+            current_tcp = self.current_tcp()
+            clearance_tcp = (
+                current_tcp["x"],
+                current_tcp["y"],
+                retreat_tcp[2],
+            )
+            if clearance_tcp[2] <= current_tcp["z"]:
+                raise PickPlaceError("post-release vertical clearance target is not above the current TCP")
+            # First lift clear of the released physical ball without a lateral
+            # sweep. Only after this collision-aware clearance has completed
+            # may the arm travel to the P4-visible safe posture.
+            clearance_motion = self.move_pose(
+                "post_release_clearance", self.pose_stamped(clearance_tcp, quaternion)
+            )
             retreat_motion = self.move_pose(
                 "retreat", self.pose_stamped(retreat_tcp, quaternion)
             )
             return {
                 "motion": retreat_motion,
+                "vertical_clearance_motion": clearance_motion,
                 "gripper_is_open": release_open["observation"],
                 "attachment_state": self._attachment_state,
                 "retreat_target_policy": "p5_safe_startup_tcp_for_unobstructed_phase4_post_place_vision",

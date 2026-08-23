@@ -59,6 +59,7 @@ MOTION_LABELS = (
     "lift",
     "transport",
     "lower",
+    "post_release_clearance",
     "retreat",
 )
 MOTION_STAGE_KEYS = (
@@ -698,6 +699,15 @@ def validate_motion_records(
         stage_motion = require_mapping(details.get(detail_key), f"{stage_name}.details.{detail_key}")
         if stage_motion != records[motion_label]:
             raise EvaluationError(f"{stage_name} is not tied to its successful MoveIt motion record")
+    retreat_details = require_mapping(stages["RETREAT"].get("details"), "RETREAT.details")
+    if (
+        require_mapping(
+            retreat_details.get("vertical_clearance_motion"),
+            "RETREAT.details.vertical_clearance_motion",
+        )
+        != records["post_release_clearance"]
+    ):
+        raise EvaluationError("RETREAT is not tied to its successful vertical clearance motion")
 
 
 def validate_gripper_action(value: Any, label: str, *, contact_close: bool = False) -> tuple[float, float]:

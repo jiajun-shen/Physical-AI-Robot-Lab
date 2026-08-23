@@ -333,7 +333,8 @@ def _write_execution(path: Path, pre_stamp: int) -> None:
         "LOWER": {"motion": motions[5], "vision_retention_samples": lower},
         "RELEASE": release,
         "RETREAT": {
-            "motion": motions[6],
+            "vertical_clearance_motion": motions[6],
+            "motion": motions[7],
             "gripper_is_open": release_action["observation"],
             "attachment_state": "detached",
             "retreat_target_policy": "p5_safe_startup_tcp_for_unobstructed_phase4_post_place_vision",

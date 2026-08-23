@@ -85,6 +85,8 @@ def test_descending_side_grasp_config_and_legacy_contract_are_fail_closed() -> N
     assert 'self.motion.get("lift_retention_samples")' in source
     assert "last transport green/TCP relative offset" in source
     assert "pre_release_attached_settle_sec" in source
+    assert '"post_release_clearance"' in source
+    assert "vertical_clearance_motion" in source
     assert '"primary_rgbd_fallback_after_guard_rejection"' in source
     assert '"phase5_transport_rgbd_fallback_after_guard_primary_rejection"' in source
     assert "guard TCP-relative drift" in source
