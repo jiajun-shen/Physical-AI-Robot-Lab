@@ -888,7 +888,12 @@ class DrawingRuntime(Node):
             accepted_preflight_attempt: int | None = None
             for preflight_attempt in range(1, route_preflight_attempts + 1):
                 try:
-                    approach_position = self._shift_normal(world_points[0], frame, approach_offset)
+                    # Use collision-aware free-space planning to reach the
+                    # first contactless drawing standoff.  The generated
+                    # Cartesian trace begins there, so the first draw segment
+                    # contains only a curve chord—not an unverified 10 cm
+                    # normal descent mixed into the drawing motion.
+                    approach_position = world_points[0]
                     candidate_approach = self.plan_pose(
                         f"{identifier}_approach",
                         self.pose_stamped(approach_position, orientation),
