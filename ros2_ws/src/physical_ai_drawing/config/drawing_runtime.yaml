@@ -51,7 +51,7 @@ planner:
   # velocity limits and independently observed after execution.
   cartesian_velocity_scaling: 0.03
   cartesian_retime_safety_factor: 4.0
-  cartesian_minimum_segment_duration_sec: 0.50
+  cartesian_minimum_segment_duration_sec: 1.00
   # MoveIt can return several collision-free approach IK branches for the
   # same pen pose.  Sample a bounded number before motion and retain only a
   # branch whose whole segmented Cartesian route also passes collision checks.
