@@ -37,7 +37,11 @@ planner:
   cartesian_prismatic_jump_threshold: 0.0
   cartesian_revolute_jump_threshold: 0.0
   cartesian_acceleration_scaling: 0.10
-  cartesian_segment_waypoints: 6
+  # Two successive generated samples per execution command keep the physical
+  # controller inside its verified 0.03-rad goal tolerance at the heart's
+  # high-curvature lobes. Adjacent segments share an endpoint, preserving a
+  # continuous board-local curve rather than switching to joint waypoints.
+  cartesian_segment_waypoints: 2
   # Cartesian traces are deliberately slower than the free-space approach:
   # there are no verified acceleration limits, and every chunk must be
   # visibly tracked by the Gazebo joint controller.
