@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
-# Execute Phase 6 drawing cases through the live P5 Gazebo/MoveIt graph.
+# Execute Phase 6 drawing cases through fresh, isolated P5-compatible
+# Gazebo/MoveIt graphs.
 # The source worktree must be clean: this harness is used only for immutable
 # simulation evidence, not iterative development.
 set -eo pipefail
 
 if [[ "${P6_WATCHDOG_ACTIVE:-0}" != "1" ]]; then
   export P6_WATCHDOG_ACTIVE=1
-  exec timeout --signal=TERM --kill-after=45s 1200s "$0" "$@"
+  # Each of the three sealed cases owns a complete fresh simulation episode.
+  # Keep a finite watchdog, but allow the three bounded case budgets plus the
+  # one-time source build/test step to finish before it intervenes.
+  exec timeout --signal=TERM --kill-after=45s 2400s "$0" "$@"
 fi
 
 readonly ROS_SETUP=/opt/ros/jazzy/setup.bash
@@ -86,7 +90,29 @@ tested_commit="$(git -C "${REPOSITORY_ROOT}" rev-parse HEAD)"
 capture_manifest() { ( cd "${REPOSITORY_ROOT}" && git ls-files --cached --others --exclude-standard -z | LC_ALL=C sort -z | xargs -0 -r sha256sum ); }
 capture_manifest >"${BEFORE_MANIFEST}"
 
-launch_pid=""; vision_pid=""; static_vision_pid=""
+launch_pid=""; vision_pid=""; static_vision_pid=""; active_case_partition=""
+partition_pids() {
+  local partition="$1" environment_file process_dir
+  for process_dir in /proc/[0-9]*; do
+    environment_file="${process_dir}/environ"
+    [[ -r "${environment_file}" ]] || continue
+    if tr '\0' '\n' <"${environment_file}" 2>/dev/null |
+        grep -Fxq "GZ_PARTITION=${partition}"; then
+      printf '%s\n' "${process_dir##*/}"
+    fi
+  done
+  return 0
+}
+wait_for_partition_empty() {
+  local partition="$1" deadline pids
+  deadline=$((SECONDS + 12))
+  while (( SECONDS < deadline )); do
+    pids="$(partition_pids "${partition}")"
+    [[ -z "${pids}" ]] && return 0
+    sleep 0.25
+  done
+  return 1
+}
 stop_group() {
   local pid="$1"
   [[ -n "${pid}" ]] && kill -0 -- "-${pid}" 2>/dev/null || return 0
@@ -106,13 +132,22 @@ stop_active_case() {
   for pid in "${static_vision_pid}" "${vision_pid}" "${launch_pid}"; do
     [[ -z "${pid}" ]] || ! kill -0 -- "-${pid}" 2>/dev/null || status=1
   done
-  static_vision_pid=""; vision_pid=""; launch_pid=""
   timeout --kill-after=1s 5s ros2 daemon stop >/dev/null 2>&1 || true
+  if [[ -n "${active_case_partition}" ]]; then
+    wait_for_partition_empty "${active_case_partition}" || status=1
+  fi
+  if (( status == 0 )); then
+    static_vision_pid=""; vision_pid=""; launch_pid=""; active_case_partition=""
+  fi
   return "${status}"
 }
 cleanup() {
   local status="$?"; trap - EXIT INT TERM
-  stop_active_case || status=1
+  if ! stop_active_case; then
+    echo "ERROR: Phase-6 process cleanup failed; retrying once" >&2
+    stop_active_case || true
+    status=1
+  fi
   exit "${status}"
 }
 trap cleanup EXIT
@@ -120,6 +155,20 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 run_step() { local label="$1" log="$2"; shift 2; "$@" >"${log}" 2>&1 || { echo "ERROR: ${label}" >&2; tail -n 220 "${log}" >&2 || true; return 1; }; }
 topic_snapshot() { timeout --kill-after=1s 8s ros2 topic list --no-daemon --spin-time 3 2>/dev/null || true; }
+wait_for_empty_domain() {
+  local label="$1" log="$2" deadline nodes=""
+  deadline=$((SECONDS + 24))
+  while (( SECONDS < deadline )); do
+    if nodes="$(timeout --kill-after=1s 8s ros2 node list --no-daemon --spin-time 3 2>"${log}.stderr")" && [[ -z "${nodes}" ]]; then
+      printf 'ROS_DOMAIN_EMPTY=PASS\n' >"${log}"
+      return 0
+    fi
+    printf '%s\n' "${nodes:-<inspection failed>}" >"${log}.last_nodes.txt"
+    sleep 0.5
+  done
+  printf 'ROS_DOMAIN_EMPTY=FAIL\n' >"${log}"
+  die "${label}: selected ROS domain did not become empty"
+}
 
 cd "${REPOSITORY_ROOT}/ros2_ws"
 run_step "Phase-6 targeted build" "${OUTPUT_ROOT}/colcon_build.txt" colcon --log-base "${COLCON_LOG_BASE}" build --base-paths "${SOURCE_ROOT}" --packages-up-to physical_ai_drawing physical_ai_perception abb_lab_moveit_config --build-base "${BUILD_BASE}" --install-base "${INSTALL_BASE}" --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
@@ -134,9 +183,19 @@ readonly EVALUATOR="${SCRIPT_DIR}/evaluate_p6_drawing_evidence.py"
 [[ -f "${P4_VERIFIER}" && -f "${EVALUATOR}" ]] || die "required Phase-6 helper missing"
 
 run_case() {
-  local case_id="$1" instruction="$2" case_root="${OUTPUT_ROOT}/cases/$1" case_runtime="${RUNTIME_ROOT}/$1" case_partition deadline topics
+  local case_id="$1" instruction="$2" case_root="${OUTPUT_ROOT}/cases/$1" case_runtime="${RUNTIME_ROOT}/$1" case_partition deadline topics launch_ready existing_partition_pids
   mkdir -p "${case_root}" "${case_runtime}"
   case_partition="physical_ai_p6_${ROS_DOMAIN_ID}_${case_id}_${BASHPID}"
+  wait_for_empty_domain "${case_id} pre-launch" "${case_runtime}/ros_domain_prelaunch.txt"
+  existing_partition_pids="$(partition_pids "${case_partition}")"
+  [[ -z "${existing_partition_pids}" ]] || die "${case_id} GZ partition is already occupied: ${existing_partition_pids}"
+  {
+    echo "CASE_ID=${case_id}"
+    echo "ROS_DOMAIN_ID=${ROS_DOMAIN_ID}"
+    echo "GZ_PARTITION=${case_partition}"
+    echo "EPISODE_ISOLATION=FRESH_GAZEBO_MOVEIT_VISION"
+  } >"${case_runtime}/episode_metadata.txt"
+  active_case_partition="${case_partition}"
   export GZ_PARTITION="${case_partition}"
 
   # A drawn final pose can occlude the two static fiducials.  Each acceptance
@@ -145,14 +204,23 @@ run_case() {
   # carried from a previous drawing episode.
   setsid ros2 launch abb_lab_moveit_config phase6_drawing_headless.launch.py execution_duration_scaling:=2.2 execution_goal_duration_margin:=2.0 >"${case_runtime}/launch.log" 2>&1 &
   launch_pid="$!"
+  launch_ready=false
   deadline=$((SECONDS + 100))
   while (( SECONDS < deadline )); do
     kill -0 "${launch_pid}" 2>/dev/null || { tail -n 260 "${case_runtime}/launch.log" >&2 || true; die "${case_id} P6 launch exited before readiness"; }
     topics="$(topic_snapshot)"
-    if grep -Fxq /joint_states <<<"${topics}" && grep -Fxq /lab_camera/color/image_raw <<<"${topics}" && grep -Fxq /lab_camera/depth/image_raw <<<"${topics}" && ros2 service list --no-daemon 2>/dev/null | grep -Fxq /compute_cartesian_path && ros2 service list --no-daemon 2>/dev/null | grep -Fxq /plan_kinematic_path; then break; fi
+    if grep -Fxq /joint_states <<<"${topics}" && grep -Fxq /lab_camera/color/image_raw <<<"${topics}" && grep -Fxq /lab_camera/depth/image_raw <<<"${topics}" && grep -Fxq /lab_camera/color/camera_info <<<"${topics}" && ros2 service list --no-daemon 2>/dev/null | grep -Fxq /compute_cartesian_path && ros2 service list --no-daemon 2>/dev/null | grep -Fxq /plan_kinematic_path && timeout --kill-after=1s 5s gz model -m abb_irb1200_gripper >"${case_runtime}/gazebo_robot_identity.txt" 2>&1; then
+      launch_ready=true
+      break
+    fi
     sleep 0.5
   done
+  [[ "${launch_ready}" == true ]] || { tail -n 260 "${case_runtime}/launch.log" >&2 || true; die "${case_id} P6 launch did not become ready"; }
   kill -0 "${launch_pid}" 2>/dev/null || die "${case_id} P6 launch did not remain alive"
+  grep -Fq 'Model:' "${case_runtime}/gazebo_robot_identity.txt" || die "${case_id} cannot resolve robot in its own GZ_PARTITION"
+  existing_partition_pids="$(partition_pids "${case_partition}")"
+  [[ -n "${existing_partition_pids}" ]] || die "${case_id} launch did not create a process in its GZ_PARTITION"
+  printf '%s\n' "${existing_partition_pids}" >"${case_runtime}/partition_processes_after_launch.txt"
   ros2 param get /move_group trajectory_execution.allowed_execution_duration_scaling >"${case_runtime}/moveit_execution_monitor.txt" 2>&1 || die "${case_id} could not read Phase-6 MoveIt execution monitor"
   grep -Eq '2\.2' "${case_runtime}/moveit_execution_monitor.txt" || die "${case_id} Phase-6 MoveIt execution monitor did not apply bounded scaling"
 
@@ -186,7 +254,14 @@ run_case() {
   run_step "${case_id} fresh Phase-4 board vision sealing" "${case_runtime}/vision_verifier.log" python3 "${P4_VERIFIER}" --output-root "${case_root}/vision_baseline" --timeout 55 --minimum-source-stamp-sec 3.0
   run_step "Phase-6 ${case_id}" "${case_runtime}/${case_id}.log" ros2 run physical_ai_drawing execute_drawing --instruction "${instruction}" --output-root "${case_root}" --timeout 330
   [[ -f "${case_root}/drawing_execution_evidence.json" ]] || die "${case_id} did not produce drawing evidence"
-  stop_active_case || die "${case_id} process cleanup failed"
+  if ! stop_active_case; then
+    printf 'CLEANUP_STATUS=FAIL\n' >"${case_runtime}/cleanup_status.txt"
+    die "${case_id} process cleanup failed"
+  fi
+  existing_partition_pids="$(partition_pids "${case_partition}")"
+  printf '%s\n' "${existing_partition_pids}" >"${case_runtime}/partition_processes_after_cleanup.txt"
+  [[ -z "${existing_partition_pids}" ]] || die "${case_id} GZ partition remained occupied after cleanup: ${existing_partition_pids}"
+  wait_for_empty_domain "${case_id} post-cleanup" "${case_runtime}/ros_domain_post_cleanup.txt"
   printf 'CLEANUP_STATUS=PASS\n' >"${case_runtime}/cleanup_status.txt"
   unset GZ_PARTITION
 }
