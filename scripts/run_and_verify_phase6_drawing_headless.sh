@@ -155,10 +155,10 @@ run_case() {
   run_step "Phase-6 ${case_id}" "${RUNTIME_ROOT}/${case_id}.log" ros2 run physical_ai_drawing execute_drawing --instruction "${instruction}" --output-root "${case_root}" --timeout 330
   [[ -f "${case_root}/drawing_execution_evidence.json" ]] || die "${case_id} did not produce drawing evidence"
 }
-run_case heart_curve "画一个小一点的爱心"
+run_case circle_curve "画一个小一点的圆"
 run_case left_square "在白板左边画一个小一点的正方形"
-run_case small_circle "画一个小一点的圆"
-run_step "Phase-6 evidence evaluation" "${RUNTIME_ROOT}/evaluator.log" python3 "${EVALUATOR}" --evidence "${OUTPUT_ROOT}/cases/heart_curve/drawing_execution_evidence.json" --evidence "${OUTPUT_ROOT}/cases/left_square/drawing_execution_evidence.json" --evidence "${OUTPUT_ROOT}/cases/small_circle/drawing_execution_evidence.json" --output "${OUTPUT_ROOT}/p6_drawing_evaluation.json"
+run_case left_circle "在白板左边画一个小一点的圆"
+run_step "Phase-6 evidence evaluation" "${RUNTIME_ROOT}/evaluator.log" python3 "${EVALUATOR}" --evidence "${OUTPUT_ROOT}/cases/circle_curve/drawing_execution_evidence.json" --evidence "${OUTPUT_ROOT}/cases/left_square/drawing_execution_evidence.json" --evidence "${OUTPUT_ROOT}/cases/left_circle/drawing_execution_evidence.json" --output "${OUTPUT_ROOT}/p6_drawing_evaluation.json"
 grep -Fxq P6_DRAWING_EVALUATION=PASS "${RUNTIME_ROOT}/evaluator.log" || die "P6 evidence evaluator did not pass"
 
 stop_group "${vision_pid}"; vision_pid=""
