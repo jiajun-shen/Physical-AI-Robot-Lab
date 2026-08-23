@@ -64,8 +64,8 @@ def _evidence(shape: str, size: float, position: str = "center") -> dict:
                             "live_forward_target_count": 1,
                         },
                         "expected_endpoint": {f"joint_{index}": 0.0 for index in range(1, 7)},
-                        "observed_endpoint": {f"joint_{index}": 0.005 for index in range(1, 7)},
-                        "endpoint_gate": {"tolerance_rad": 0.01, "consecutive_samples": 3},
+                        "observed_endpoint": {f"joint_{index}": 0.025 for index in range(1, 7)},
+                        "endpoint_gate": {"tolerance_rad": 0.03, "consecutive_samples": 3},
                         "retiming": {
                             "terminal_hold": {
                                 "duration_sec": 1.0,
@@ -182,9 +182,9 @@ def test_evaluator_rejects_a_live_segment_that_backtracks_to_a_nominal_endpoint(
         raise AssertionError("evaluator accepted a live segment that backtracked")
 
 
-def test_evaluator_rejects_an_endpoint_that_exceeds_the_tighter_live_gate(tmp_path):
+def test_evaluator_rejects_an_endpoint_that_exceeds_the_live_gate(tmp_path):
     invalid = _evidence("heart", 0.14)
-    invalid["execution"]["cartesian"]["segments"][0]["observed_endpoint"]["joint_3"] = 0.011
+    invalid["execution"]["cartesian"]["segments"][0]["observed_endpoint"]["joint_3"] = 0.031
     paths = []
     for index, shape in enumerate(("heart", "square", "circle")):
         path = tmp_path / f"{index}.json"

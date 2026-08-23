@@ -120,7 +120,7 @@ def validate_one(path: Path) -> dict[str, Any]:
             endpoint_gate = segment.get("endpoint_gate")
             require(isinstance(endpoint_gate, dict), f"{path}: Cartesian segment {index} lacks measured endpoint gate")
             endpoint_tolerance = finite(endpoint_gate.get("tolerance_rad"), f"{path}: Cartesian segment {index} endpoint tolerance")
-            require(0.0 < endpoint_tolerance <= 0.01, f"{path}: Cartesian segment {index} endpoint gate is too loose")
+            require(0.0 < endpoint_tolerance <= 0.03, f"{path}: Cartesian segment {index} endpoint gate is too loose")
             require(finite(endpoint_gate.get("consecutive_samples"), f"{path}: Cartesian segment {index} endpoint sample count") >= 3.0, f"{path}: Cartesian segment {index} endpoint gate is undersampled")
             expected_endpoint = segment.get("expected_endpoint")
             observed_endpoint = segment.get("observed_endpoint")

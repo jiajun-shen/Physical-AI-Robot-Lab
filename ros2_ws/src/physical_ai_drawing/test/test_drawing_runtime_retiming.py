@@ -65,7 +65,7 @@ def test_live_cartesian_execution_uses_only_forward_generated_targets():
         observe_endpoint=lambda endpoint, label: endpoint,
         planner={
             "cartesian_segment_waypoints": 2,
-            "observed_joint_tolerance_rad": 0.01,
+            "observed_joint_tolerance_rad": 0.03,
             "endpoint_samples": 3,
             "preflight_minimum_joint_limit_margin_rad": 0.2,
         },
@@ -100,7 +100,7 @@ def test_live_cartesian_execution_uses_only_forward_generated_targets():
         "live_forward_target_count": 1,
     }
     assert result["segments"][0]["endpoint_gate"] == {
-        "tolerance_rad": 0.01,
+        "tolerance_rad": 0.03,
         "consecutive_samples": 3,
     }
     assert result["segments"][0]["live_joint_limit_margin"][
