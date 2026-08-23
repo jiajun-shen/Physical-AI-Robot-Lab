@@ -4,7 +4,7 @@ scope: SIMULATION_ONLY
 robot:
   group_name: manipulator
   planning_frame: world
-  tcp_link: gripper_tcp
+  tcp_link: drawing_tip
   arm_joint_names: [joint_1, joint_2, joint_3, joint_4, joint_5, joint_6]
   gripper_joint: two_finger_right_joint
   velocity_limits_rad_per_sec:
@@ -58,10 +58,10 @@ board:
   horizontal_axis_world: [0.0, 1.0, 0.0]
   vertical_axis_world: [0.0, 0.0, 1.0]
   front_surface_offset_m: 0.015
-  # There is no physical pen/contact model in this phase. The virtual tip
-  # stays 35 mm in front of the solid collision board, so collision checking
-  # remains true while the projected trace lies in its named board frame.
-  virtual_tip_standoff_m: 0.065
+  # `drawing_tip` belongs to the collision-bearing P6 pen model.  The tip
+  # remains 8 mm in front of the solid board to keep this simulation trace
+  # contactless while its actual tool frame maps to the board plane.
+  virtual_tip_standoff_m: 0.008
   approach_offset_m: 0.100
   horizontal_half_extent_m: 0.35
   vertical_half_extent_m: 0.225

@@ -30,6 +30,7 @@ def generate_launch_description() -> LaunchDescription:
     world_name = LaunchConfiguration("world_name")
     arm_initial_positions_file = LaunchConfiguration("arm_initial_positions_file")
     world_to_base_z = LaunchConfiguration("world_to_base_z")
+    robot_description_xacro = LaunchConfiguration("robot_description_xacro")
     base_bringup = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution(
@@ -46,6 +47,7 @@ def generate_launch_description() -> LaunchDescription:
             "world_name": world_name,
             "arm_initial_positions_file": arm_initial_positions_file,
             "world_to_base_z": world_to_base_z,
+            "robot_description_xacro": robot_description_xacro,
         }.items(),
     )
     camera_bridge = Node(
@@ -150,6 +152,17 @@ def generate_launch_description() -> LaunchDescription:
                 "world_to_base_z",
                 default_value="0",
                 description="Forward an optional simulation-only base mount height.",
+            ),
+            DeclareLaunchArgument(
+                "robot_description_xacro",
+                default_value=PathJoinSubstitution(
+                    [
+                        FindPackageShare("abb_lab_gripper"),
+                        "urdf",
+                        "irb1200_5_90_gz_gripper_control.urdf.xacro",
+                    ]
+                ),
+                description="Forward an exact gripper/drawing-tool Xacro to the single spawned robot.",
             ),
             base_bringup,
             camera_bridge,

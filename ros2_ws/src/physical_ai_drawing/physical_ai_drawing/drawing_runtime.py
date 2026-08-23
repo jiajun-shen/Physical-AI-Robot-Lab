@@ -169,8 +169,8 @@ class DrawingRuntime(Node):
         self.gripper_joint = str(self.robot.get("gripper_joint", ""))
         self.planning_frame = str(self.robot.get("planning_frame", ""))
         self.tcp_link = str(self.robot.get("tcp_link", ""))
-        if self.planning_frame != "world" or self.tcp_link != "gripper_tcp" or not self.gripper_joint:
-            raise DrawingRuntimeError("drawing runtime has an unexpected planning frame, TCP, or gripper joint")
+        if self.planning_frame != "world" or self.tcp_link != "drawing_tip" or not self.gripper_joint:
+            raise DrawingRuntimeError("drawing runtime requires the collision-bearing Phase-6 drawing_tip and bounded gripper joint")
         self.velocity_limits = {
             name: finite(mapping(self.robot.get("velocity_limits_rad_per_sec"), "velocity limits").get(name), f"velocity limit {name}", positive=True)
             for name in self.arm_joints
@@ -736,6 +736,8 @@ class DrawingRuntime(Node):
                 "front_surface_offset_m": frame.front_surface_offset_m,
                 "virtual_tip_standoff_m": standoff,
                 "board_collision_preserved": True,
+                "tool_link": self.tcp_link,
+                "tool_model": "phase6_collision_bearing_drawing_pen",
             },
             "planning_scene_ids": scene_ids,
             "orientation_attempts": attempts,

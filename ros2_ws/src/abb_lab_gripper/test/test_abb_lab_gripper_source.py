@@ -13,6 +13,7 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 URDF_DIR = PACKAGE_ROOT / "urdf"
 CONFIG_DIR = PACKAGE_ROOT / "config"
 PROFILE_XACRO = URDF_DIR / "irb1200_5_90_gz_gripper_control.urdf.xacro"
+DRAWING_PROFILE_XACRO = URDF_DIR / "irb1200_5_90_gz_drawing_pen_control.urdf.xacro"
 CONTROLLERS_YAML = CONFIG_DIR / "irb1200_gripper_controllers.yaml"
 LIMITS_YAML = CONFIG_DIR / "two_finger_gripper_limits.yaml"
 SAFETY_YAML = (
@@ -37,6 +38,16 @@ def _expanded_robot() -> ET.Element:
     return ET.fromstring(completed.stdout)
 
 
+def _expanded_drawing_robot() -> ET.Element:
+    completed = subprocess.run(
+        ["xacro", str(DRAWING_PROFILE_XACRO)],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+    return ET.fromstring(completed.stdout)
+
+
 def _load_yaml(path: Path) -> dict:
     with path.open(encoding="utf-8") as stream:
         loaded = yaml.safe_load(stream)
@@ -48,6 +59,7 @@ def test_profile_is_a_new_self_contained_package() -> None:
     assert PROFILE_XACRO.is_file()
     assert CONTROLLERS_YAML.is_file()
     assert LIMITS_YAML.is_file()
+    assert DRAWING_PROFILE_XACRO.is_file()
     assert not (PACKAGE_ROOT / "launch").exists()
     assert not (PACKAGE_ROOT / "scripts").exists()
 
@@ -242,3 +254,18 @@ def test_gripper_initial_and_safe_positions_are_bounded_by_the_only_actuated_joi
     assert lower <= safe["closed_clearance_position"] <= upper
     assert lower <= safe["open_position"] <= upper
     assert safe["open_position"] > safe["closed_clearance_position"]
+
+
+def test_phase6_drawing_profile_has_a_collision_bearing_tip_without_new_control_interfaces() -> None:
+    robot = _expanded_drawing_robot()
+    links = {link.attrib["name"]: link for link in robot.findall("link")}
+    joints = {joint.attrib["name"]: joint for joint in robot.findall("joint")}
+    assert {"drawing_pen_shaft", "drawing_tip"}.issubset(links)
+    shaft = links["drawing_pen_shaft"]
+    cylinder = shaft.find("collision/geometry/cylinder")
+    assert cylinder is not None
+    assert float(cylinder.attrib["radius"]) == 0.004
+    assert float(cylinder.attrib["length"]) == 0.085
+    assert joints["gripper_tcp_to_drawing_pen_shaft"].find("parent").attrib["link"] == "gripper_tcp"
+    assert joints["drawing_pen_shaft_to_drawing_tip"].find("child").attrib["link"] == "drawing_tip"
+    assert len(robot.findall("ros2_control")) == 1

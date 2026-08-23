@@ -40,13 +40,7 @@ def generate_launch_description() -> LaunchDescription:
     world_name = LaunchConfiguration("world_name")
     arm_initial_positions_file = LaunchConfiguration("arm_initial_positions_file")
     world_to_base_z = LaunchConfiguration("world_to_base_z")
-    description_path = PathJoinSubstitution(
-        [
-            FindPackageShare("abb_lab_gripper"),
-            "urdf",
-            "irb1200_5_90_gz_gripper_control.urdf.xacro",
-        ]
-    )
+    description_path = LaunchConfiguration("robot_description_xacro")
     controller_config = PathJoinSubstitution(
         [
             FindPackageShare("abb_lab_gripper"),
@@ -231,6 +225,17 @@ def generate_launch_description() -> LaunchDescription:
                 "world_to_base_z",
                 default_value="0",
                 description="Fixed simulation mount height for base_link in metres.",
+            ),
+            DeclareLaunchArgument(
+                "robot_description_xacro",
+                default_value=PathJoinSubstitution(
+                    [
+                        FindPackageShare("abb_lab_gripper"),
+                        "urdf",
+                        "irb1200_5_90_gz_gripper_control.urdf.xacro",
+                    ]
+                ),
+                description="Exact gripper or Phase-6 drawing-tool Xacro used for RSP and Gazebo spawn.",
             ),
             gazebo,
             clock_bridge,

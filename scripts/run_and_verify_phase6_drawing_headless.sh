@@ -123,7 +123,7 @@ readonly EVALUATOR="${SCRIPT_DIR}/evaluate_p6_drawing_evidence.py"
 [[ -f "${P4_VERIFIER}" && -f "${EVALUATOR}" ]] || die "required Phase-6 helper missing"
 
 export GZ_PARTITION="physical_ai_p6_${ROS_DOMAIN_ID}_$$"
-setsid ros2 launch abb_lab_moveit_config irb1200_gripper_moveit_rgbd_headless.launch.py execution_duration_scaling:=2.2 execution_goal_duration_margin:=2.0 >"${RUNTIME_ROOT}/launch.log" 2>&1 &
+setsid ros2 launch abb_lab_moveit_config phase6_drawing_headless.launch.py execution_duration_scaling:=2.2 execution_goal_duration_margin:=2.0 >"${RUNTIME_ROOT}/launch.log" 2>&1 &
 launch_pid="$!"
 deadline=$((SECONDS + 100))
 while (( SECONDS < deadline )); do

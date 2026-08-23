@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+<!-- Phase-6 semantic model for the gripper-expanded ABB plus drawing pen. -->
+<robot name="abb_irb1200_5_90_gz_gripper_control">
+  <group name="manipulator">
+    <chain base_link="base_link" tip_link="drawing_tip"/>
+  </group>
+  <group name="gripper">
+    <joint name="two_finger_right_joint"/>
+  </group>
+  <end_effector name="two_finger_gripper" parent_link="gripper_tcp"
+                group="gripper" parent_group="manipulator"/>
+  <group_state name="home" group="manipulator">
+    <joint name="joint_1" value="0"/>
+    <joint name="joint_2" value="0"/>
+    <joint name="joint_3" value="0"/>
+    <joint name="joint_4" value="0"/>
+    <joint name="joint_5" value="0"/>
+    <joint name="joint_6" value="0"/>
+  </group_state>
+  <disable_collisions link1="base_link" link2="link_1" reason="Adjacent"/>
+  <disable_collisions link1="link_1" link2="link_2" reason="Adjacent"/>
+  <disable_collisions link1="link_2" link2="link_3" reason="Adjacent"/>
+  <disable_collisions link1="link_3" link2="link_4" reason="Adjacent"/>
+  <disable_collisions link1="link_4" link2="link_5" reason="Adjacent"/>
+  <disable_collisions link1="link_5" link2="link_6" reason="Adjacent"/>
+  <disable_collisions link1="tool0" link2="gripper_base" reason="Adjacent"/>
+  <disable_collisions link1="gripper_base" link2="gripper_tcp" reason="Adjacent"/>
+  <disable_collisions link1="gripper_base" link2="two_finger_right_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_base" link2="two_finger_left_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_tcp" link2="drawing_pen_shaft" reason="Adjacent"/>
+  <disable_collisions link1="drawing_pen_shaft" link2="drawing_tip" reason="Adjacent"/>
+</robot>

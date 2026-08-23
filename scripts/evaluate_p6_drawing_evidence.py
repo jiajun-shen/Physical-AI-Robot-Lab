@@ -70,6 +70,8 @@ def validate_one(path: Path) -> dict[str, Any]:
     observation = board.get("observation")
     require(isinstance(observation, dict) and observation.get("source_mode") == "VISION", f"{path}: board observation provenance invalid")
     require(board.get("board_collision_preserved") is True, f"{path}: board collision was not preserved")
+    require(board.get("tool_link") == "drawing_tip", f"{path}: runtime did not use the Phase-6 drawing tip")
+    require(board.get("tool_model") == "phase6_collision_bearing_drawing_pen", f"{path}: drawing tool provenance is invalid")
     scene = value.get("planning_scene_ids")
     require(isinstance(scene, list) and "p6_live_vision_drawing_board" in scene, f"{path}: board collision absent from MoveIt scene")
     execution = value.get("execution")

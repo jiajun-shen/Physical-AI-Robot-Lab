@@ -24,7 +24,7 @@ def _evidence(shape: str, size: float, position: str = "center") -> dict:
             "local_points": [{"normal_m": 0.0, "horizontal_m": 0.0, "vertical_m": 0.0}] * 16,
             "world_waypoints_m": [[1.05, 0.0, 0.95]] * 16,
         },
-        "board_frame": {"name": "drawing_board", "center_source": "fresh_rgbd_vision", "observation": {"source_mode": "VISION"}, "board_collision_preserved": True},
+        "board_frame": {"name": "drawing_board", "center_source": "fresh_rgbd_vision", "observation": {"source_mode": "VISION"}, "board_collision_preserved": True, "tool_link": "drawing_tip", "tool_model": "phase6_collision_bearing_drawing_pen"},
         "planning_scene_ids": ["p6_live_vision_drawing_board"],
         "execution": {
             "cartesian": {"avoid_collisions": True, "fraction": 1.0, "execution": {"action_status": 4}},
