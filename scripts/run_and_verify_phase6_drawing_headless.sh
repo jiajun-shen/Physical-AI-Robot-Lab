@@ -123,7 +123,7 @@ readonly EVALUATOR="${SCRIPT_DIR}/evaluate_p6_drawing_evidence.py"
 [[ -f "${P4_VERIFIER}" && -f "${EVALUATOR}" ]] || die "required Phase-6 helper missing"
 
 export GZ_PARTITION="physical_ai_p6_${ROS_DOMAIN_ID}_$$"
-setsid ros2 launch abb_lab_moveit_config irb1200_gripper_moveit_rgbd_headless.launch.py >"${RUNTIME_ROOT}/launch.log" 2>&1 &
+setsid ros2 launch abb_lab_moveit_config irb1200_gripper_moveit_rgbd_headless.launch.py execution_duration_scaling:=2.2 execution_goal_duration_margin:=2.0 >"${RUNTIME_ROOT}/launch.log" 2>&1 &
 launch_pid="$!"
 deadline=$((SECONDS + 100))
 while (( SECONDS < deadline )); do
@@ -133,6 +133,8 @@ while (( SECONDS < deadline )); do
   sleep 0.5
 done
 kill -0 "${launch_pid}" 2>/dev/null || die "P6 launch did not remain alive"
+ros2 param get /move_group trajectory_execution.allowed_execution_duration_scaling >"${RUNTIME_ROOT}/moveit_execution_monitor.txt" 2>&1 || die "could not read Phase-6 MoveIt execution monitor"
+grep -Eq '2\.2' "${RUNTIME_ROOT}/moveit_execution_monitor.txt" || die "Phase-6 MoveIt execution monitor did not apply bounded scaling"
 
 setsid ros2 run physical_ai_perception vision_localizer_node --ros-args -p use_sim_time:=true -p perception_mode:=vision >"${RUNTIME_ROOT}/vision_node.log" 2>&1 &
 vision_pid="$!"

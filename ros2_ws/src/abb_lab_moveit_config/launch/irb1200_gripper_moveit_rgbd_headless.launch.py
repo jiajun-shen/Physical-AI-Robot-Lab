@@ -24,6 +24,8 @@ def generate_launch_description() -> LaunchDescription:
     use_sim_time = LaunchConfiguration("use_sim_time")
     world_path = LaunchConfiguration("world_path")
     world_name = LaunchConfiguration("world_name")
+    execution_duration_scaling = LaunchConfiguration("execution_duration_scaling")
+    execution_goal_duration_margin = LaunchConfiguration("execution_goal_duration_margin")
     phase5_arm_initial_positions = str(
         Path(get_package_share_directory("abb_lab_gripper"))
         / "config"
@@ -106,6 +108,11 @@ def generate_launch_description() -> LaunchDescription:
                 "capabilities": "",
                 "disable_capabilities": "",
                 "use_sim_time": use_sim_time,
+                # Keep the normal P5 defaults, while allowing a bounded
+                # Phase-6 Cartesian trace to declare its longer conservative
+                # segment timing without mutating the shared controller YAML.
+                "trajectory_execution.allowed_execution_duration_scaling": execution_duration_scaling,
+                "trajectory_execution.allowed_goal_duration_margin": execution_goal_duration_margin,
             },
         ],
     )
@@ -266,6 +273,16 @@ def generate_launch_description() -> LaunchDescription:
                 "world_name",
                 default_value="manipulation_lab",
                 description="World that receives the one ABB model.",
+            ),
+            DeclareLaunchArgument(
+                "execution_duration_scaling",
+                default_value="1.2",
+                description="MoveIt execution-time monitor scaling (P5 default preserved).",
+            ),
+            DeclareLaunchArgument(
+                "execution_goal_duration_margin",
+                default_value="0.5",
+                description="MoveIt execution-time monitor fixed margin in seconds.",
             ),
             rgbd_gripper_bringup,
             guard_camera_bridge,
