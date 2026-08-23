@@ -20,11 +20,11 @@ planner:
   planner_id: RRTConnectkConfigDefault
   planning_attempts: 3
   allowed_planning_time_sec: 5.0
-  velocity_scaling: 0.12
+  velocity_scaling: 0.08
   position_tolerance_m: 0.008
   orientation_tolerance_rad: 0.08
-  retime_safety_factor: 2.0
-  minimum_segment_duration_sec: 0.10
+  retime_safety_factor: 2.5
+  minimum_segment_duration_sec: 0.20
   service_wait_timeout_sec: 25.0
   service_call_timeout_sec: 18.0
   action_result_timeout_sec: 75.0
@@ -57,10 +57,10 @@ board:
   curve_samples: 31
   minimum_tcp_trace_samples: 5
   orientation_candidates:
-    - id: x_plus_roll_0
-      xyzw: [0.0, 0.0, 0.0, 1.0]
     - id: x_plus_roll_90
       xyzw: [0.70710678, 0.0, 0.0, 0.70710678]
+    - id: x_plus_roll_0
+      xyzw: [0.0, 0.0, 0.0, 1.0]
     - id: x_plus_roll_180
       xyzw: [1.0, 0.0, 0.0, 0.0]
     - id: x_plus_roll_270

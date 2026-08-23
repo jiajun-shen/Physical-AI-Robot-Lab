@@ -636,25 +636,30 @@ class DrawingRuntime(Node):
             try:
                 approach_position = self._shift_normal(world_points[0], frame, approach_offset)
                 approach = self.plan_pose(f"{identifier}_approach", self.pose_stamped(approach_position, orientation), scene_ids)
-                approach_execution = self.execute(approach["trajectory"], f"{identifier}_approach")
-                approach_observed = self.observe_endpoint(approach["endpoint"], f"{identifier}_approach")
-                cartesian = self.cartesian_path(f"{identifier}_draw", world_points, orientation, scene_ids)
-                draw_execution = self.execute(cartesian["trajectory"], f"{identifier}_draw")
-                draw_observed = self.observe_endpoint(cartesian["endpoint"], f"{identifier}_draw")
-                retreat_position = self._shift_normal(world_points[-1], frame, approach_offset)
-                retreat = self.plan_pose(f"{identifier}_retreat", self.pose_stamped(retreat_position, orientation), scene_ids)
-                retreat_execution = self.execute(retreat["trajectory"], f"{identifier}_retreat")
-                retreat_observed = self.observe_endpoint(retreat["endpoint"], f"{identifier}_retreat")
-                selected = {
-                    "orientation_candidate": identifier,
-                    "orientation_xyzw": list(orientation),
-                    "approach": {"target": approach["target"], "planning": approach["planning"], "execution": approach_execution, "observed_endpoint": approach_observed},
-                    "cartesian": {**cartesian["cartesian"], "execution": draw_execution, "observed_endpoint": draw_observed},
-                    "retreat": {"target": retreat["target"], "planning": retreat["planning"], "execution": retreat_execution, "observed_endpoint": retreat_observed},
-                }
-                break
             except DrawingRuntimeError as exc:
                 attempts.append({"orientation_candidate": identifier, "result": "REJECTED", "reason": str(exc)})
+                continue
+            # Only a pre-motion approach-planning rejection may advance to the
+            # next calibrated orientation. Once motion has started, a failure
+            # leaves robot state uncertain, so every subsequent gate is
+            # fail-closed rather than trying another pose from that state.
+            approach_execution = self.execute(approach["trajectory"], f"{identifier}_approach")
+            approach_observed = self.observe_endpoint(approach["endpoint"], f"{identifier}_approach")
+            cartesian = self.cartesian_path(f"{identifier}_draw", world_points, orientation, scene_ids)
+            draw_execution = self.execute(cartesian["trajectory"], f"{identifier}_draw")
+            draw_observed = self.observe_endpoint(cartesian["endpoint"], f"{identifier}_draw")
+            retreat_position = self._shift_normal(world_points[-1], frame, approach_offset)
+            retreat = self.plan_pose(f"{identifier}_retreat", self.pose_stamped(retreat_position, orientation), scene_ids)
+            retreat_execution = self.execute(retreat["trajectory"], f"{identifier}_retreat")
+            retreat_observed = self.observe_endpoint(retreat["endpoint"], f"{identifier}_retreat")
+            selected = {
+                "orientation_candidate": identifier,
+                "orientation_xyzw": list(orientation),
+                "approach": {"target": approach["target"], "planning": approach["planning"], "execution": approach_execution, "observed_endpoint": approach_observed},
+                "cartesian": {**cartesian["cartesian"], "execution": draw_execution, "observed_endpoint": draw_observed},
+                "retreat": {"target": retreat["target"], "planning": retreat["planning"], "execution": retreat_execution, "observed_endpoint": retreat_observed},
+            }
+            break
         if selected is None:
             raise DrawingRuntimeError(f"no collision-aware board orientation completed: {attempts}")
         if len(self.trace) < integer(self.board_config.get("minimum_tcp_trace_samples"), "minimum trace samples", minimum=1):
