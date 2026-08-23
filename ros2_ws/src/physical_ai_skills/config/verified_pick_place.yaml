@@ -118,12 +118,13 @@ motion:
   # Later samples must remain within the 40 mm relative-drift envelope below.
   retention_sample_max_tcp_distance_m: 0.115
   lift_target_m: 0.085
-  # Keep the held ball 5 mm above its RGB-D-derived support height before
-  # opening. A 20 mm drop passed in one seed but gave seed 43 enough lateral
-  # energy to roll outside the placement band after a correctly aligned LOWER.
-  # The commanded attached collision proxy still remains clear of the table;
-  # final support and distance continue to be proven only by fresh RGB-D.
-  release_clearance_m: 0.005
+  # Keep the held ball 10 mm above its RGB-D-derived support height before
+  # opening. A 20 mm drop gave seed 43 enough lateral energy to roll outside
+  # the placement band, while 5 mm let its calibrated lower endpoint
+  # interpenetrate the tabletop on detach. Ten mm preserves a collision-aware
+  # gap and reduces the original drop by half; support/distance remain fresh
+  # RGB-D postconditions.
+  release_clearance_m: 0.010
   # Hold the attached object after the collision-aware lower endpoint before
   # opening/detaching. This drains the final commanded arm motion from the
   # physics body rather than releasing a moving ball into the tabletop.
