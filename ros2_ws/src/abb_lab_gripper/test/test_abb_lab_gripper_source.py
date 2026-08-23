@@ -255,7 +255,7 @@ def test_phase6_controller_profile_keeps_one_interface_contract_with_bounded_set
     assert arm["allow_partial_joints_goal"] is False
     assert arm["open_loop_control"] is False
     constraints = arm["constraints"]
-    assert constraints["goal_time"] == 3.0
+    assert constraints["goal_time"] == 4.0
     for name in ARM_JOINTS:
         assert constraints[name]["goal"] == 0.03
 

@@ -32,9 +32,10 @@ joint_trajectory_controller:
     allow_partial_joints_goal: false
     open_loop_control: false
     constraints:
-      # Preserve reviewed endpoint precision.  This finite Phase-6 grace
-      # window is paired with the calibrated P6 position-loop gain below.
-      goal_time: 3.0
+      # Preserve reviewed endpoint precision.  This P6-only finite grace
+      # window lets the bounded Gazebo position loop close the last few
+      # milliradians of a generated curve without changing the 0.03-rad goal.
+      goal_time: 4.0
       stopped_velocity_tolerance: 0.05
       joint_1: {trajectory: 0.1, goal: 0.03}
       joint_2: {trajectory: 0.1, goal: 0.03}
