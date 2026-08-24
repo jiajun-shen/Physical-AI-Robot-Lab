@@ -1,8 +1,8 @@
 # Project State
 
-> Current Phase-5 completion addendum (2026-08-23): this addendum supersedes
-> the historical Phase-4-only wording below. Phase 5 is `COMPLETE`; A04 is
-> `PASS`. Phase 6 and Phase 7 are not started.
+> Current Phase-6 completion addendum (2026-08-24): this addendum supersedes
+> the historical Phase-4/5-only wording below. Phases 5 and 6 are `COMPLETE`;
+> A04 and A05 are `PASS`. Phase 7 is not started.
 
 ## Project name
 
@@ -10,11 +10,22 @@ Physical-AI-Robot-Lab
 
 ## Current phase
 
-Phase 5 - vision-driven verified pick/place (`COMPLETE`)
+Phase 6 - language-conditioned generative drawing (`COMPLETE`)
 
-Project state: `PHASE 5 COMPLETE - A04 PASS - PHASE 6/7 NOT STARTED`.
+Project state: `PHASE 6 COMPLETE - A04/A05 PASS - PHASE 7 NOT STARTED`.
 
 ## Current subtask
+
+Phase 6 completed on clean runtime-tested commit
+`eba23f1177d59e45cb924eea4f2b3f26f0af6801` with final evidence root
+`/var/tmp/physical-ai-p6.final.isolated.eba23f1.20260824`. The sealed harness
+built and passed 85 test records, then executed a centered small circle, a left
+small square, and a left small circle in three fresh Gazebo/MoveIt/RGB-D
+episodes. These cover a curve, polygon, and board-position variation. The
+independent evaluator passed; every episode newly observed the board and both
+P5 static fiducials before motion, and each finished with process cleanup and
+ROS-domain-empty PASS. Source manifest equality and a clean worktree were
+recorded after runtime. See `docs/phase6_drawing_runtime_evidence.md`.
 
 Phase 4 remains complete at clean tested feature commit
 `62dc9c8d0d682239dd2e4567f311a3ce2551ca4a`; its vision-only two-seed RGB-D
@@ -42,10 +53,10 @@ variation checks; its green-position delta was `0.321813231388 m`.
 
 ## Git checkpoints
 
-- Latest runtime-qualified feature commit: `7e682d45e6c666060bbb84b192fd2ab756987b73` (P5/A04)
-- Latest stable Phase-5 implementation commit: `b7d97b68832fc5f87379511300751211d5a25c16`
-- Current Phase-5 runtime code commit: `7e682d45e6c666060bbb84b192fd2ab756987b73`
-- Runtime evidence: two-seed PASS at `/var/tmp/physical-ai-p5.lift-trajectory.final.20260823`; retry28 remains only historical failed contact-close evidence
+- Latest runtime-qualified feature commit: `eba23f1177d59e45cb924eea4f2b3f26f0af6801` (P6/A05)
+- Current Phase-6 runtime code commit: `eba23f1177d59e45cb924eea4f2b3f26f0af6801`
+- Phase-6 runtime evidence: three-episode PASS at `/var/tmp/physical-ai-p6.final.isolated.eba23f1.20260824`
+- Retained Phase-5 runtime code commit: `7e682d45e6c666060bbb84b192fd2ab756987b73`; its two-seed PASS remains at `/var/tmp/physical-ai-p5.lift-trajectory.final.20260823`
 - Stable base branch: `main` at `f994fd651e4817f053121227383a8c89bb23b0ed`
 - Active branch: `agent/phase5-7` (push the final documentation checkpoint
   before leaving this session)
@@ -202,7 +213,7 @@ perception, or MoveIt-with-gripper result.
     plus yaw variation for `blue_cube` and `yellow_cube`.
   - `GRASP_STATE=NOT_DETERMINED_NO_CONTACT_EVIDENCE`, force control is not
     configured, and attachment is not implemented in both runs.
-- A01-A04: PASS. A05-A14: NOT STARTED.
+- A01-A05: PASS. A06-A14: NOT STARTED.
 - Phase-4 final clean runtime: PASS at `62dc9c8` for selected seeds 42 and 43.
   - `P4_RGB_TRANSPORT`, `P4_DEPTH_TRANSPORT`, `P4_CAMERA_INFO`,
     `P4_TF_CHAIN`, `P4_DEPTH_PROJECTION`, `P4_ALL_FIVE_DETECTIONS`,
@@ -319,8 +330,10 @@ ros2_control 4.45.2, gz_ros2_control 1.2.19, ros2_controllers 4.40.1, MoveIt
 
 ## Next exact steps
 
-1. Phase 5/A04 is complete. Preserve the committed two-seed evidence and do
-   not rerun it merely as a sanity check.
-2. Do not begin Phase 6 or Phase 7 in this checkpoint. Preserve the Phase-8
-   M1 hold unchanged: any later Phase-4--8 work still requires final
-   integrated M1 evidence and separate explicit user acceptance before Phase 9.
+1. Phase 5/A04 and Phase 6/A05 are complete. Preserve their committed runtime
+   evidence; do not rerun either merely as a sanity check.
+2. Begin Phase 7 with a local, pinned Whisper-compatible multilingual backend
+   and one real zh/en/fr microphone-to-Phase-6 drawing execution per language.
+3. Preserve the Phase-8 M1 hold unchanged: any later Phase-4--8 work still
+   requires final integrated M1 evidence and separate explicit user acceptance
+   before Phase 9.

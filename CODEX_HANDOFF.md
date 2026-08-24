@@ -1,39 +1,36 @@
 # Codex Project Handoff — Physical-AI-Robot-Lab
 
-## Current safe checkpoint — Phase 5 complete (2026-08-23)
+## Current safe checkpoint — Phase 6 complete (2026-08-24)
 
 This section supersedes the historical addenda below.
 
-- Branch: `agent/phase5-7`; Phase 5 is `COMPLETE`; A04 is `PASS`. Phase 6
-  and Phase 7 are `NOT STARTED`.
-- Runtime-tested Phase-5 code commit:
-  `7e682d45e6c666060bbb84b192fd2ab756987b73`. The prior stable implementation
-  checkpoint remains `b7d97b68832fc5f87379511300751211d5a25c16`.
-- Final evidence root:
-  `/var/tmp/physical-ai-p5.lift-trajectory.final.20260823`; its harness result
-  reports `P5_PICK_PLACE=PASS`, `A04=PASS`, source-manifest equality, and a
-  clean worktree after runtime. The two-seed comparison is
-  `p5_two_seed_comparison.json` under that root.
-- Seed 42 PASS: visual lift `0.0781464666 m`, transport `0.5405326913 m`,
-  final green/red planar distance `0.0794259254 m`. Seed 43 PASS: visual lift
-  `0.0812261127 m`, transport `0.0605447531 m`, final distance
-  `0.1189200508 m`. Both use fresh sealed post-place Phase-4 RGB-D evidence.
-- Contact-close remains an actuator observation only: a 20--40 mm observed
-  endpoint, with normal success or explicit status-6/stalled semantics, is
-  never grasp success by itself. The PASS evidence instead requires a fresh
-  >=50 mm RGB-D lift, visual transport retention, release/retreat, and fresh
-  post-place vision. OPEN/RELEASE still require normal action plus endpoint
-  evidence.
-- The final seven-package harness recorded 67 tests with zero errors,
-  failures, or skips; the final direct P5 contract/runtime/static-vision/
-  evaluator suite recorded 19 passing tests. See
+- Branch: `agent/phase5-7`; Phase 5 and Phase 6 are `COMPLETE`; A04 and A05
+  are `PASS`. Phase 7 is next and remains `NOT STARTED`.
+- Runtime-tested Phase-6 commit:
+  `eba23f1177d59e45cb924eea4f2b3f26f0af6801`.
+- Final Phase-6 evidence root:
+  `/var/tmp/physical-ai-p6.final.isolated.eba23f1.20260824`; its harness result
+  reports `P6_DRAWING=PASS`, `A05=PASS`, source-manifest equality, and a clean
+  worktree after runtime. The independent `p6_drawing_evaluation.json` reports
+  `P6_DRAWING_EVALUATION=PASS`.
+- Three separately launched Gazebo/MoveIt/RGB-D episodes passed: centered small
+  circle (curve), left small square (polygon), and left small circle
+  (board-position variation). Each had new board plus static-fiducial vision,
+  collision-aware planning, explicit live-state entry alignment/TCP gate, an
+  executed trace, and `CLEANUP_STATUS=PASS` with `ROS_DOMAIN_EMPTY=PASS`.
+- The final Phase-6 harness recorded 85 tests with zero errors, failures, or
+  skips. See `docs/phase6_drawing_runtime_evidence.md` and
+  `docs/phase6_drawing_evidence_contract.md`.
+- Retained Phase-5/A04 evidence is the clean two-seed runtime at
+  `7e682d45e6c666060bbb84b192fd2ab756987b73`, rooted at
+  `/var/tmp/physical-ai-p5.lift-trajectory.final.20260823`; see
   `docs/phase5_pick_place_runtime_evidence.md`.
-- Historical retry28 is retained only as diagnostic evidence: CLOSE reported
-  `status=6`, `stalled=true`, with `/joint_states` near `27.64 mm`. It is
-  superseded for acceptance by the final two-seed PASS, not reclassified as a
-  grasp claim.
-- Commit and push the documentation checkpoint, verify
-  `git status --short --branch`, then stop. Do not start Phase 6.
+- Next: Phase 7 must add a pinned local multilingual ASR backend and capture one
+  real zh/en/fr microphone command through the Phase-6 drawing interface. Do
+  not relabel normalization scaffolding as microphone evidence.
+- Commit and push this documentation checkpoint, verify
+  `git status --short --branch`, then proceed to Phase 7. The Phase-8 M1 hold
+  remains unchanged.
 
 > Historical Phase-3 snapshot date: 2026-08-14. This handoff is deliberately
 > operational rather than promotional. The historical snapshot is retained

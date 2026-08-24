@@ -4,7 +4,7 @@ A long-term robotics research repository for an ABB IRB1200-5/0.9 virtual
 laboratory, multilingual task execution, classical manipulation, and an honest
 path toward ABB-adapted vision-language-action research.
 
-The project has completed verified Phase 0 through Phase 4. The project-owned
+The project has completed verified Phase 0 through Phase 6. The project-owned
 ABB IRB1200 has real
 clean headless Gazebo Harmonic, ros2_control, and MoveIt evidence: the exact
 model spawned, six position interfaces were claimed, JSB/JTC became active,
@@ -35,6 +35,16 @@ arbitrary-scene robustness, GUI, or real-camera evidence. See
 `PROJECT_STATE.md`, `ACCEPTANCE_STATUS.md`, and
 `docs/phase4_perception_runtime_evidence.md`.
 
+Phase 5 completed verified two-seed RGB-D/MoveIt pick-place at `7e682d4` and
+made A04 `PASS`; its evidence remains separately scoped to simulated visual
+lift, retention, placement, and fresh post-place observation. Phase 6 completed
+generative drawing at `eba23f1`: three independently launched Gazebo/MoveIt/
+RGB-D episodes executed a runtime-generated centered circle, left square, and
+left circle, covering a curve, polygon, and board-position variation. The
+independent evaluator, source-manifest check, cleanup gates, and 85 tests all
+passed, making A05 `PASS`. See `docs/phase5_pick_place_runtime_evidence.md` and
+`docs/phase6_drawing_runtime_evidence.md`.
+
 The clean P2.2 run found no residual owned process, but observed the installed
 `move_group` process exit with SIGSEGV during requested teardown. That is
 open KI-012, not a graceful-shutdown claim, and must be resolved or otherwise
@@ -57,9 +67,9 @@ remain gated by the unresolved first-party license.
 ## Phase-3 acceptance record
 
 The user explicitly accepted the saved final Phase-3 real-run evidence on
-2026-08-14. Phase 4 subsequently completed at `62dc9c8`, including A03.
-Phase 5 is not started. No result here replaces the separate Phase-8 M1 hold
-below.
+2026-08-14. Phase 4 subsequently completed at `62dc9c8` (A03), Phase 5 at
+`7e682d4` (A04), and Phase 6 at `eba23f1` (A05). No result here replaces the
+separate Phase-8 M1 hold below.
 
 ## Mandatory midterm hold
 

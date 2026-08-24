@@ -22,7 +22,7 @@ Phase 9 work begins.
 | 3 | Modular two-finger gripper + randomized lab objects | Real free-space command/state profile; two selected seeded worlds actually launch with saved live Gazebo-pose variation evidence; contact/grasp remains a later criterion |
 | 4 | RGB-D perception | Real RGB/depth projection and TF transform locate required objects in vision mode |
 | 5 | Verified pick/place | Multi-stage collision-aware grasp succeeds over multiple seeds |
-| 6 | Parametric drawing | Generated Cartesian heart/path executes; scale changes geometry |
+| 6 | Language-conditioned parametric drawing | Runtime-generated Cartesian curve and polygon execute in the board frame; size or board position changes geometry |
 | 7 | zh/en/fr speech | Microphone pipeline emits normalized `SpeechCommand` with honest confidence/language |
 | 8 | Task AI + long-horizon executive | Constrained multilingual TaskGraph; observe/verify/replan loop |
 | M1 | Midterm acceptance stop | All 12 targets pass as real integrated runs on the tested Phase-8-final commit; pause and wait for explicit user acceptance before Phase 9 |
@@ -76,9 +76,9 @@ Phase 9 work begins.
    feature commit `62dc9c8d0d682239dd2e4567f311a3ce2551ca4a`. Two isolated
    seeded worlds (42 and 43) passed real RGB/depth/CameraInfo/TF2 input,
    typed five-object vision localization, sealed-before-offline-Gazebo
-   comparison, and A03. This is simulation-only perception evidence; A04
-   remains `NOT STARTED` and Phase 5 is not started or automatically
-   authorized by this checkpoint.
+   comparison, and A03. This is simulation-only perception evidence; the later
+   Phase-5 two-seed runtime separately completed A04. This historical Phase-4
+   checkpoint does not itself establish pick/place or any M1 row.
 
 ## Phase-3 release rule
 

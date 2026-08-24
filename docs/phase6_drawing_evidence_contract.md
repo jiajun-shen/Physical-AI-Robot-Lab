@@ -1,8 +1,10 @@
 # Phase 6 — Parametric Drawing Evidence Contract
 
-Phase 6 requires a Cartesian curve generated at runtime, not prerecorded joint motion.
+Phase 6 requires drawing-domain intent to generate Cartesian geometry at
+runtime, not prerecorded joint motion. Curves and polygons are generated in
+drawing-local coordinates and mapped through the observed board frame.
 
-The canonical heart is generated from
+The heart remains one supported curve, generated from
 `x(t)=16 sin(t)^3`,
 `y(t)=13 cos(t)-5 cos(2t)-2 cos(3t)-cos(4t)`,
 then normalized, scaled in metres, and embedded in the drawing-board plane.
@@ -38,5 +40,10 @@ Exit evidence must preserve the requested scale, generated Cartesian samples,
 front-surface/derived-centre board frame, visual static-obstacle provenance and
 scene IDs, collision-aware approach/entry/curve/retreat, execution gates, and
 the live end-effector trace. Two different requested scales or positions must
-produce parameter variation. A05 stays `NOT STARTED` until three real Gazebo
-cases (curve, polygon, and parameter variation) pass the independent evaluator.
+produce parameter variation.
+
+This contract was satisfied for A05 on 2026-08-24 by the clean three-episode
+runtime at `eba23f1177d59e45cb924eea4f2b3f26f0af6801`: a centered circle, a
+left square, and a left circle passed the independent evaluator. See
+`docs/phase6_drawing_runtime_evidence.md` for the sealed evidence root and
+observed results.
