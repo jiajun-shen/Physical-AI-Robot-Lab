@@ -39,3 +39,15 @@ def test_detection_and_pose_messages_preserve_sensor_and_frame_provenance() -> N
         assert token in pose
     assert "physical_ai_interfaces/ObjectDetection[] detections" in detection_array
     assert "physical_ai_interfaces/ObjectPose[] poses" in pose_array
+
+
+def test_speech_command_preserves_asr_language_confidence_and_time() -> None:
+    speech = read_message("SpeechCommand.msg")
+    for token in (
+        "std_msgs/Header header",
+        "string transcript",
+        "string detected_language",
+        "float32 confidence",
+        "uint64 timestamp_ns",
+    ):
+        assert token in speech

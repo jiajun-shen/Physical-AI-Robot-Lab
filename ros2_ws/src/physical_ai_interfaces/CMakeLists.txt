@@ -12,6 +12,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ObjectDetectionArray.msg"
   "msg/ObjectPose.msg"
   "msg/ObjectPoseArray.msg"
+  "msg/SpeechCommand.msg"
   DEPENDENCIES geometry_msgs sensor_msgs std_msgs)
 
 ament_export_dependencies(rosidl_default_runtime)

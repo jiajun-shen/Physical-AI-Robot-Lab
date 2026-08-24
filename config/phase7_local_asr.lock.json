@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "backend": {
+    "name": "faster-whisper",
+    "package_version": "1.1.1"
+  },
+  "model": {
+    "repository": "Systran/faster-whisper-small",
+    "revision": "536b0662742c02347bc0e980a01041f333bce120",
+    "directory_name": "faster-whisper-small",
+    "manifest_sha256": "52fe583a447c1b9903ce071de2264cb385b2506e9f735cb0a6c72b9a98e08bc8"
+  }
+}
