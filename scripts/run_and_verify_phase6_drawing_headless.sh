@@ -25,7 +25,7 @@ readonly SOURCE_ROOT="${REPOSITORY_ROOT}/ros2_ws/src"
 readonly REQUIRED_AVAILABLE_MEMORY_KIB=$((2 * 1024 * 1024))
 
 die() { echo "ERROR: $*" >&2; exit 1; }
-for command in awk cmp colcon find findmnt flock git grep gz pgrep python3 realpath ros2 sed setsid sha256sum sort tail timeout tr wc xargs; do
+for command in awk cat cmp colcon find findmnt flock git grep gz pgrep python3 realpath ros2 sed setsid sha256sum sort tail timeout tr wc xargs; do
   command -v "${command}" >/dev/null 2>&1 || die "required command is unavailable: ${command}"
 done
 [[ $# -le 1 ]] || die "usage: $0 [new-or-empty-output-directory]"
@@ -96,7 +96,7 @@ partition_pids() {
   for process_dir in /proc/[0-9]*; do
     environment_file="${process_dir}/environ"
     [[ -r "${environment_file}" ]] || continue
-    if tr '\0' '\n' <"${environment_file}" 2>/dev/null |
+    if cat "${environment_file}" 2>/dev/null | tr '\0' '\n' |
         grep -Fxq "GZ_PARTITION=${partition}"; then
       printf '%s\n' "${process_dir##*/}"
     fi
@@ -251,7 +251,7 @@ run_case() {
   grep -Fxq /phase5/perception/static_obstacle_poses <<<"${topics}" || die "${case_id} static-obstacle vision topic did not become ready"
   printf '%s\n' "${topics}" >"${case_runtime}/topics_with_static_obstacle_vision.txt"
 
-  run_step "${case_id} fresh Phase-4 board vision sealing" "${case_runtime}/vision_verifier.log" python3 "${P4_VERIFIER}" --output-root "${case_root}/vision_baseline" --timeout 55 --minimum-source-stamp-sec 3.0
+  run_step "${case_id} fresh Phase-4 board vision sealing" "${case_runtime}/vision_verifier.log" python3 "${P4_VERIFIER}" --output-root "${case_runtime}/vision_baseline" --timeout 55 --minimum-source-stamp-sec 3.0
   run_step "Phase-6 ${case_id}" "${case_runtime}/${case_id}.log" ros2 run physical_ai_drawing execute_drawing --instruction "${instruction}" --output-root "${case_root}" --timeout 330
   [[ -f "${case_root}/drawing_execution_evidence.json" ]] || die "${case_id} did not produce drawing evidence"
   if ! stop_active_case; then
