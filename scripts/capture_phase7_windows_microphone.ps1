@@ -13,7 +13,9 @@ param(
 
     [double]$DurationSec,
 
-    [string]$DeviceName = '麦克风阵列 (2- Realtek(R) Audio)',
+    # Use the DirectShow alternative name rather than a localized display name:
+    # Windows PowerShell 5 reads UTF-8 scripts through the active code page.
+    [string]$DeviceName = '@device_cm_{33D9A762-90C8-11D0-BD43-00A0C911CE86}\wave_{DAF55499-0211-45EE-9B20-EEDEDBDF227A}',
 
     [string]$FfmpegPath = 'C:\Program Files\JianyingPro\Apps\5.7.0.11527\ffmpeg.exe',
 
@@ -148,8 +150,14 @@ $ffmpegArguments = @(
     '-f', 'wav',
     $audioTemporary
 )
-& $FfmpegPath @ffmpegArguments 2> $ffmpegLog
-$ffmpegExitCode = $LASTEXITCODE
+$previousErrorActionPreference = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+try {
+    & $FfmpegPath @ffmpegArguments 2> $ffmpegLog
+    $ffmpegExitCode = $LASTEXITCODE
+} finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+}
 $endedAtUnixNs = Get-UnixNanoseconds
 if ($ffmpegExitCode -ne 0) {
     Fail "ffmpeg DirectShow capture failed with exit code $ffmpegExitCode; inspect $ffmpegLog"
