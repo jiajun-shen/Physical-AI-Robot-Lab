@@ -49,13 +49,13 @@ Add-Type -AssemblyName System.Drawing
 $script:maximumDurationSec = 60.0
 $script:repositoryRoot = [IO.Directory]::GetParent([IO.Path]::GetFullPath($PSScriptRoot)).FullName
 $script:recorder = $null
-$script:recorderErrorHandler = $null
 $script:recordingFolder = $null
 $script:audioTemporaryPath = $null
 $script:audioPath = $null
 $script:metadataTemporaryPath = $null
 $script:metadataPath = $null
 $script:ffmpegLogPath = $null
+$script:recorderErrorReadTask = $null
 $script:startedAtUnixNs = [Int64]0
 $script:stopRequestedAtUtc = $null
 $script:elapsedWatch = $null
@@ -64,7 +64,6 @@ $script:forcedTermination = $false
 $script:closeAfterFinalization = $false
 $script:finalizing = $false
 $script:lastCompletedFolder = $null
-$script:ffmpegLogLines = New-Object 'System.Collections.Generic.List[string]'
 
 function Set-UiStatus {
     param(
@@ -234,11 +233,12 @@ function New-CaptureFolder {
 }
 
 function Write-FfmpegLog {
+    param([string]$Text = '')
+
     if ([string]::IsNullOrWhiteSpace($script:ffmpegLogPath)) {
         return
     }
-    $lines = @($script:ffmpegLogLines.ToArray())
-    [IO.File]::WriteAllLines($script:ffmpegLogPath, [string[]]$lines, [Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText($script:ffmpegLogPath, $Text, [Text.UTF8Encoding]::new($false))
 }
 
 function Reset-RecorderState {
@@ -262,15 +262,10 @@ function Reset-RecorderState {
             } catch { }
         }
         try { $script:recorder.StandardInput.Close() } catch { }
-        try {
-            if ($null -ne $script:recorderErrorHandler) {
-                $script:recorder.remove_ErrorDataReceived($script:recorderErrorHandler)
-            }
-        } catch { }
         try { $script:recorder.Dispose() } catch { }
     }
     $script:recorder = $null
-    $script:recorderErrorHandler = $null
+    $script:recorderErrorReadTask = $null
     $script:elapsedWatch = $null
     $script:stopRequestedAtUtc = $null
     $script:stopRequested = $false
@@ -286,17 +281,19 @@ function Finish-Recording {
     $endedAtUnixNs = Get-UnixNanoseconds
     $completed = $false
     $completionMessage = $null
+    $ffmpegStderr = ''
     try {
-        # Waiting after HasExited also lets asynchronous error callbacks drain.
         $script:recorder.WaitForExit()
-        try { $script:recorder.CancelErrorRead() } catch { }
-        Write-FfmpegLog
+        if ($null -ne $script:recorderErrorReadTask) {
+            $ffmpegStderr = $script:recorderErrorReadTask.GetAwaiter().GetResult()
+        }
+        Write-FfmpegLog -Text $ffmpegStderr
 
         if ($script:forcedTermination) {
             throw 'ffmpeg did not finalize after Stop Recording was requested; no microphone evidence was accepted.'
         }
         if ($script:recorder.ExitCode -ne 0) {
-            throw "ffmpeg exited with code $($script:recorder.ExitCode). See $script:ffmpegLogPath"
+            throw "ffmpeg exited with code $($script:recorder.ExitCode)."
         }
         if (-not (Test-Path -LiteralPath $script:audioTemporaryPath -PathType Leaf)) {
             throw 'ffmpeg exited successfully but did not create a temporary WAV.'
@@ -331,7 +328,7 @@ function Finish-Recording {
         $completionMessage = "Recording saved. WAV and capture metadata are ready in $($script:recordingFolder)"
         $completed = $true
     } catch {
-        try { Write-FfmpegLog } catch { }
+        try { Write-FfmpegLog -Text $ffmpegStderr } catch { }
         $completionMessage = "Recording was not accepted: $($_.Exception.Message)"
     } finally {
         Reset-RecorderState
@@ -404,7 +401,6 @@ function Start-Recording {
         $script:metadataTemporaryPath = Join-Path -Path $script:recordingFolder -ChildPath '.capture_metadata.json.partial'
         $script:metadataPath = Join-Path -Path $script:recordingFolder -ChildPath 'capture_metadata.json'
         $script:ffmpegLogPath = Join-Path -Path $script:recordingFolder -ChildPath 'ffmpeg_capture.log'
-        $script:ffmpegLogLines = New-Object 'System.Collections.Generic.List[string]'
         $script:startedAtUnixNs = Get-UnixNanoseconds
         $script:stopRequested = $false
         $script:forcedTermination = $false
@@ -422,25 +418,18 @@ function Start-Recording {
         $startInfo.UseShellExecute = $false
         $startInfo.CreateNoWindow = $true
         $startInfo.RedirectStandardInput = $true
+        # Drain stderr through a .NET task rather than a PowerShell event
+        # handler.  The latter executes on a worker thread with no usable
+        # PowerShell runspace and can close the visible recorder unexpectedly.
         $startInfo.RedirectStandardError = $true
         $startInfo.RedirectStandardOutput = $false
 
         $script:recorder = New-Object Diagnostics.Process
         $script:recorder.StartInfo = $startInfo
-        $script:recorderErrorHandler = [Diagnostics.DataReceivedEventHandler] {
-            param($sender, $eventArgs)
-            if ($null -ne $eventArgs.Data) {
-                $script:ffmpegLogLines.Add([string]$eventArgs.Data)
-                if ($script:ffmpegLogLines.Count -gt 400) {
-                    $script:ffmpegLogLines.RemoveAt(0)
-                }
-            }
-        }
-        $script:recorder.add_ErrorDataReceived($script:recorderErrorHandler)
         if (-not $script:recorder.Start()) {
             throw 'Windows could not start ffmpeg.'
         }
-        $script:recorder.BeginErrorReadLine()
+        $script:recorderErrorReadTask = $script:recorder.StandardError.ReadToEndAsync()
         $script:elapsedWatch = [Diagnostics.Stopwatch]::StartNew()
         $script:recordingTimer.Start()
 
