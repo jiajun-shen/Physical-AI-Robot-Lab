@@ -217,8 +217,18 @@ def test_completed_capture_metadata_keeps_the_phase7_provenance_contract():
     assert re.search(
         r"['\"]ffmpeg_directshow['\"]", source, re.IGNORECASE
     ), "metadata must identify the ffmpeg DirectShow backend"
+    assert not re.search(r"\bGet-FileHash\b", source, re.IGNORECASE), (
+        "recorder must not depend on a PowerShell cmdlet that can be unavailable in its UI session"
+    )
     assert re.search(
-        r"\bGet-FileHash\b[\s\S]{0,160}\bSHA256\b", source, re.IGNORECASE
+        r"function\s+Get-Sha256Hex\b[\s\S]{0,900}\bSecurity\.Cryptography\.SHA256\b",
+        source,
+        re.IGNORECASE,
+    ), "recorder must implement SHA-256 with the .NET cryptography runtime"
+    assert re.search(
+        r"\baudio_sha256\s*=\s*Get-Sha256Hex\s+-Path\s+\$script:audioPath\b",
+        source,
+        re.IGNORECASE,
     ), "metadata must compute a SHA-256 from the completed WAV"
     assert re.search(
         r"\binput_kind\b[\s\S]{0,80}['\"]microphone['\"]", source, re.IGNORECASE

@@ -80,6 +80,22 @@ function Get-UnixNanoseconds {
     return ([Int64]([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()) * [Int64]1000000)
 }
 
+function Get-Sha256Hex {
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    # Do not rely on an optional hash cmdlet: constrained/local PowerShell
+    # sessions can omit it even though the .NET SHA-256 implementation exists.
+    $stream = [IO.File]::Open($Path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
+    $algorithm = [Security.Cryptography.SHA256]::Create()
+    try {
+        $hashBytes = $algorithm.ComputeHash($stream)
+    } finally {
+        $algorithm.Dispose()
+        $stream.Dispose()
+    }
+    return [BitConverter]::ToString($hashBytes).Replace('-', '').ToLowerInvariant()
+}
+
 function Quote-WindowsArgument {
     param([Parameter(Mandatory = $true)][string]$Argument)
 
@@ -315,7 +331,7 @@ function Finish-Recording {
             started_at_unix_ns = $script:startedAtUnixNs
             ended_at_unix_ns = $endedAtUnixNs
             duration_requested_sec = [double]$script:maximumDurationSec
-            audio_sha256 = (Get-FileHash -LiteralPath $script:audioPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            audio_sha256 = Get-Sha256Hex -Path $script:audioPath
             audio_size_bytes = [Int64]$audioFile.Length
             audio_format = $audioFormat
         }
