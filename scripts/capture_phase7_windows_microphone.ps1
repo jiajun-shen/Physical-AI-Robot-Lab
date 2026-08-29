@@ -113,7 +113,7 @@ if (-not (Test-Path -LiteralPath $FfmpegPath -PathType Leaf)) {
     Fail "ffmpeg executable was not found: $FfmpegPath"
 }
 
-$scriptDirectory = Split-Path -LiteralPath $PSScriptRoot -Parent
+$scriptDirectory = Split-Path -Path $PSScriptRoot -Parent
 $repositoryRoot = [System.IO.Path]::GetFullPath($scriptDirectory)
 $resolvedOutput = [System.IO.Path]::GetFullPath($OutputDirectory)
 $repositoryPrefix = $repositoryRoot.TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar
