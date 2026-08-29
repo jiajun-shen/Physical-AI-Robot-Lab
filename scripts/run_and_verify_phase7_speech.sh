@@ -9,7 +9,6 @@ if [[ "${P7_WATCHDOG_ACTIVE:-0}" != "1" ]]; then
   export P7_WATCHDOG_ACTIVE=1
   exec timeout --signal=TERM --kill-after=45s 1800s "$0" "$@"
 fi
-set -u
 
 readonly ROS_SETUP=/opt/ros/jazzy/setup.bash
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
@@ -192,6 +191,7 @@ run_step() {
 
 # shellcheck disable=SC1091
 source "${ROS_SETUP}"
+set -u
 cd "${REPOSITORY_ROOT}/ros2_ws"
 run_step "Phase-7 targeted build" "${OUTPUT_ROOT}/colcon_build.txt" \
   colcon --log-base "${COLCON_LOG_BASE}" build --base-paths "${SOURCE_ROOT}" \
