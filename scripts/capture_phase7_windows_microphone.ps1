@@ -6,7 +6,7 @@ PulseAudio capture script and intentionally accepts no typed transcript.
 Example:
   .\capture_phase7_windows_microphone.ps1 `
     -OutputDirectory C:\Temp\physical-ai-p7\zh `
-    -DurationSec 7 -ConsentToMicrophoneRecording
+    -DurationSec 7 -RecordingConsentToken I_CONSENT_TO_MICROPHONE_RECORDING
 #>
 [CmdletBinding()]
 param(
@@ -21,7 +21,9 @@ param(
 
     [string]$FfmpegPath = 'C:\Program Files\JianyingPro\Apps\5.7.0.11527\ffmpeg.exe',
 
-    [switch]$ConsentToMicrophoneRecording
+    [Parameter(Mandatory = $true)]
+    [ValidateSet('I_CONSENT_TO_MICROPHONE_RECORDING')]
+    [string]$RecordingConsentToken
 )
 
 Set-StrictMode -Version Latest
@@ -101,8 +103,8 @@ function Get-WaveFormat([string]$Path) {
     }
 }
 
-if (-not $ConsentToMicrophoneRecording) {
-    Fail 'microphone capture requires -ConsentToMicrophoneRecording'
+if ($RecordingConsentToken -ne 'I_CONSENT_TO_MICROPHONE_RECORDING') {
+    Fail 'microphone capture requires explicit RecordingConsentToken'
 }
 if ([string]::IsNullOrWhiteSpace($DeviceName) -or $DeviceName -match '(?i)\.monitor$') {
     Fail 'a physical DirectShow microphone device is required'
