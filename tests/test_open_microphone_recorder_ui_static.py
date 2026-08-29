@@ -169,6 +169,23 @@ def test_stop_path_sends_q_to_ffmpeg_standard_input_for_graceful_finalization():
     ), "the graceful q stop path is not reachable from a visible Stop click handler"
 
 
+def test_window_close_cannot_skip_pending_wav_finalization():
+    source = _source()
+    close_handlers = _blocks(source, r"\.Add_FormClosing\s*\(\s*\{")
+    assert close_handlers, "recorder has no window-close handler"
+    close_handler = close_handlers[-1]
+
+    assert re.search(
+        r"\$eventArgs\s*\.\s*Cancel\s*=\s*\$true", close_handler.body, re.IGNORECASE
+    ), "window close must wait for a pending recorder to finalize"
+    assert re.search(
+        r"\$script:recorder\s*\.\s*HasExited", close_handler.body, re.IGNORECASE
+    ), "window-close path does not handle the Stop/exit race"
+    assert _handler_references(close_handler, "Finish-Recording"), (
+        "an already-exited recorder must be finalized before the window can close"
+    )
+
+
 def test_completed_capture_metadata_keeps_the_phase7_provenance_contract():
     source = _source()
     required_fields = {

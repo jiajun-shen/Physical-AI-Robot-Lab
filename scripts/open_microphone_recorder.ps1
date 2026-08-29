@@ -619,10 +619,18 @@ $script:recordingTimer.Add_Tick({
 
 $script:form.Add_FormClosing({
     param($sender, $eventArgs)
-    if ($null -ne $script:recorder -and -not $script:recorder.HasExited) {
+    if ($null -ne $script:recorder) {
+        # The user may press Stop and immediately close the window.  ffmpeg can
+        # already have exited in that short interval, while the timer has not
+        # yet observed it.  Always finish the pending capture before allowing
+        # the form to close so a valid WAV is never stranded as a partial file.
         $eventArgs.Cancel = $true
         $script:closeAfterFinalization = $true
-        Request-RecordingStop -Reason 'The window is closing.'
+        if ($script:recorder.HasExited) {
+            Finish-Recording
+        } else {
+            Request-RecordingStop -Reason 'The window is closing.'
+        }
     }
 })
 
