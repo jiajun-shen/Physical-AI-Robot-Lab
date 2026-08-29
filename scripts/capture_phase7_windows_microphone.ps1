@@ -8,21 +8,15 @@ Example:
     -OutputDirectory C:\Temp\physical-ai-p7\zh `
     -DurationSec 7 -RecordingConsentToken I_CONSENT_TO_MICROPHONE_RECORDING
 #>
-[CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
     [string]$OutputDirectory,
 
-    [Parameter(Mandatory = $true)]
-    [ValidateRange(1.0, 60.0)]
     [double]$DurationSec,
 
     [string]$DeviceName = '麦克风阵列 (2- Realtek(R) Audio)',
 
     [string]$FfmpegPath = 'C:\Program Files\JianyingPro\Apps\5.7.0.11527\ffmpeg.exe',
 
-    [Parameter(Mandatory = $true)]
-    [ValidateSet('I_CONSENT_TO_MICROPHONE_RECORDING')]
     [string]$RecordingConsentToken
 )
 
@@ -105,6 +99,12 @@ function Get-WaveFormat([string]$Path) {
 
 if ($RecordingConsentToken -ne 'I_CONSENT_TO_MICROPHONE_RECORDING') {
     Fail 'microphone capture requires explicit RecordingConsentToken'
+}
+if ([string]::IsNullOrWhiteSpace($OutputDirectory)) {
+    Fail 'microphone capture requires OutputDirectory'
+}
+if ($DurationSec -lt 1.0 -or $DurationSec -gt 60.0) {
+    Fail 'DurationSec must be between 1 and 60 seconds'
 }
 if ([string]::IsNullOrWhiteSpace($DeviceName) -or $DeviceName -match '(?i)\.monitor$') {
     Fail 'a physical DirectShow microphone device is required'
