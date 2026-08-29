@@ -79,6 +79,15 @@ midterm acceptance. All twelve M1 capabilities in `ACCEPTANCE_STATUS.md` must
 pass from saved real integrated runs on the tested final commit; code presence,
 unit tests, or static configuration are not sufficient.
 
+## Manual microphone recorder
+
+The project-wide microphone entry point is the visible Windows recorder at
+`scripts/open_microphone_recorder.cmd`. It opens in an idle state: no audio is
+captured until the user presses **Start Recording**, and **Stop Recording**
+gracefully seals a local WAV plus provenance metadata. This is the required
+recording flow for future voice features as well as Phase 7; it is never a
+background timer. See `docs/phase7_manual_microphone_ui.md`.
+
 ## Recovery entry point
 
 Every development session starts by reading:
