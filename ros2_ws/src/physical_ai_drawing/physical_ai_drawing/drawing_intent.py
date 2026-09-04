@@ -57,7 +57,7 @@ class DrawingIntent:
 
 
 _SHAPES: tuple[tuple[Shape, tuple[str, ...]], ...] = (
-    (Shape.CIRCLE, ("circle", "圆形", "画圆", "一个圆", "圆")),
+    (Shape.CIRCLE, ("circle", "圆形", "画圆", "一个圆", "圆", "圈")),
     (Shape.SQUARE, ("square", "正方形", "方形")),
     (Shape.TRIANGLE, ("triangle", "三角形")),
     (Shape.HEART, ("heart", "coeur", "cœur", "爱心", "心形")),

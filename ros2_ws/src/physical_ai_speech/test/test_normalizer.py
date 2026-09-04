@@ -7,6 +7,7 @@ from physical_ai_speech.normalizer import SpeechCommand, normalize
     "text,detected_language",
     [
         ("画一个圆。", "zh"),
+        ("画一个圈", "zh"),
         ("Draw a square.", "en"),
         ("Dessine un triangle.", "fr"),
     ],

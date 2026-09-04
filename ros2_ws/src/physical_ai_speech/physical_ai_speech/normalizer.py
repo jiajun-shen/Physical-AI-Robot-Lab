@@ -72,7 +72,7 @@ PHRASES = {
 _DRAWING_PATTERNS: dict[str, tuple[re.Pattern[str], tuple[str, ...]]] = {
     "zh": (
         re.compile("画"),
-        ("圆", "方形", "正方形", "三角形", "爱心", "心形", "波浪", "直线", "线条"),
+        ("圆", "圈", "方形", "正方形", "三角形", "爱心", "心形", "波浪", "直线", "线条"),
     ),
     "en": (
         re.compile(r"\bdraw\b"),

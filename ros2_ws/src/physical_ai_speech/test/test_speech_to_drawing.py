@@ -12,6 +12,7 @@ from physical_ai_speech.speech_to_drawing import (
     "text,detected_language,shape",
     [
         ("画一个圆。", "zh", "circle"),
+        ("画一个圈", "zh", "circle"),
         ("Draw a square.", "en", "square"),
         ("Dessine un triangle.", "fr", "triangle"),
     ],

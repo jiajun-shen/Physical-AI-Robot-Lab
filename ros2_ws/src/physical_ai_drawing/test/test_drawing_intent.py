@@ -29,6 +29,7 @@ CANONICAL_LIMITS = (
 
 def test_drawing_domain_parser_handles_required_shapes_and_parameters():
     assert parse_drawing_instruction("画一个圆").shape is Shape.CIRCLE
+    assert parse_drawing_instruction("画一个圈").shape is Shape.CIRCLE
     small_heart = parse_drawing_instruction("画一个小一点的爱心")
     assert small_heart.shape is Shape.HEART
     assert small_heart.size_m == pytest.approx(0.08)

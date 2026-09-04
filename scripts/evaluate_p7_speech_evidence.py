@@ -300,7 +300,7 @@ def validate_capture(value: Any, evidence_path: Path, created_at_ns: int) -> tup
 
 def validate_phrase(language: str, transcript: str) -> None:
     if language == "zh":
-        require("画" in transcript and ("圆" in transcript or "圓" in transcript), "Chinese transcript is not a spoken draw-circle command")
+        require("画" in transcript and any(token in transcript for token in ("圆", "圓", "圈")), "Chinese transcript is not a spoken draw-circle command")
     elif language == "en":
         lowered = transcript.casefold()
         require(bool(re.search(r"\bdraw\b", lowered)) and bool(re.search(r"\bsquare\b", lowered)), "English transcript is not a spoken draw-square command")
